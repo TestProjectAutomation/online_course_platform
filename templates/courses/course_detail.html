@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - منصة الكورسات{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Hero Section -->
+    <div class="relative h-96 rounded-2xl overflow-hidden mb-8">
+        <img src="{{ course.image.url }}" 
+             alt="{{ course.title }}"
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+        
+        <div class="absolute bottom-0 right-0 left-0 p-8 text-white">
+            <div class="flex items-center space-x-4 space-x-reverse mb-4">
+                <span class="badge badge-primary text-sm">{{ course.category.name }}</span>
+                {% if course.is_active %}
+                <span class="badge bg-green-500 text-white">متاح</span>
+                {% endif %}
+            </div>
+            <h1 class="text-4xl font-bold mb-4">{{ course.title }}</h1>
+            <div class="flex items-center space-x-6 space-x-reverse">
+                <div class="flex items-center">
+                    <i class="fas fa-calendar ml-2"></i>
+                    <span>{{ course.created_at|date:"Y/m/d" }}</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-users ml-2"></i>
+                    <span>{{ course.enrollments.count }} طالب</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-4">وصف الكورس</h2>
+                <div class="prose dark:prose-invert max-w-none">
+                    {{ course.description|linebreaks }}
+                </div>
+            </div>
+            
+            <!-- Course Features -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4">ماذا ستتعلم؟</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                        <span>محتوى شامل ومتكامل</span>
+                    </div>
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                        <span>دعم فني مستمر</span>
+                    </div>
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                        <span>شهادة إتمام معتمدة</span>
+                    </div>
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                        <span>وصول مدى الحياة</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-24">
+                <div class="text-center mb-6">
+                    <span class="text-4xl font-bold text-primary-600">{{ course.price }} د.ع</span>
+                    <span class="text-gray-500">دينار</span>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    {% if is_enrolled %}
+                        <div class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 p-4 rounded-lg text-center mb-4">
+                            <i class="fas fa-check-circle text-3xl mb-2"></i>
+                            <p class="font-semibold">أنت مسجل في هذا الكورس</p>
+                        </div>
+                        
+                        <a href="{% url 'user_dashboard' %}" 
+                           class="btn-primary w-full block text-center mb-4">
+                            <i class="fas fa-play-circle ml-2"></i>
+                            ابدأ التعلم الآن
+                        </a>
+                    {% else %}
+                        <!-- WhatsApp Contact Button -->
+                        <a href="https://wa.me/201234567890?text={{ contact_message|urlencode }}" 
+                           target="_blank"
+                           class="btn-success w-full block text-center mb-4"
+                           style="background-color: #25D366; color: white; padding: 12px; border-radius: 8px; font-weight: bold;">
+                            <i class="fab fa-whatsapp text-xl ml-2"></i>
+                            تواصل للشراء عبر واتساب
+                        </a>
+                    {% endif %}
+                    
+                    <!-- Favorite Button -->
+                    <form method="post" action="{% url 'toggle_favorite' course.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="w-full py-3 px-4 rounded-lg border-2 {% if is_favorite %}border-red-500 text-red-500 hover:bg-red-50{% else %}border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %} transition">
+                            <i class="{% if is_favorite %}fas{% else %}far{% endif %} fa-heart ml-2"></i>
+                            {% if is_favorite %}إزالة من المفضلة{% else %}أضف إلى المفضلة{% endif %}
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="text-center">
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                            سجل دخول للتواصل للشراء
+                        </p>
+                        <a href="{% url 'admin:login' %}?next={% url 'course_detail' course.slug %}" 
+                           class="btn-primary w-full block text-center">
+                            <i class="fas fa-sign-in-alt ml-2"></i>
+                            تسجيل الدخول
+                        </a>
+                    </div>
+                {% endif %}
+                
+                <hr class="my-6 dark:border-gray-700">
+                
+                <!-- Course Info -->
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-folder ml-2"></i>
+                            التصنيف
+                        </span>
+                        <span class="font-semibold">{{ course.category.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-calendar ml-2"></i>
+                            تاريخ الإضافة
+                        </span>
+                        <span class="font-semibold">{{ course.created_at|date:"Y/m/d" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-users ml-2"></i>
+                            عدد الطلاب
+                        </span>
+                        <span class="font-semibold">{{ course.enrollments.count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Courses -->
+    {% if related_courses %}
+    <section class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">كورسات مشابهة</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for related in related_courses %}
+            <div class="card">
+                <img src="{{ related.image.url }}" 
+                     alt="{{ related.title }}"
+                     class="w-full h-40 object-cover">
+                <div class="p-4">
+                    <h3 class="font-bold mb-2">{{ related.title }}</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-primary-600 font-bold">{{ related.price }} د.ع</span>
+                        <a href="{% url 'course_detail' related.slug %}" 
+                           class="text-primary-600 hover:text-primary-700">
+                            عرض <i class="fas fa-arrow-left mr-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

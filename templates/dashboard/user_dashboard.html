@@ -1,0 +1,158 @@
+{% extends 'base.html' %} {% load static %} {% block title %}لوحة التحكم - منصة
+الكورسات{% endblock %} {% block content %}
+<div class="max-w-6xl mx-auto">
+  <!-- Welcome Header -->
+  <div
+    class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 mb-8 text-white"
+  >
+    <h1 class="text-3xl font-bold mb-2">مرحباً {{ user.username }} 👋</h1>
+    <p class="opacity-90">نتمنى لك يوم دراسي ممتع</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 mb-1">الكورسات المسجلة</p>
+          <h3 class="text-3xl font-bold">{{ enrolled_courses|length }}</h3>
+        </div>
+        <div
+          class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center"
+        >
+          <i class="fas fa-book-open text-primary-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 mb-1">المفضلة</p>
+          <h3 class="text-3xl font-bold">{{ favorite_courses|length }}</h3>
+        </div>
+        <div
+          class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center"
+        >
+          <i class="fas fa-heart text-red-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 mb-1">قيد الانتظار</p>
+          <h3 class="text-3xl font-bold">{{ pending_enrollments|length }}</h3>
+        </div>
+        <div
+          class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center"
+        >
+          <i class="fas fa-clock text-yellow-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Courses -->
+  <section class="mb-8">
+    <h2 class="text-2xl font-bold mb-4">كورساتي المسجلة</h2>
+
+    {% if enrolled_courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for course in enrolled_courses %}
+      <div class="card">
+        <img
+          src="{{ course.image.url }}"
+          alt="{{ course.title }}"
+          class="w-full h-40 object-cover"
+        />
+        <div class="p-4">
+          <h3 class="font-bold mb-2">{{ course.title }}</h3>
+          <div class="flex justify-between items-center mb-3">
+            <span class="badge badge-success">
+              <i class="fas fa-check-circle ml-1"></i>
+              مسجل
+            </span>
+            <span class="text-sm text-gray-500"
+              >{{ course.category.name }}</span
+            >
+          </div>
+          <a
+            href="{% url 'course_detail' course.slug %}"
+            class="btn-primary w-full block text-center text-sm"
+          >
+            <i class="fas fa-play-circle ml-1"></i>
+            متابعة الكورس
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-12 text-center">
+      <i class="fas fa-book-open text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-bold text-gray-500 mb-2">لا توجد كورسات مسجلة</h3>
+      <p class="text-gray-400 mb-4">لم تسجل في أي كورس بعد</p>
+      <a href="{% url 'home' %}" class="btn-primary inline-block">
+        استعرض الكورسات المتاحة
+      </a>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Favorite Courses -->
+  <section>
+    <h2 class="text-2xl font-bold mb-4">المفضلة</h2>
+
+    {% if favorite_courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for course in favorite_courses %}
+      <div class="card">
+        <img
+          src="{{ course.image.url }}"
+          alt="{{ course.title }}"
+          class="w-full h-40 object-cover"
+        />
+        <div class="p-4">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-bold">{{ course.title }}</h3>
+            <form
+              method="post"
+              action="{% url 'toggle_favorite' course.slug %}"
+            >
+              {% csrf_token %}
+              <button type="submit" class="text-red-500 hover:text-red-600">
+                <i class="fas fa-heart"></i>
+              </button>
+            </form>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+            {{ course.description|truncatechars:60 }}
+          </p>
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-primary-600"
+              >{{ course.price }} د.ع</span
+            >
+            <a
+              href="{% url 'course_detail' course.slug %}"
+              class="text-primary-600 hover:text-primary-700"
+            >
+              عرض التفاصيل
+              <i class="fas fa-arrow-left mr-2"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-12 text-center">
+      <i class="far fa-heart text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-bold text-gray-500 mb-2">المفضلة فارغة</h3>
+      <p class="text-gray-400">أضف كورساتك المفضلة هنا</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

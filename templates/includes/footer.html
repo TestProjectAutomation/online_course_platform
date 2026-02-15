@@ -1,0 +1,209 @@
+{% load static %}
+<footer class="bg-gradient-to-b from-gray-900 to-gray-950 text-white mt-12 border-t border-gray-800">
+    <!-- Newsletter Section -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="max-w-3xl mx-auto text-center relative">
+            <!-- Decorative Elements -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-5">
+                <i class="fas fa-graduation-cap text-9xl"></i>
+            </div>
+            
+            <h3 class="text-3xl font-bold mb-3 relative">اشترك في النشرة البريدية</h3>
+            <p class="text-gray-400 mb-6 relative">احصل على أحدث الكورسات والعروض الحصرية مباشرة في بريدك</p>
+            
+            <form class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto relative" id="newsletter-form">
+                {% csrf_token %}
+                <div class="flex-1 relative">
+                    <i class="fas fa-envelope absolute right-4 top-4 text-gray-400"></i>
+                    <input type="email" 
+                           placeholder="بريدك الإلكتروني" 
+                           class="w-full pr-12 pl-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white transition-all"
+                           required>
+                </div>
+                <button type="submit" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105 font-bold whitespace-nowrap group">
+                    <i class="fas fa-paper-plane ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    اشترك الآن
+                </button>
+            </form>
+            
+            <p class="text-xs text-gray-500 mt-3">نحن نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.</p>
+        </div>
+    </div>
+    
+    <!-- Main Footer -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-800">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- About Section -->
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2 space-x-reverse group">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                    </div>
+                    <span class="text-2xl font-bold bg-gradient-to-l from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                        منصة الكورسات
+                    </span>
+                </div>
+                
+                <p class="text-gray-400 leading-relaxed">
+                    منصة تعليمية عربية رائدة تقدم كورسات احترافية في مختلف المجالات التقنية والإدارية مع نخبة من أفضل المدربين المعتمدين.
+                </p>
+                
+                <!-- Social Links -->
+                <div class="flex space-x-3 space-x-reverse pt-2">
+                    <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg group" title="فيسبوك">
+                        <i class="fab fa-facebook-f group-hover:animate-bounce"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg group" title="تويتر">
+                        <i class="fab fa-twitter group-hover:animate-bounce"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg group" title="لينكد إن">
+                        <i class="fab fa-linkedin-in group-hover:animate-bounce"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg group" title="يوتيوب">
+                        <i class="fab fa-youtube group-hover:animate-bounce"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg group" title="انستغرام">
+                        <i class="fab fa-instagram group-hover:animate-bounce"></i>
+                    </a>
+                </div>
+                
+                <!-- App Badges -->
+                <div class="flex space-x-2 space-x-reverse pt-2">
+                    <a href="#" class="flex-1">
+                        <img src="{% static 'images/app-store.svg' %}" alt="App Store" class="h-10 opacity-80 hover:opacity-100 transition">
+                    </a>
+                    <a href="#" class="flex-1">
+                        <img src="{% static 'images/google-play.svg' %}" alt="Google Play" class="h-10 opacity-80 hover:opacity-100 transition">
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div>
+                <h4 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-link ml-2 text-purple-500"></i>
+                    روابط سريعة
+                </h4>
+                <ul class="space-y-3">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        عن المنصة
+                    </a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        اتصل بنا
+                    </a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        الشروط والأحكام
+                    </a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        سياسة الخصوصية
+                    </a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        الأسئلة الشائعة
+                    </a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                        <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                        وظائف
+                    </a></li>
+                </ul>
+            </div>
+            
+            <!-- Categories -->
+            <div>
+                <h4 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-folder ml-2 text-purple-500"></i>
+                    التصنيفات
+                </h4>
+                <ul class="space-y-3">
+                    {% for category in categories|slice:":6" %}
+                    <li><a href="{% url 'home' %}?category={{ category.slug }}" class="text-gray-400 hover:text-white transition-colors flex items-center justify-between group">
+                        <span class="flex items-center">
+                            <i class="fas fa-chevron-left ml-2 text-xs group-hover:translate-x-1 transition-transform"></i>
+                            {{ category.name }}
+                        </span>
+                        <span class="text-xs bg-gray-800 px-2 py-1 rounded-full group-hover:bg-purple-600 transition-colors">
+                            {{ category.course_count }}
+                        </span>
+                    </a></li>
+                    {% endfor %}
+                    
+                    {% if categories|length > 6 %}
+                    <li><a href="{% url 'home' %}" class="text-purple-500 hover:text-purple-400 transition-colors flex items-center text-sm">
+                        عرض الكل
+                        <i class="fas fa-arrow-left mr-1 text-xs"></i>
+                    </a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <!-- Contact Info -->
+            <div>
+                <h4 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-address-card ml-2 text-purple-500"></i>
+                    معلومات الاتصال
+                </h4>
+                <ul class="space-y-4">
+                    <li class="flex items-start space-x-2 space-x-reverse group">
+                        <i class="fas fa-map-marker-alt text-purple-500 ml-3 mt-1 group-hover:scale-110 transition-transform"></i>
+                        <div>
+                            <p class="text-gray-400">مصر، القاهرة</p>
+                            <p class="text-gray-500 text-sm">شارع النيل، برج التعليم</p>
+                        </div>
+                    </li>
+                    <li class="flex items-center group">
+                        <i class="fas fa-phone text-purple-500 ml-3 group-hover:rotate-12 transition-transform"></i>
+                        <div>
+                            <p class="text-gray-400" dir="ltr">+20 123 456 7890</p>
+                            <p class="text-gray-500 text-xs">طوال أيام الأسبوع - 24/7</p>
+                        </div>
+                    </li>
+                    <li class="flex items-center group">
+                        <i class="fas fa-envelope text-purple-500 ml-3 group-hover:scale-110 transition-transform"></i>
+                        <div>
+                            <p class="text-gray-400">info@courses.com</p>
+                            <p class="text-gray-500 text-xs">الدعم الفني</p>
+                        </div>
+                    </li>
+                    <li class="flex items-center group">
+                        <i class="fas fa-clock text-purple-500 ml-3 group-hover:rotate-12 transition-transform"></i>
+                        <div>
+                            <p class="text-gray-400">السبت - الخميس</p>
+                            <p class="text-gray-500 text-xs">9:00 صباحاً - 9:00 مساءً</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="mt-12 pt-8 border-t border-gray-800">
+            <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400 space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <p>© {% now "Y" %} منصة الكورسات. جميع الحقوق محفوظة</p>
+                    <span class="hidden md:inline">|</span>
+                    <p>تطوير وتشغيل <a href="#" class="text-purple-500 hover:text-purple-400 transition-colors">فريق منصة الكورسات</a></p>
+                </div>
+                
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <a href="#" class="hover:text-white transition-colors">خريطة الموقع</a>
+                    <span>|</span>
+                    <a href="#" class="hover:text-white transition-colors">الدعم الفني</a>
+                    <span>|</span>
+                    <a href="#" class="hover:text-white transition-colors">المساعدة</a>
+                </div>
+                
+                <!-- Payment Methods -->
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <i class="fab fa-cc-visa text-2xl text-gray-600 hover:text-purple-400 transition-colors" title="Visa"></i>
+                    <i class="fab fa-cc-mastercard text-2xl text-gray-600 hover:text-purple-400 transition-colors" title="Mastercard"></i>
+                    <i class="fab fa-cc-paypal text-2xl text-gray-600 hover:text-purple-400 transition-colors" title="PayPal"></i>
+                    <i class="fab fa-cc-amex text-2xl text-gray-600 hover:text-purple-400 transition-colors" title="American Express"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

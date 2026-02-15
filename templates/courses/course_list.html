@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load course_extras %}  <!-- أضف هذا السطر -->
+
+{% block title %}الكورسات - منصة الكورسات{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <!-- Sidebar Filters -->
+    <aside class="lg:w-1/4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-24">
+            <h2 class="text-xl font-bold mb-4">التصنيفات</h2>
+            <ul class="space-y-2">
+                <li>
+                    <a href="{% url 'home' %}" 
+                       class="block px-4 py-2 rounded-lg transition {% if not selected_category %}bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        جميع الكورسات
+                        <span class="float-left text-sm text-gray-500">{{ page_obj.paginator.count }}</span>
+                    </a>
+                </li>
+                {% for category in categories %}
+                <li>
+                    <a href="?category={{ category.slug }}" 
+                       class="block px-4 py-2 rounded-lg transition {% if selected_category == category.slug %}bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        {{ category.name }}
+                        <span class="float-left text-sm text-gray-500">{{ category.course_count }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+    
+    <!-- Courses Grid -->
+    <div class="lg:w-3/4">
+        <!-- Results Info -->
+        <div class="mb-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">
+                {% if selected_category %}
+                    {% for category in categories %}
+                        {% if category.slug == selected_category %}
+                            {{ category.name }}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    جميع الكورسات
+                {% endif %}
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                {{ page_obj.paginator.count }} كورس متاح
+            </p>
+        </div>
+        
+        <!-- Courses Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for course in courses %}
+            <div class="card group">
+                <!-- Course Image -->
+                <div class="relative overflow-hidden h-48">
+                    <img src="{{ course.image.url }}" 
+                         alt="{{ course.title }}"
+                         class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute top-3 right-3">
+                        <span class="badge badge-primary">{{ course.category.name }}</span>
+                    </div>
+                </div>
+                
+                <!-- Course Content -->
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-2 line-clamp-2">
+                        <a href="{% url 'course_detail' course.slug %}" class="hover:text-primary-600 transition">
+                            {{ course.title }}
+                        </a>
+                    </h3>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                        {{ course.description|truncatechars:100 }}
+                    </p>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2 space-x-reverse">
+                            <span class="text-2xl font-bold text-primary-600">{{ course.price }} د.ع</span>
+                            <span class="text-sm text-gray-500">دينار</span>
+                        </div>
+                        
+                        <div class="flex space-x-2 space-x-reverse">
+                            {% if user.is_authenticated %}
+                            <form method="post" action="{% url 'toggle_favorite' course.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="text-2xl text-gray-400 hover:text-red-500 transition">
+                                    <i class="{% if course.id in user_favorites %}fas text-red-500{% else %}far{% endif %} fa-heart"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <a href="{% url 'course_detail' course.slug %}" 
+                               class="btn-primary text-sm">
+                                <i class="fas fa-eye ml-1"></i>
+                                عرض التفاصيل
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-400">لا توجد كورسات</h3>
+                <p class="text-gray-500">لم نتمكن من العثور على أي كورسات تطابق بحثك</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="inline-flex rounded-lg shadow">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-r-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+                
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <span class="px-4 py-2 bg-primary-600 text-white border border-primary-600">{{ i }}</span>
+                    {% else %}
+                    <a href="?page={{ i }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        {{ i }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-l-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

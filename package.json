@@ -1,0 +1,10 @@
+{
+    "name": "online-course-platform",
+    "version": "1.0.0",
+    "scripts": {
+        "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.0"
+    }
+}
