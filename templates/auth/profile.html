@@ -1,0 +1,944 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- رسالة ترحيب متحركة -->
+    <div class="mb-8 bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 rounded-2xl p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-white opacity-5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold mb-2">مرحباً {{ user.first_name|default:user.username }}! 👋</h1>
+            <p class="text-white/90">مرحباً بعودتك إلى ملفك الشخصي</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar - بطاقة الملف الشخصي -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sticky top-24 transform transition-all duration-300 hover:shadow-xl">
+                <!-- صورة المستخدم مع تأثيرات -->
+                <div class="text-center mb-6 relative group">
+                    <div class="relative inline-block">
+                        {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" 
+                             class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-primary-500 group-hover:scale-105 transition duration-300 group-hover:shadow-2xl">
+                        {% else %}
+                        <div class="w-32 h-32 rounded-full mx-auto mb-4 bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center border-4 border-white dark:border-gray-800 group-hover:scale-105 transition duration-300 shadow-lg">
+                            <span class="text-4xl text-white font-bold">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- مؤشر الحالة (متصل/غير متصل) -->
+                        <span class="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse"></span>
+                        
+                        <!-- زر تغيير الصورة (يظهر عند التحويم) -->
+                        <label for="avatar-upload" class="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition duration-300">
+                            <i class="fas fa-camera text-white text-2xl"></i>
+                        </label>
+                        <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400 flex items-center justify-center gap-1">
+                        <i class="fas fa-envelope text-sm"></i>
+                        {{ user.email }}
+                    </p>
+                    
+                    <!-- عرض الأدوار مع تأثيرات -->
+                    <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                        {% if user.is_superuser %}
+                        <span class="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-purple-800 text-white text-sm rounded-full font-semibold shadow-lg flex items-center gap-1 animate-pulse-slow">
+                            <i class="fas fa-crown"></i>
+                            سوبر أدمن
+                        </span>
+                        {% endif %}
+                        
+                        <span class="px-4 py-1.5 text-white text-sm rounded-full font-semibold shadow-lg flex items-center gap-1
+                            {% if user.role == 'admin' %}bg-gradient-to-r from-purple-500 to-purple-700
+                            {% elif user.role == 'instructor' %}bg-gradient-to-r from-green-500 to-green-700
+                            {% else %}bg-gradient-to-r from-blue-500 to-blue-700{% endif %}">
+                            <i class="fas 
+                                {% if user.role == 'admin' %}fa-crown
+                                {% elif user.role == 'instructor' %}fa-chalkboard-teacher
+                                {% else %}fa-user-graduate{% endif %}">
+                            </i>
+                            {% if user.role == 'admin' %}مدير
+                            {% elif user.role == 'instructor' %}مدرب
+                            {% else %}طالب{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- بطاقات الإحصائيات السريعة -->
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <div class="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3 text-center group hover:bg-primary-100 dark:hover:bg-primary-900/40 transition">
+                        <div class="text-2xl font-bold text-primary-600 group-hover:scale-110 transition">{{ stats.enrolled_courses|default:'0' }}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400">دورة</div>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center group hover:bg-green-100 dark:hover:bg-green-900/40 transition">
+                        <div class="text-2xl font-bold text-green-600 group-hover:scale-110 transition">{{ stats.completed_courses|default:'0' }}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400">مكتملة</div>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 text-center group hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition">
+                        <div class="text-2xl font-bold text-yellow-600 group-hover:scale-110 transition">{{ favorites_count|default:'0' }}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400">مفضلة</div>
+                    </div>
+                </div>
+
+                <!-- قائمة التنقل -->
+                <nav class="space-y-1">
+                    <a href="#profile" onclick="showTab('profile')" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-300 tab-link group"
+                       data-tab="profile">
+                        <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-user text-primary-600 dark:text-primary-400"></i>
+                        </div>
+                        <span class="flex-1">المعلومات الشخصية</span>
+                        <i class="fas fa-chevron-left text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                    </a>
+                    
+                    <a href="#stats" onclick="showTab('stats')" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-300 tab-link group"
+                       data-tab="stats">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-chart-bar text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <span class="flex-1">الإحصائيات</span>
+                        <i class="fas fa-chevron-left text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                    </a>
+                    
+                    <a href="#favorites" onclick="showTab('favorites')" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-300 tab-link group"
+                       data-tab="favorites">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-heart text-red-600 dark:text-red-400"></i>
+                        </div>
+                        <span class="flex-1">المفضلة</span>
+                        {% if favorites_count %}
+                        <span class="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{{ favorites_count }}</span>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="#activities" onclick="showTab('activities')" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-300 tab-link group"
+                       data-tab="activities">
+                        <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-history text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                        <span class="flex-1">آخر الأنشطة</span>
+                        <i class="fas fa-chevron-left text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                    </a>
+                    
+                    <!-- روابط إضافية للمشرفين -->
+                    {% if user.is_superuser or user.role == 'admin' %}
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-2 pt-2"></div>
+                    
+                    <a href="{% url 'courses:admin_dashboard' %}" 
+                       class="flex items-center px-4 py-3 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all duration-300 group">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-crown text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <span class="flex-1">لوحة المشرفين</span>
+                        <i class="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.is_instructor %}
+                    <a href="{% url 'courses:instructor_dashboard' %}" 
+                       class="flex items-center px-4 py-3 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-all duration-300 group">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center ml-3 group-hover:scale-110 transition">
+                            <i class="fas fa-chalkboard-teacher text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <span class="flex-1">لوحة المدربين</span>
+                        <i class="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <div class="lg:col-span-3">
+            <!-- ==================== تبويب الملف الشخصي ==================== -->
+            <div id="profile-tab" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold flex items-center gap-2">
+                            <i class="fas fa-user-edit text-primary-600"></i>
+                            تعديل الملف الشخصي
+                        </h2>
+                        <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 text-sm rounded-full">
+                            <i class="fas fa-check-circle ml-1"></i>
+                            متصل
+                        </span>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% for field in form %}
+                            <div class="{% if field.name == 'bio' %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                </label>
+                                
+                                {% if field.name == 'bio' %}
+                                <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                          rows="4" 
+                                          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                          placeholder="اكتب نبذة عنك...">{{ field.value|default:'' }}</textarea>
+                                {% elif field.name == 'avatar' %}
+                                <div class="flex items-center gap-4">
+                                    {{ field }}
+                                    <button type="button" onclick="document.getElementById('{{ field.id_for_label }}').click()" 
+                                            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                                        <i class="fas fa-upload ml-2"></i>
+                                        اختر صورة
+                                    </button>
+                                </div>
+                                {% else %}
+                                <input type="{% if field.name == 'email' %}email{% else %}text{% endif %}" 
+                                       name="{{ field.name }}" 
+                                       id="{{ field.id_for_label }}"
+                                       value="{{ field.value|default:'' }}"
+                                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                       {% if field.field.required %}required{% endif %}>
+                                {% endif %}
+                                
+                                {% if field.errors %}
+                                <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ field.errors.0 }}
+                                </p>
+                                {% endif %}
+                                
+                                {% if field.help_text %}
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:scale-105 flex items-center gap-2 shadow-lg">
+                                <i class="fas fa-save"></i>
+                                حفظ التغييرات
+                            </button>
+                            <button type="reset" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center gap-2">
+                                <i class="fas fa-undo"></i>
+                                إعادة تعيين
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ==================== تبويب الإحصائيات ==================== -->
+            <div id="stats-tab" class="tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fas fa-chart-pie text-primary-600"></i>
+                        إحصائيات التعلم
+                    </h2>
+                    
+                    <!-- بطاقات الإحصائيات الرئيسية -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <i class="fas fa-book-open text-3xl opacity-80"></i>
+                                <span class="text-4xl font-bold">{{ stats.enrolled_courses|default:'0' }}</span>
+                            </div>
+                            <h3 class="text-lg font-semibold">الدورات المسجل فيها</h3>
+                            <p class="text-blue-100 text-sm">إجمالي الدورات</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <i class="fas fa-check-circle text-3xl opacity-80"></i>
+                                <span class="text-4xl font-bold">{{ stats.completed_courses|default:'0' }}</span>
+                            </div>
+                            <h3 class="text-lg font-semibold">الدورات المكتملة</h3>
+                            <p class="text-green-100 text-sm">معدل الإكمال: {% widthratio stats.completed_courses|default:0 stats.enrolled_courses|default:1 100 %}%</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <i class="fas fa-heart text-3xl opacity-80"></i>
+                                <span class="text-4xl font-bold">{{ favorites_count|default:'0' }}</span>
+                            </div>
+                            <h3 class="text-lg font-semibold">الدورات المفضلة</h3>
+                            <p class="text-yellow-100 text-sm">تمت إضافتها للمفضلة</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <i class="fas fa-star text-3xl opacity-80"></i>
+                                <span class="text-4xl font-bold">{{ stats.reviews_written|default:'0' }}</span>
+                            </div>
+                            <h3 class="text-lg font-semibold">التقييمات</h3>
+                            <p class="text-purple-100 text-sm">عدد التقييمات المكتوبة</p>
+                        </div>
+                    </div>
+
+                    <!-- تقدم التعلم -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mb-8">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-line text-primary-600"></i>
+                            تقدم التعلم
+                        </h3>
+                        
+                        {% for enrollment in active_enrollments|slice:":5" %}
+                        <div class="mb-4 last:mb-0">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <img src="{{ enrollment.course.image.url|default:'https://via.placeholder.com/30' }}" 
+                                         alt="{{ enrollment.course.title }}" 
+                                         class="w-8 h-8 rounded object-cover">
+                                    <span class="font-medium text-sm">{{ enrollment.course.title|truncatechars:30 }}</span>
+                                </div>
+                                <span class="text-sm font-bold text-primary-600">{{ enrollment.progress }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                <div class="bg-primary-600 rounded-full h-2 transition-all duration-500 progress-bar" 
+                                     style="width: {{ enrollment.progress }}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="far fa-clock ml-1"></i>
+                                آخر نشاط: {{ enrollment.last_accessed|timesince }}
+                            </p>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-gray-500 dark:text-gray-400 py-8">
+                            <i class="fas fa-info-circle ml-2"></i>
+                            لا توجد دورات قيد التقدم
+                        </p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- آخر التقييمات -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-star text-yellow-500"></i>
+                            آخر تقييماتك
+                        </h3>
+                        
+                        {% for review in recent_reviews|slice:":3" %}
+                        <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0 mb-4 last:mb-0">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-semibold">{{ review.course.title }}</h4>
+                                    <div class="flex items-center gap-1 mt-1">
+                                        {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                        {% else %}
+                                        <i class="far fa-star text-yellow-400 text-sm"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ review.created_at|date:'Y-m-d' }}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.comment|truncatechars:100 }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-gray-500 dark:text-gray-400 py-4">
+                            <i class="fas fa-star ml-2"></i>
+                            لم تكتب أي تقييمات بعد
+                        </p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+  
+
+            <!-- ==================== تبويب المفضلة ==================== -->
+            <div id="favorites-tab" class="tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold flex items-center gap-2">
+                            <i class="fas fa-heart text-red-500"></i>
+                            الدورات المفضلة
+                        </h2>
+                        {% if favorites_count %}
+                        <span class="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-semibold flex items-center gap-2">
+                            <i class="fas fa-heart"></i>
+                            {{ favorites_count }} دورة
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if favorites %}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {% for favorite in favorites %}
+                        <div class="group relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 transform hover:-translate-y-2">
+                            <!-- شريط علوي ملون -->
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+                            
+                            <div class="p-5">
+                                <div class="flex gap-4">
+                                    <!-- صورة الدورة -->
+                                    <div class="relative w-24 h-24 flex-shrink-0">
+                                        {% if favorite.course.image %}
+                                        <img src="{{ favorite.course.image.url }}" 
+                                            alt="{{ favorite.course.title }}" 
+                                            class="w-full h-full object-cover rounded-xl shadow-md group-hover:scale-105 transition duration-500">
+                                        {% else %}
+                                        <div class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md">
+                                            <i class="fas fa-image text-white text-2xl"></i>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- شارة السعر -->
+                                        {% if favorite.course.price == 0 %}
+                                        <span class="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
+                                            <i class="fas fa-gift ml-1"></i>
+                                            مجاني
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- محتوى الدورة -->
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h3 class="font-bold text-lg line-clamp-1 group-hover:text-primary-600 transition">
+                                                    <a href="{% url 'courses:course_detail' favorite.course.slug %}" class="hover:underline">
+                                                        {{ favorite.course.title }}
+                                                    </a>
+                                                </h3>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    <i class="fas fa-folder ml-1"></i>
+                                                    {{ favorite.course.category.name }}
+                                                </p>
+                                            </div>
+                                            
+                                            <!-- زر إزالة من المفضلة -->
+                                            <button onclick="removeFromFavorites({{ favorite.course.id }})" 
+                                                    class="text-red-500 hover:text-red-700 transition transform hover:scale-125 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center"
+                                                    title="إزالة من المفضلة">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- معلومات المدرب -->
+                                        <div class="flex items-center gap-2 mt-3">
+                                            {% if favorite.course.instructor.avatar %}
+                                            <img src="{{ favorite.course.instructor.avatar.url }}" 
+                                                alt="{{ favorite.course.instructor.get_full_name }}" 
+                                                class="w-6 h-6 rounded-full object-cover">
+                                            {% else %}
+                                            <div class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                                <span class="text-primary-600 dark:text-primary-400 text-xs font-bold">
+                                                    {{ favorite.course.instructor.first_name|first|upper }}
+                                                </span>
+                                            </div>
+                                            {% endif %}
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ favorite.course.instructor.get_full_name|default:favorite.course.instructor.username }}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- التقييم والسعر -->
+                                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                <div class="flex items-center">
+                                                    {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= favorite.course.rating %}
+                                                    <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                                    {% elif forloop.counter <= favorite.course.rating|add:"0.5" %}
+                                                    <i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>
+                                                    {% else %}
+                                                    <i class="far fa-star text-yellow-400 text-xs"></i>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="text-xs text-gray-500 dark:text-gray-500">
+                                                    ({{ favorite.course.reviews.count }})
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-sm font-bold {% if favorite.course.price == 0 %}text-green-600{% else %}text-primary-600{% endif %}">
+                                                    {% if favorite.course.price == 0 %}
+                                                    مجاناً
+                                                    {% else %}
+                                                    ${{ favorite.course.price }}
+                                                    {% endif %}
+                                                </span>
+                                                
+                                                <a href="{% url 'courses:course_detail' favorite.course.slug %}" 
+                                                class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1 bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-full transition hover:bg-primary-100 dark:hover:bg-primary-900/50">
+                                                    عرض
+                                                    <i class="fas fa-arrow-left text-xs"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- تاريخ الإضافة -->
+                                        <div class="mt-2 text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                            <i class="far fa-clock"></i>
+                                            أضيفت: {{ favorite.created_at|date:'Y/m/d' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- إذا كان عدد المفضلة كبير، نضيف زر تحميل المزيد -->
+                    {% if favorites_count > 6 %}
+                    <div class="text-center mt-8">
+                        <button class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition font-semibold">
+                            <i class="fas fa-sync-alt ml-2"></i>
+                            تحميل المزيد
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <!-- حالة عدم وجود مفضلة -->
+                    <div class="text-center py-16">
+                        <div class="relative inline-block">
+                            <div class="text-8xl text-gray-300 dark:text-gray-600 mb-4 animate-pulse-slow">
+                                <i class="far fa-heart"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-12 h-12 bg-red-500 rounded-full opacity-20 animate-ping"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">المفضلة فارغة</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                            لم تقم بإضافة أي دورات إلى المفضلة بعد. استعرض الدورات وأضف المفضلة لديك!
+                        </p>
+                        <a href="{% url 'courses:course_list' %}" 
+                        class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition transform hover:scale-105 shadow-xl group">
+                            <i class="fas fa-search ml-2 group-hover:rotate-12 transition"></i>
+                            استعرض الدورات
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+
+
+            <!-- ==================== تبويب الأنشطة ==================== -->
+            <div id="activities-tab" class="tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fas fa-history text-primary-600"></i>
+                        آخر الأنشطة
+                    </h2>
+                    
+                    {% if recent_activities %}
+                    <div class="space-y-4">
+                        {% for activity in recent_activities %}
+                        <div class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:shadow-md transition group">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center
+                                    {% if activity.status == 'completed' %}bg-green-100 dark:bg-green-900
+                                    {% elif activity.status == 'enrolled' %}bg-primary-100 dark:bg-primary-900
+                                    {% else %}bg-yellow-100 dark:bg-yellow-900{% endif %}">
+                                    <i class="fas 
+                                        {% if activity.status == 'completed' %}fa-check-circle text-green-600 dark:text-green-400
+                                        {% elif activity.status == 'enrolled' %}fa-play-circle text-primary-600 dark:text-primary-400
+                                        {% else %}fa-clock text-yellow-600 dark:text-yellow-400{% endif %} text-xl">
+                                    </i>
+                                </div>
+                                {% if forloop.first %}
+                                <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping"></span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <div>
+                                        <h4 class="font-semibold">{{ activity.course.title }}</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            {% if activity.status == 'completed' %}
+                                            🎉 أكملت الدورة بنجاح
+                                            {% elif activity.status == 'enrolled' %}
+                                            📚 تقدمك: {{ activity.progress }}%
+                                            {% else %}
+                                            ⏳ في انتظار الموافقة
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <span class="text-xs text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
+                                        {{ activity.last_accessed|timesince }}
+                                    </span>
+                                </div>
+                                
+                                {% if activity.status == 'enrolled' and activity.progress < 100 %}
+                                <div class="mt-2 flex items-center gap-2">
+                                    <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                        <div class="bg-primary-600 rounded-full h-2 progress-bar" 
+                                             style="width: {{ activity.progress }}%"></div>
+                                    </div>
+                                    <span class="text-xs font-medium text-primary-600">{{ activity.progress }}%</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-16">
+                        <div class="text-7xl text-gray-300 dark:text-gray-600 mb-4 animate-bounce-slow">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">لا توجد أنشطة بعد</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">ابدأ رحلة التعلم الآن</p>
+                        <a href="{% url 'courses:course_list' %}" 
+                           class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-play ml-2"></i>
+                            ابدأ التعلم
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تغيير الصورة -->
+<div id="avatarModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">تغيير الصورة الشخصية</h3>
+            <button onclick="closeAvatarModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                <p class="text-gray-600 dark:text-gray-400">اسحب وأفلت الصورة هنا أو</p>
+                <button class="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    اختر صورة
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 text-center">أقصى حجم: 5MB. الصيغ المسموحة: JPG, PNG, GIF</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ==================== إدارة التبويبات ====================
+    function showTab(tabName) {
+        // إخفاء جميع التبويبات
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // إظهار التبويب المحدد مع تأثير
+        const selectedTab = document.getElementById(`${tabName}-tab`);
+        selectedTab.classList.remove('hidden');
+        selectedTab.classList.add('animate__animated', 'animate__fadeIn');
+        
+        // تحديث الحالة النشطة في الشريط الجانبي
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.classList.remove('active', 'bg-gray-100', 'dark:bg-gray-700', 'text-primary-600', 'dark:text-primary-400');
+        });
+        
+        const activeLink = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active', 'bg-gray-100', 'dark:bg-gray-700', 'text-primary-600', 'dark:text-primary-400');
+        }
+        
+        // تحديث URL hash
+        window.location.hash = tabName;
+    }
+
+    // ==================== إدارة المفضلة ====================
+    function removeFromFavorites(courseId) {
+        if (!confirm('هل أنت متأكد من إزالة هذه الدورة من المفضلة؟')) {
+            return;
+        }
+        
+        fetch('/ajax/toggle-favorite/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams({
+                'course_id': courseId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && !data.is_favorite) {
+                // إزالة العنصر من الصفحة بتأثير حركي
+                const card = event.target.closest('.group');
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9) translateY(-20px)';
+                
+                setTimeout(() => {
+                    card.remove();
+                    
+                    // تحديث العداد في الشريط الجانبي
+                    updateFavoritesCount();
+                    
+                    // التحقق مما إذا كانت المفضلة أصبحت فارغة
+                    const remainingCards = document.querySelectorAll('#favorites-tab .group').length;
+                    if (remainingCards === 0) {
+                        location.reload(); // إعادة تحميل الصفحة لإظهار الحالة الفارغة
+                    }
+                }, 300);
+                
+                showNotification('✅ تمت إزالة الدورة من المفضلة', 'success');
+            }
+        })
+        .catch(error => {
+            showNotification('❌ حدث خطأ، حاول مرة أخرى', 'error');
+        });
+    }
+
+    // تحديث عداد المفضلة في الشريط الجانبي
+    function updateFavoritesCount() {
+        const sidebarBadge = document.querySelector('[data-tab="favorites"] .bg-red-500');
+        const headerBadge = document.querySelector('#favorites-tab .bg-red-100');
+        
+        if (sidebarBadge) {
+            const currentCount = parseInt(sidebarBadge.textContent) - 1;
+            if (currentCount > 0) {
+                sidebarBadge.textContent = currentCount;
+            } else {
+                sidebarBadge.remove();
+            }
+        }
+        
+        if (headerBadge) {
+            const currentCount = parseInt(headerBadge.textContent) - 1;
+            if (currentCount > 0) {
+                headerBadge.innerHTML = `<i class="fas fa-heart ml-2"></i>${currentCount} دورة`;
+            } else {
+                headerBadge.remove();
+            }
+        }
+    }
+
+
+    // ==================== إدارة الصورة الشخصية ====================
+    document.getElementById('avatar-upload')?.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            
+            // التحقق من حجم الملف (حد أقصى 5 ميجابايت)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('❌ حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت', 'error');
+                this.value = ''; // إعادة تعيين الحقل
+                return;
+            }
+            
+            // التحقق من نوع الملف
+            if (!file.type.match('image.*')) {
+                showNotification('❌ يرجى اختيار ملف صورة فقط (jpg, png, gif)', 'error');
+                this.value = '';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('avatar', file);
+            formData.append('csrfmiddlewaretoken', csrftoken);
+            
+            showLoading('جاري رفع الصورة...');
+            
+            fetch('/profile/update-avatar/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.status === 'success') {
+                    showNotification('✅ تم تحديث الصورة بنجاح', 'success');
+                    
+                    // تحديث الصورة في الصفحة بدون إعادة تحميل
+                    const avatarImg = document.querySelector('.group img, .group div[class*="bg-gradient"]');
+                    if (avatarImg && avatarImg.tagName === 'IMG') {
+                        avatarImg.src = data.avatar_url + '?t=' + new Date().getTime(); // إضافة timestamp لمنع cache
+                    } else {
+                        // إذا كانت الصورة الافتراضية، إعادة تحميل الصفحة
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                } else {
+                    showNotification('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                showNotification(error.message || '❌ حدث خطأ في الاتصال بالخادم', 'error');
+            });
+        }
+    });
+
+    // تحسين دالة showLoading
+    function showLoading(message = 'جاري التحميل...') {
+        const spinner = document.getElementById('loading-spinner');
+        const messageEl = spinner.querySelector('p');
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+        spinner.classList.remove('hidden');
+        spinner.classList.add('flex');
+    }
+
+    // تحسين دالة hideLoading
+    function hideLoading() {
+        const spinner = document.getElementById('loading-spinner');
+        spinner.classList.add('hidden');
+        spinner.classList.remove('flex');
+        
+        // إعادة النص الافتراضي
+        const messageEl = spinner.querySelector('p');
+        if (messageEl) {
+            messageEl.textContent = 'جاري التحميل...';
+        }
+    }
+
+
+    // ==================== نظام الإشعارات ====================
+    // دالة عرض الإشعارات
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate__animated animate__fadeInDown ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 
+            'bg-blue-500'
+        } text-white flex items-center gap-3`;
+        
+        notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('animate__fadeOutUp');
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+    // ==================== عرض/إخفاء التحميل ====================
+    function showLoading() {
+        document.getElementById('loading-spinner').classList.remove('hidden');
+        document.getElementById('loading-spinner').classList.add('flex');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-spinner').classList.add('hidden');
+        document.getElementById('loading-spinner').classList.remove('flex');
+    }
+
+    // ==================== التحقق من URL hash عند التحميل ====================
+    window.addEventListener('load', function() {
+        const hash = window.location.hash.substring(1);
+        if (hash && ['profile', 'stats', 'favorites', 'activities'].includes(hash)) {
+            showTab(hash);
+        }
+        
+        // تحريك الأرقام
+        animateNumbers();
+    });
+
+    // ==================== تحريك الأرقام ====================
+    function animateNumbers() {
+        document.querySelectorAll('.counter').forEach(counter => {
+            const target = parseInt(counter.innerText);
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    counter.innerText = target;
+                    clearInterval(timer);
+                } else {
+                    counter.innerText = Math.round(current);
+                }
+            }, 20);
+        });
+    }
+
+    // ==================== إغلاق الـ modal ====================
+    function closeAvatarModal() {
+        document.getElementById('avatarModal').classList.add('hidden');
+        document.getElementById('avatarModal').classList.remove('flex');
+    }
+
+    // ==================== اختصارات لوحة المفاتيح ====================
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+1,2,3,4 للتبديل بين التبويبات
+        if (e.ctrlKey && !e.shiftKey) {
+            const tabs = ['profile', 'stats', 'favorites', 'activities'];
+            const index = parseInt(e.key) - 1;
+            if (index >= 0 && index < tabs.length) {
+                e.preventDefault();
+                showTab(tabs[index]);
+            }
+        }
+        
+        // Esc لإغلاق الـ modal
+        if (e.key === 'Escape') {
+            closeAvatarModal();
+        }
+    });
+</script>
+
+<style>
+    /* أنميشن إضافية */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .tab-content {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    /* تحسين شريط التمرير */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+{% endblock %}

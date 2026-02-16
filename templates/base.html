@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -20,6 +20,12 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <!-- Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
+    
     <!-- Custom Styles -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
@@ -30,7 +36,7 @@
         
         /* Smooth transitions */
         * {
-            transition: background-color 0.2s ease, border-color 0.2s ease;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
         }
         
         /* Custom scrollbar */
@@ -41,7 +47,6 @@
         
         ::-webkit-scrollbar-track {
             background: #f1f1f1;
-            dark: #374151;
         }
         
         ::-webkit-scrollbar-thumb {
@@ -63,6 +68,422 @@
         
         .dark ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
+        }
+
+        /* Line clamp utility */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* تحسينات إضافية للنماذج */
+        input[type="file"]::file-selector-button {
+            transition: all 0.2s ease;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* تحسين ظهور الحقول المعطلة */
+        input:disabled,
+        select:disabled,
+        textarea:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f3f4f6;
+        }
+
+        .dark input:disabled,
+        .dark select:disabled,
+        .dark textarea:disabled {
+            background-color: #374151;
+            opacity: 0.5;
+        }
+
+        /* تحسين ظهور الحقول التي بها أخطاء */
+        input.error,
+        select.error,
+        textarea.error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .dark input.error,
+        .dark select.error,
+        .dark textarea.error {
+            border-color: #f87171;
+            background-color: #451a1a;
+        }
+
+        /* تمييز السوبر أدمن */
+        .superuser-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .superuser-badge i {
+            font-size: 0.75rem;
+        }
+
+        /* تمييز صف السوبر أدمن في الجدول */
+        tr.superuser-row {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .dark tr.superuser-row {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        }
+
+        /* تحسينات لتعديل الأدوار */
+        .role-selector {
+            transition: all 0.3s ease;
+        }
+
+        .role-selector:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .permission-preview {
+            transition: all 0.2s ease;
+        }
+
+        .permission-preview:hover {
+            background-color: #f9fafb;
+        }
+
+        .dark .permission-preview:hover {
+            background-color: #374151;
+        }
+
+        /* أنميشن للتحذيرات */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .role-change-warning {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* ==================== إضافات جديدة للإشعارات ==================== */
+        
+        /* Toast Notifications Container */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .toast-message {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideInLeft 0.3s ease-out;
+            border-right-width: 4px;
+        }
+
+        .dark .toast-message {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+
+        .toast-message.success {
+            border-right-color: #10b981;
+        }
+
+        .toast-message.error {
+            border-right-color: #ef4444;
+        }
+
+        .toast-message.warning {
+            border-right-color: #f59e0b;
+        }
+
+        .toast-message.info {
+            border-right-color: #3b82f6;
+        }
+
+        .toast-message.hide {
+            animation: slideOutLeft 0.3s ease-out forwards;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 1.5rem;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Live Activity Indicator */
+        .live-activity {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .live-activity::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            animation: livePulse 1.5s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Progress Bar Animation */
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        .dark .skeleton {
+            background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .ripple:focus:not(:active)::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 0.5rem;
+        }
+
+        .tooltip:hover::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+            margin-bottom: -0.25rem;
+        }
+
+        /* Glassmorphism Effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .dark .glass {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Neon Glow Effect */
+        .neon-glow {
+            box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6;
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Counter Animation */
+        .counter {
+            animation: countUp 2s ease-out;
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom Animation for Modals */
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
     
@@ -89,6 +510,8 @@
                     animation: {
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'bounce-slow': 'bounce 2s infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                        'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
                     }
                 }
             }
@@ -101,11 +524,19 @@
 
     <!-- Loading Spinner (Hidden by default) -->
     <div id="loading-spinner" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl glass modal-enter">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p class="mt-4 text-gray-700 dark:text-gray-300">جاري التحميل...</p>
         </div>
     </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Floating Action Button (للرجوع للأعلى) -->
+    <button id="fab" class="fab hidden" onclick="scrollToTop()" title="العودة للأعلى">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <!-- Navigation -->
     <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-40">
@@ -113,101 +544,114 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo & Brand -->
                 <div class="flex items-center space-x-4 space-x-reverse">
-                    <a href="{% url 'courses:home' %}" class="flex items-center space-x-2 space-x-reverse">
-                        <i class="fas fa-graduation-cap text-3xl text-primary-600"></i>
-                        <span class="font-bold text-xl hidden sm:block">{{ SITE_NAME }}</span>
+                    <a href="{% url 'courses:home' %}" class="flex items-center space-x-2 space-x-reverse group">
+                        <div class="relative">
+                            <i class="fas fa-graduation-cap text-3xl text-primary-600 group-hover:scale-110 transition"></i>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-ping-slow"></span>
+                        </div>
+                        <span class="font-bold text-xl hidden sm:block gradient-text">{{ SITE_NAME }}</span>
                     </a>
                     
                     <!-- Desktop Navigation -->
                     <div class="hidden md:flex items-center space-x-4 space-x-reverse mr-8">
-                        <a href="{% url 'courses:course_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition">
+                        <a href="{% url 'courses:course_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             الدورات
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:about' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition">
+                        <a href="{% url 'courses:about' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             عن المنصة
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:contact' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition">
+                        <a href="{% url 'courses:contact' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             اتصل بنا
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:faq' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition">
+                        <a href="{% url 'courses:faq' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             الأسئلة الشائعة
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
                     </div>
                 </div>
 
                 <!-- Right Section -->
                 <div class="flex items-center space-x-3 space-x-reverse">
-                    <!-- Search Button -->
-                    <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" onclick="toggleSearch()">
+                    <!-- Search Button with Tooltip -->
+                    <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" onclick="toggleSearch()" data-tooltip="بحث">
                         <i class="fas fa-search text-gray-600 dark:text-gray-400"></i>
                     </button>
 
-                    <!-- Dark Mode Toggle -->
-                    <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <!-- Dark Mode Toggle with Animation -->
+                    <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition relative">
                         <i class="fas fa-moon dark:hidden text-gray-600"></i>
-                        <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+                        <i class="fas fa-sun hidden dark:block text-yellow-400 animate-spin-slow"></i>
                     </button>
 
-                    <!-- Cart -->
-                    <a href="#" class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-shopping-cart text-gray-600 dark:text-gray-400"></i>
+                    <!-- Cart with Notification Badge -->
+                    <a href="{% url 'courses:cart_view' %}" class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                        <i class="fas fa-shopping-cart text-gray-600 dark:text-gray-400 group-hover:scale-110 transition"></i>
                         {% if cart_count > 0 %}
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        <span class="notification-badge animate__animated animate__bounceIn" id="cart-count">
                             {{ cart_count }}
                         </span>
                         {% endif %}
                     </a>
-
+<a href="{% url 'courses:order_history' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
+    <i class="fas fa-shopping-bag ml-2 text-green-500"></i> طلباتي
+</a>
                     <!-- User Menu -->
                     {% if user.is_authenticated %}
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="flex items-center space-x-2 space-x-reverse focus:outline-none">
-                            {% if user.avatar %}
-                            <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="w-8 h-8 rounded-full object-cover border-2 border-primary-500">
-                            {% else %}
-                            <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                                <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ user.username|first|upper }}</span>
+                        <button @click="open = !open" class="flex items-center space-x-2 space-x-reverse focus:outline-none group">
+                            <div class="relative">
+                                {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="w-8 h-8 rounded-full object-cover border-2 border-primary-500 group-hover:scale-110 transition">
+                                {% else %}
+                                <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center border-2 border-primary-500 group-hover:scale-110 transition">
+                                    <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ user.username|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                                <!-- Live Activity Indicator -->
+                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full live-activity"></span>
                             </div>
-                            {% endif %}
-                            <i class="fas fa-chevron-down text-xs text-gray-600 dark:text-gray-400"></i>
+                            <i class="fas fa-chevron-down text-xs text-gray-600 dark:text-gray-400 group-hover:rotate-180 transition"></i>
                         </button>
                         
-                        <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
-                            <a href="{% url 'courses:profile' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <div x-show="open" @click.away="open = false" x-transition:enter="animate__animated animate__fadeInLeft animate__faster"
+                             class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+                            <a href="{% url 'courses:profile' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
                                 <i class="fas fa-user ml-2"></i> الملف الشخصي
                             </a>
-                            <a href="{% url 'courses:user_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="{% url 'courses:user_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
                                 <i class="fas fa-tachometer-alt ml-2"></i> لوحة التحكم
                             </a>
                             
                             {% if user.is_instructor %}
-                            <a href="{% url 'courses:instructor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="{% url 'courses:instructor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
                                 <i class="fas fa-chalkboard-teacher ml-2"></i> لوحة المدرب
                             </a>
                             {% endif %}
                             
                             {% if user.is_admin_user %}
-                            <a href="{% url 'courses:admin_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="{% url 'courses:admin_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
                                 <i class="fas fa-crown ml-2"></i> لوحة الإدارة
                             </a>
                             {% endif %}
                             
                             <hr class="my-1 border-gray-200 dark:border-gray-700">
                             
-                            <a href="{% url 'courses:my_favorites' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <!-- Favorites with Badge -->
+                            <a href="{% url 'courses:profile' %}#favorites" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all relative">
                                 <i class="fas fa-heart ml-2 text-red-500"></i> المفضلة
-                                {% if favorites_count %}<span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 mr-2">{{ favorites_count }}</span>{% endif %}
-                            </a>
-                            
-                            <a href="{% url 'courses:my_reviews' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-star ml-2 text-yellow-500"></i> تقييماتي
+                                {% if favorites_count %}
+                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 mr-2 animate__animated animate__pulse animate__infinite">{{ favorites_count }}</span>
+                                {% endif %}
                             </a>
                             
                             <hr class="my-1 border-gray-200 dark:border-gray-700">
                             
                             <form method="post" action="{% url 'courses:logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="block w-full text-right px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <button type="submit" class="block w-full text-right px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
                                     <i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج
                                 </button>
                             </form>
@@ -215,10 +659,11 @@
                     </div>
                     {% else %}
                     <div class="flex items-center space-x-2 space-x-reverse">
-                        <a href="{% url 'courses:login' %}" class="px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition">
+                        <a href="{% url 'courses:login' %}" class="px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition relative group">
                             تسجيل الدخول
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:register' %}" class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-md hover:shadow-lg">
+                        <a href="{% url 'courses:register' %}" class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ripple">
                             إنشاء حساب
                         </a>
                     </div>
@@ -232,12 +677,15 @@
             </div>
 
             <!-- Search Bar (Hidden by default) -->
-            <div id="searchBar" class="hidden py-4 border-t border-gray-200 dark:border-gray-700">
+            <div id="searchBar" class="hidden py-4 border-t border-gray-200 dark:border-gray-700 animate__animated animate__fadeIn">
                 <form action="{% url 'courses:course_list' %}" method="GET" class="flex gap-2">
-                    <input type="text" name="search" placeholder="ابحث عن دورات، مدربين، مواضيع..." 
-                           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-md">
-                        <i class="fas fa-search ml-2"></i> بحث
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" name="search" placeholder="ابحث عن دورات، مدربين، مواضيع..." 
+                               class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
+                    </div>
+                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ripple">
+                        بحث
                     </button>
                 </form>
             </div>
@@ -247,14 +695,14 @@
         <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div class="container mx-auto px-4 py-3">
                 <div class="flex flex-col space-y-2">
-                    <a href="{% url 'courses:course_list' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">الدورات</a>
-                    <a href="{% url 'courses:about' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">عن المنصة</a>
-                    <a href="{% url 'courses:contact' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">اتصل بنا</a>
-                    <a href="{% url 'courses:faq' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">الأسئلة الشائعة</a>
+                    <a href="{% url 'courses:course_list' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">الدورات</a>
+                    <a href="{% url 'courses:about' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">عن المنصة</a>
+                    <a href="{% url 'courses:contact' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">اتصل بنا</a>
+                    <a href="{% url 'courses:faq' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">الأسئلة الشائعة</a>
                     
                     {% if not user.is_authenticated %}
                     <hr class="my-2 border-gray-200 dark:border-gray-700">
-                    <a href="{% url 'courses:login' %}" class="px-3 py-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">تسجيل الدخول</a>
+                    <a href="{% url 'courses:login' %}" class="px-3 py-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">تسجيل الدخول</a>
                     <a href="{% url 'courses:register' %}" class="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition text-center">إنشاء حساب</a>
                     {% endif %}
                 </div>
@@ -262,28 +710,36 @@
         </div>
     </nav>
 
-    <!-- Messages/Alerts -->
+    <!-- Messages/Alerts with Animation -->
     {% if messages %}
     <div class="container mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="rounded-lg p-4 mb-3 flex items-center justify-between animate-slideDown
+        <div class="rounded-lg p-4 mb-3 flex items-center justify-between animate__animated animate__fadeInDown
             {% if message.tags == 'success' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800
             {% elif message.tags == 'error' %}bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800
             {% elif message.tags == 'warning' %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800
             {% else %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800{% endif %}">
             <div class="flex items-center">
                 {% if message.tags == 'success' %}
-                <i class="fas fa-check-circle ml-2 text-xl"></i>
+                <div class="w-8 h-8 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center ml-2">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                </div>
                 {% elif message.tags == 'error' %}
-                <i class="fas fa-exclamation-circle ml-2 text-xl"></i>
+                <div class="w-8 h-8 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center ml-2">
+                    <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400"></i>
+                </div>
                 {% elif message.tags == 'warning' %}
-                <i class="fas fa-exclamation-triangle ml-2 text-xl"></i>
+                <div class="w-8 h-8 bg-yellow-200 dark:bg-yellow-800 rounded-full flex items-center justify-center ml-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                </div>
                 {% else %}
-                <i class="fas fa-info-circle ml-2 text-xl"></i>
+                <div class="w-8 h-8 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center ml-2">
+                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400"></i>
+                </div>
                 {% endif %}
                 <span>{{ message }}</span>
             </div>
-            <button onclick="this.parentElement.remove()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+            <button onclick="this.parentElement.remove()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition transform hover:scale-110">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -295,16 +751,24 @@
     {% if breadcrumbs %}
     <div class="container mx-auto px-4 mt-4">
         <nav class="flex" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 space-x-reverse md:space-x-3 md:space-x-reverse">
+            <ol class="inline-flex items-center space-x-1 space-x-reverse md:space-x-3 md:space-x-reverse bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm">
                 {% for breadcrumb in breadcrumbs %}
                 <li class="inline-flex items-center">
                     {% if not forloop.last %}
-                    <a href="{{ breadcrumb.url }}" class="text-gray-700 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+                    <a href="{{ breadcrumb.url }}" class="text-gray-700 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center">
+                        {% if forloop.first %}
+                        <i class="fas fa-home ml-1"></i>
+                        {% endif %}
                         {{ breadcrumb.name }}
                     </a>
                     <i class="fas fa-chevron-left mx-2 text-gray-400 text-sm"></i>
                     {% else %}
-                    <span class="text-gray-500 dark:text-gray-300">{{ breadcrumb.name }}</span>
+                    <span class="text-gray-500 dark:text-gray-300 flex items-center">
+                        {% if forloop.first %}
+                        <i class="fas fa-home ml-1"></i>
+                        {% endif %}
+                        {{ breadcrumb.name }}
+                    </span>
                     {% endif %}
                 </li>
                 {% endfor %}
@@ -323,23 +787,23 @@
         <div class="container mx-auto px-4 py-12">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- About -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-4 flex items-center">
-                        <i class="fas fa-graduation-cap text-primary-600 ml-2"></i>
-                        {{ SITE_NAME }}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center group">
+                        <i class="fas fa-graduation-cap text-primary-600 ml-2 group-hover:rotate-12 transition"></i>
+                        <span class="gradient-text">{{ SITE_NAME }}</span>
                     </h3>
                     <p class="text-gray-600 dark:text-gray-400 mb-4">{{ SITE_DESCRIPTION }}</p>
                     <div class="flex space-x-3 space-x-reverse">
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
                             <i class="fab fa-facebook-f text-primary-600"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
                             <i class="fab fa-twitter text-primary-600"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
                             <i class="fab fa-linkedin-in text-primary-600"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
                             <i class="fab fa-youtube text-primary-600"></i>
                         </a>
                     </div>
@@ -349,10 +813,22 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">روابط سريعة</h3>
                     <ul class="space-y-2">
-                        <li><a href="{% url 'courses:course_list' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">جميع الدورات</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">المدربين</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">الشهادات</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">الأسئلة الشائعة</a></li>
+                        <li><a href="{% url 'courses:course_list' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
+                            جميع الدورات
+                        </a></li>
+                        <li><a href="{% url 'courses:about' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
+                            عن المنصة
+                        </a></li>
+                        <li><a href="{% url 'courses:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
+                            اتصل بنا
+                        </a></li>
+                        <li><a href="{% url 'courses:faq' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
+                            الأسئلة الشائعة
+                        </a></li>
                     </ul>
                 </div>
 
@@ -360,10 +836,18 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">الدعم</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">سياسة الخصوصية</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">شروط الاستخدام</a></li>
-                        <li><a href="{% url 'courses:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">اتصل بنا</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">المساعدة</a></li>
+                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-shield-alt ml-2 group-hover:scale-110 transition"></i>
+                            سياسة الخصوصية
+                        </a></li>
+                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-file-contract ml-2 group-hover:scale-110 transition"></i>
+                            شروط الاستخدام
+                        </a></li>
+                        <li><a href="{% url 'courses:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-headset ml-2 group-hover:scale-110 transition"></i>
+                            المساعدة
+                        </a></li>
                     </ul>
                 </div>
 
@@ -371,38 +855,44 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">معلومات الاتصال</h3>
                     <ul class="space-y-3">
-                        <li class="flex items-center text-gray-600 dark:text-gray-400">
-                            <i class="fas fa-envelope ml-2 text-primary-600"></i>
+                        <li class="flex items-center text-gray-600 dark:text-gray-400 group">
+                            <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
+                                <i class="fas fa-envelope text-primary-600 dark:text-primary-400"></i>
+                            </div>
                             <a href="mailto:{{ CONTACT_EMAIL }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition">{{ CONTACT_EMAIL }}</a>
                         </li>
-                        <li class="flex items-center text-gray-600 dark:text-gray-400">
-                            <i class="fas fa-phone ml-2 text-primary-600"></i>
+                        <li class="flex items-center text-gray-600 dark:text-gray-400 group">
+                            <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
+                                <i class="fas fa-phone text-primary-600 dark:text-primary-400"></i>
+                            </div>
                             <a href="tel:{{ CONTACT_PHONE }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition" dir="ltr">{{ CONTACT_PHONE }}</a>
                         </li>
-                        <li class="flex items-center text-gray-600 dark:text-gray-400">
-                            <i class="fas fa-map-marker-alt ml-2 text-primary-600"></i>
+                        <li class="flex items-center text-gray-600 dark:text-gray-400 group">
+                            <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
+                                <i class="fas fa-map-marker-alt text-primary-600 dark:text-primary-400"></i>
+                            </div>
                             <span>القاهرة، مصر</span>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Stats -->
+            <!-- Stats with Counter Animation -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-primary-600">{{ site_stats.total_students|default:'0' }}</div>
+                <div class="text-center group">
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_students|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">طالب مسجل</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-primary-600">{{ site_stats.total_courses|default:'0' }}</div>
+                <div class="text-center group">
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_courses|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">دورة تدريبية</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-primary-600">{{ site_stats.total_instructors|default:'0' }}</div>
+                <div class="text-center group">
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_instructors|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">مدرب معتمد</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-primary-600">{{ site_stats.total_enrollments|default:'0' }}</div>
+                <div class="text-center group">
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_enrollments|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">تسجيل في الدورات</div>
                 </div>
             </div>
@@ -413,46 +903,12 @@
         </div>
     </footer>
 
-    <!-- Alpine.js for dropdowns and interactive elements -->
-    <script src="//unpkg.com/alpinejs" defer></script>
-    
     <!-- Custom JavaScript -->
     <script>
-        // Dark Mode Toggle
-        document.getElementById('darkModeToggle')?.addEventListener('click', function() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
-        });
+        // ==================== الإعدادات الأساسية ====================
+        const csrftoken = getCookie('csrftoken');
 
-        // Search Toggle
-        function toggleSearch() {
-            const searchBar = document.getElementById('searchBar');
-            searchBar.classList.toggle('hidden');
-        }
-
-        // Mobile Menu Toggle
-        document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Loading Spinner
-        function showLoading() {
-            document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-spinner').classList.add('flex');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading-spinner').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.remove('flex');
-        }
-
-        // AJAX setup for CSRF token
+        // دالة الحصول على CSRF token
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -468,16 +924,170 @@
             return cookieValue;
         }
 
-        const csrftoken = getCookie('csrftoken');
+        // ==================== Dark Mode Toggle ====================
+        document.getElementById('darkModeToggle')?.addEventListener('click', function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+                showNotification('🌞 تم تفعيل الوضع النهاري', 'info');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                showNotification('🌙 تم تفعيل الوضع الليلي', 'info');
+            }
+        });
+
+        // ==================== Search Toggle ====================
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                searchBar.querySelector('input').focus();
+            }
+        }
+
+        // ==================== Mobile Menu Toggle ====================
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // ==================== Loading Spinner ====================
+        function showLoading(message = 'جاري التحميل...') {
+            const spinner = document.getElementById('loading-spinner');
+            const messageEl = spinner.querySelector('p');
+            if (messageEl) messageEl.textContent = message;
+            spinner.classList.remove('hidden');
+            spinner.classList.add('flex');
+        }
+
+        function hideLoading() {
+            const spinner = document.getElementById('loading-spinner');
+            spinner.classList.add('hidden');
+            spinner.classList.remove('flex');
+            const messageEl = spinner.querySelector('p');
+            if (messageEl) messageEl.textContent = 'جاري التحميل...';
+        }
+
+        // ==================== نظام الإشعارات الموحد ====================
+        function showNotification(message, type = 'success', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+            
+            let icon = '';
+            if (type === 'success') icon = 'fa-check-circle';
+            else if (type === 'error') icon = 'fa-exclamation-circle';
+            else if (type === 'warning') icon = 'fa-exclamation-triangle';
+            else icon = 'fa-info-circle';
+            
+            let bgColor = '';
+            if (type === 'success') bgColor = 'bg-green-100';
+            else if (type === 'error') bgColor = 'bg-red-100';
+            else if (type === 'warning') bgColor = 'bg-yellow-100';
+            else bgColor = 'bg-blue-100';
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center ml-2 ${bgColor}">
+                        <i class="fas ${icon} ${type === 'success' ? 'text-green-600' : type === 'error' ? 'text-red-600' : type === 'warning' ? 'text-yellow-600' : 'text-blue-600'}"></i>
+                    </div>
+                    <span class="text-gray-700 dark:text-gray-300">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // ==================== Floating Action Button ====================
+        window.addEventListener('scroll', function() {
+            const fab = document.getElementById('fab');
+            if (window.scrollY > 300) {
+                fab.classList.remove('hidden');
+                fab.classList.add('animate__animated', 'animate__fadeIn');
+            } else {
+                fab.classList.add('hidden');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // ==================== Counter Animation ====================
+        function animateNumbers() {
+            document.querySelectorAll('.counter').forEach(counter => {
+                const target = parseInt(counter.innerText);
+                if (isNaN(target) || target === 0) return;
+                
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.innerText = target;
+                        clearInterval(timer);
+                    } else {
+                        counter.innerText = Math.round(current);
+                    }
+                }, 20);
+            });
+        }
 
         // Auto-hide alerts after 5 seconds
         setTimeout(function() {
-            document.querySelectorAll('[class*="alert"]').forEach(function(alert) {
-                alert.style.transition = 'opacity 0.5s ease';
-                alert.style.opacity = '0';
+            document.querySelectorAll('[class*="rounded-lg p-4 mb-3"]').forEach(function(alert) {
+                alert.classList.add('animate__fadeOutUp');
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                toggleSearch();
+            }
+            
+            // Esc to close search
+            if (e.key === 'Escape' && !document.getElementById('searchBar').classList.contains('hidden')) {
+                document.getElementById('searchBar').classList.add('hidden');
+            }
+        });
+
+        // Network status indicator
+        window.addEventListener('online', function() {
+            showNotification('✅ تم استعادة الاتصال بالإنترنت', 'success');
+        });
+
+        window.addEventListener('offline', function() {
+            showNotification('❌ انقطع الاتصال بالإنترنت', 'error');
+        });
+
+        // Initialize on load
+        window.addEventListener('load', function() {
+            animateNumbers();
+            
+            // Welcome toast for new users
+            {% if not user.is_authenticated %}
+            setTimeout(() => {
+                showNotification('👋 مرحباً بك في منصة التعلم', 'info');
+            }, 1000);
+            {% endif %}
+        });
     </script>
     
     {% block extra_js %}{% endblock %}

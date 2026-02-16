@@ -11,6 +11,7 @@ def site_settings(request):
         'CONTACT_EMAIL': 'info@example.com',
         'CONTACT_PHONE': '+1234567890',
     }
+    
 
 def categories_processor(request):
     """
@@ -132,3 +133,4 @@ def cart_processor(request):
         'cart_total': cart_total,
         'cart_count': cart_count,
     }
+

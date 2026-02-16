@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sticky top-24">
+                <div class="text-center mb-6">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-primary-500">
+                    {% else %}
+                    <div class="w-32 h-32 rounded-full mx-auto mb-4 bg-primary-100 dark:bg-primary-900 flex items-center justify-center border-4 border-primary-500">
+                        <span class="text-4xl text-primary-600 dark:text-primary-400 font-bold">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <h2 class="text-xl font-bold">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400">{{ user.email }}</p>
+                    
+                    <!-- عرض الدور بشكل صحيح -->
+                    <div class="mt-3 flex flex-wrap gap-2 justify-center">
+                        {% if user.is_superuser %}
+                        <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-sm rounded-full font-semibold">
+                            <i class="fas fa-crown ml-1"></i> مشرف عام
+                        </span>
+                        {% endif %}
+                        
+                        <span class="px-3 py-1 {% if user.role == 'admin' %}bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400{% elif user.role == 'instructor' %}bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400{% else %}bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400{% endif %} text-sm rounded-full">
+                            <i class="fas 
+                                {% if user.role == 'admin' %}fa-crown
+                                {% elif user.role == 'instructor' %}fa-chalkboard-teacher
+                                {% else %}fa-user-graduate{% endif %} ml-1">
+                            </i>
+                            {% if user.role == 'admin' %}مدير
+                            {% elif user.role == 'instructor' %}مدرب
+                            {% else %}طالب{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- باقي المحتوى كما هو -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <nav class="space-y-2">
+                        <a href="#profile" onclick="showTab('profile')" class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tab-link active" data-tab="profile">
+                            <i class="fas fa-user ml-2"></i>
+                            المعلومات الشخصية
+                        </a>
+                        <a href="#stats" onclick="showTab('stats')" class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tab-link" data-tab="stats">
+                            <i class="fas fa-chart-bar ml-2"></i>
+                            الإحصائيات
+                        </a>
+                        <a href="#favorites" onclick="showTab('favorites')" class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tab-link" data-tab="favorites">
+                            <i class="fas fa-heart ml-2 text-red-500"></i>
+                            المفضلة
+                            {% if favorites_count %}<span class="mr-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ favorites_count }}</span>{% endif %}
+                        </a>
+                        <a href="#activities" onclick="showTab('activities')" class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tab-link" data-tab="activities">
+                            <i class="fas fa-history ml-2"></i>
+                            آخر الأنشطة
+                        </a>
+                        
+                        <!-- روابط إضافية للمشرفين -->
+                        {% if user.is_superuser or user.role == 'admin' %}
+                        <div class="border-t border-gray-200 dark:border-gray-700 my-2 pt-2"></div>
+                        <a href="{% url 'courses:admin_dashboard' %}" class="flex items-center px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition">
+                            <i class="fas fa-crown ml-2"></i>
+                            لوحة المشرفين
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.is_instructor %}
+                        <a href="{% url 'courses:instructor_dashboard' %}" class="flex items-center px-4 py-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition">
+                            <i class="fas fa-chalkboard-teacher ml-2"></i>
+                            لوحة المدربين
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- باقي المحتوى كما هو -->
+        <div class="lg:col-span-3">
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6">تعديل الملف الشخصي</h2>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% for field in form %}
+                            <div class="{% if field.name == 'bio' %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
+                                {% endif %}
+                                {% if field.help_text %}
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                                <i class="fas fa-save ml-2"></i>
+                                حفظ التغييرات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- باقي التبويبات كما هي -->
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content hidden">
+                <!-- محتوى الإحصائيات -->
+            </div>
+
+            <!-- Favorites Tab -->
+            <div id="favorites-tab" class="tab-content hidden">
+                <!-- محتوى المفضلة -->
+            </div>
+
+            <!-- Activities Tab -->
+            <div id="activities-tab" class="tab-content hidden">
+                <!-- محتوى الأنشطة -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Show selected tab
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+        
+        // Update active state in sidebar
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.classList.remove('active', 'bg-gray-100', 'dark:bg-gray-700', 'text-primary-600', 'dark:text-primary-400');
+        });
+        
+        const activeLink = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active', 'bg-gray-100', 'dark:bg-gray-700', 'text-primary-600', 'dark:text-primary-400');
+        }
+    }
+
+    // Check URL hash for initial tab
+    window.addEventListener('load', function() {
+        const hash = window.location.hash.substring(1);
+        if (hash && ['profile', 'stats', 'favorites', 'activities'].includes(hash)) {
+            showTab(hash);
+        }
+    });
+</script>
+{% endblock %}

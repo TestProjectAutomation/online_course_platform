@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}عن المنصة - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">عن {{ SITE_NAME }}</h1>
+        <p class="text-xl max-w-3xl mx-auto text-white/90">{{ SITE_DESCRIPTION }}</p>
+    </div>
+</section>
+
+<!-- Mission & Vision -->
+<section class="py-20 bg-white dark:bg-gray-800">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+                <span class="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">رسالتنا</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-6">نحن هنا لتمكين التعلم مدى الحياة</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                    نحن منصة تعليمية عربية تهدف إلى توفير تعليم عالي الجودة للجميع، في أي وقت ومن أي مكان. 
+                    نؤمن بأن المعرفة هي مفتاح التطور والنجاح، لذلك نسعى جاهدين لتقديم أفضل الدورات التدريبية 
+                    في مختلف المجالات، مع نخبة من أمهر المدربين والخبراء.
+                </p>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    منذ انطلاقتنا، ونحن نعمل على تطوير محتوى تعليمي متميز يلبي احتياجات المتعلمين العرب، 
+                    ويساعدهم على اكتساب المهارات المطلوبة في سوق العمل المحلي والعالمي.
+                </p>
+            </div>
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80" 
+                     alt="Our Mission" 
+                     class="rounded-2xl shadow-2xl">
+                <div class="absolute -bottom-6 -left-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6">
+                    <div class="text-4xl font-bold text-primary-600">{{ stats.years_experience|default:'5' }}+</div>
+                    <div class="text-gray-600 dark:text-gray-400">سنوات من الخبرة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="py-20 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="text-5xl font-bold text-primary-600 mb-2">{{ stats.happy_students|default:'10000' }}+</div>
+                <div class="text-gray-600 dark:text-gray-400">طالب مسجل</div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-bold text-primary-600 mb-2">{{ stats.courses_count|default:'500' }}+</div>
+                <div class="text-gray-600 dark:text-gray-400">دورة تدريبية</div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-bold text-primary-600 mb-2">{{ stats.certified_instructors|default:'50' }}+</div>
+                <div class="text-gray-600 dark:text-gray-400">مدرب معتمد</div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-bold text-primary-600 mb-2">{{ stats.years_experience|default:'5' }}</div>
+                <div class="text-gray-600 dark:text-gray-400">سنوات خبرة</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Members -->
+<section class="py-20 bg-white dark:bg-gray-800">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">فريقنا</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-2">تعرف على مدربينا</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">نخبة من أفضل المدربين والخبراء في مختلف المجالات</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% for member in team_members %}
+            <div class="group text-center">
+                <div class="relative mb-4 overflow-hidden rounded-2xl">
+                    {% if member.avatar %}
+                    <img src="{{ member.avatar.url }}" alt="{{ member.get_full_name }}" class="w-full h-64 object-cover group-hover:scale-110 transition duration-500">
+                    {% else %}
+                    <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                        <span class="text-6xl text-primary-600 dark:text-primary-400 font-bold">{{ member.first_name|first }}{{ member.last_name|first }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end justify-center p-6">
+                        <div class="text-white">
+                            <div class="flex gap-3 justify-center">
+                                <a href="#" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
+                                    <i class="fab fa-facebook-f"></i>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold">{{ member.get_full_name|default:member.username }}</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">{{ member.bio|truncatechars:50|default:'مدرب معتمد' }}</p>
+                <div class="text-sm text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-star ml-1"></i> {{ member.courses_taught.count }} دورة
+                </div>
+            </div>
+            {% empty %}
+            <!-- Static team members -->
+            <div class="group text-center">
+                <div class="relative mb-4 overflow-hidden rounded-2xl">
+                    <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                        <span class="text-6xl text-primary-600 dark:text-primary-400 font-bold">أ</span>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold">أحمد محمد</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">خبير تطوير الويب</p>
+                <div class="text-sm text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-star ml-1"></i> 15 دورة
+                </div>
+            </div>
+            <div class="group text-center">
+                <div class="relative mb-4 overflow-hidden rounded-2xl">
+                    <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                        <span class="text-6xl text-primary-600 dark:text-primary-400 font-bold">س</span>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold">سارة أحمد</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">خبيرة تسويق رقمي</p>
+                <div class="text-sm text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-star ml-1"></i> 12 دورة
+                </div>
+            </div>
+            <div class="group text-center">
+                <div class="relative mb-4 overflow-hidden rounded-2xl">
+                    <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                        <span class="text-6xl text-primary-600 dark:text-primary-400 font-bold">م</span>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold">محمد علي</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">مدرب تصميم جرافيك</p>
+                <div class="text-sm text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-star ml-1"></i> 10 دورات
+                </div>
+            </div>
+            <div class="group text-center">
+                <div class="relative mb-4 overflow-hidden rounded-2xl">
+                    <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                        <span class="text-6xl text-primary-600 dark:text-primary-400 font-bold">ن</span>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold">نورة خالد</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">مدربة لغة إنجليزية</p>
+                <div class="text-sm text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-star ml-1"></i> 8 دورات
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="py-20 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">لماذا نحن</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-2">ما يميزنا عن الآخرين</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-xl transition">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-certificate text-3xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">شهادات معتمدة</h3>
+                <p class="text-gray-600 dark:text-gray-400">نمنحك شهادة معتمدة بعد إكمال كل دورة، معترف بها في سوق العمل</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-xl transition">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-users text-3xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">دعم مجتمعي</h3>
+                <p class="text-gray-600 dark:text-gray-400">مجتمع تفاعلي من المتعلمين والمدرسين لتبادل الخبرات والمعرفة</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-xl transition">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-mobile-alt text-3xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">تعلم في أي وقت</h3>
+                <p class="text-gray-600 dark:text-gray-400">الدورات متاحة 24/7 على جميع الأجهزة، تعلم وفق جدولك الخاص</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 text-white">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">انضم إلى آلاف المتعلمين</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">ابدأ رحلتك التعليمية اليوم وطور مهاراتك معنا</p>
+        <a href="{% url 'courses:register' %}" class="px-8 py-4 bg-yellow-400 text-primary-900 rounded-xl font-bold hover:bg-yellow-300 transition transform hover:scale-105 shadow-xl inline-flex items-center">
+            <i class="fas fa-user-plus ml-2"></i>
+            إنشاء حساب جديد
+        </a>
+    </div>
+</section>
+{% endblock %}

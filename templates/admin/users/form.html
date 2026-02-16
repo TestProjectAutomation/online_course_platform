@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">{{ title }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">أدخل معلومات المستخدم الجديد</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Personal Information -->
+            <div>
+                <h2 class="text-xl font-bold mb-4">المعلومات الشخصية</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for field in form %}
+                        {% if field.name not in 'password1,password2,role,is_active' %}
+                        <div class="{% if field.name == 'bio' %}md:col-span-2{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-2">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Account Settings -->
+            <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-bold mb-4">إعدادات الحساب</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.role.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.role.label }}
+                        </label>
+                        {{ form.role }}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.is_active.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.is_active.label }}
+                        </label>
+                        <div class="flex items-center">
+                            {{ form.is_active }}
+                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-400">نشط</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password (for new user) -->
+            {% if not user %}
+            <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-bold mb-4">كلمة المرور</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.password1.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.password1 }}
+                        {% if form.password1.help_text %}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.password1.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.password2.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.password2 }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                    <i class="fas fa-save ml-2"></i>
+                    حفظ
+                </button>
+                <a href="{% url 'courses:admin_users' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                    <i class="fas fa-times ml-2"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

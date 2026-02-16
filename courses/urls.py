@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import CustomLoginView
 
 app_name = 'courses'
 
@@ -13,17 +14,21 @@ urlpatterns = [
     
     # ==================== Authentication ====================
     path('register/', views.register_view, name='register'),
-    path('login/', auth_views.LoginView.as_view(
-        template_name='auth/login.html',
-        redirect_authenticated_user=True
-    ), name='login'),
+    # path('login/', auth_views.LoginView.as_view(
+    #     template_name='auth/login.html',
+    #     redirect_authenticated_user=True,
+    #     next_page='courses:user_dashboard'  # إضافة هذا السطر
+    # ), name='login'),
+    
+    path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(
         next_page='courses:home'
     ), name='logout'),
     
     # ==================== Profile ====================
     path('profile/', views.profile_view, name='profile'),
-    
+    path('profile/update-avatar/', views.update_avatar, name='update_avatar'),
+
     # ==================== Courses ====================
     path('courses/', views.CourseListView.as_view(), name='course_list'),
     path('course/<slug:slug>/', views.CourseDetailView.as_view(), name='course_detail'),
@@ -36,7 +41,8 @@ urlpatterns = [
     # ==================== User Actions ====================
     path('course/<slug:slug>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('course/<slug:slug>/review/', views.add_review, name='add_review'),
-    
+    path('course/<slug:slug>/enroll/', views.enroll_course, name='enroll'),  # أضف هذا السطر
+
     # ==================== Dashboards ====================
     path('dashboard/', views.user_dashboard, name='user_dashboard'),
     path('dashboard/instructor/', views.instructor_dashboard, name='instructor_dashboard'),
@@ -97,4 +103,22 @@ urlpatterns = [
     path('ajax/toggle-favorite/', views.ajax_toggle_favorite, name='ajax_toggle_favorite'),
     path('ajax/update-lesson-progress/', views.ajax_update_lesson_progress, name='ajax_update_lesson_progress'),
     path('ajax/course-stats/<int:course_id>/', views.ajax_get_course_stats, name='ajax_get_course_stats'),
+    path('ajax/dashboard-stats/', views.ajax_get_dashboard_stats, name='ajax_dashboard_stats'),
+    path('ajax/chart-data/', views.ajax_get_chart_data, name='ajax_chart_data'),
+    
+    path('ajax/recent-activities/', views.ajax_get_recent_activities, name='ajax_recent_activities'),
+    
+    path('admin/stats/', views.admin_stats_view, name='admin_stats'),
+    
+    
+    # ==================== Cart URLs ====================
+    path('cart/', views.cart_view, name='cart_view'),
+    path('cart/add/<int:course_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/remove/<int:course_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('cart/update/', views.update_cart_quantity, name='update_cart_quantity'),
+    path('cart/clear/', views.clear_cart, name='clear_cart'),
+    path('cart/submit-order/', views.submit_order, name='submit_order'),
+    path('orders/', views.order_history, name='order_history'),
+
+
 ]

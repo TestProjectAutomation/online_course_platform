@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تسجيل يدوي - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">تسجيل يدوي</h1>
+        <p class="text-gray-600 dark:text-gray-400">تسجيل طالب في دورة بشكل مباشر</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" action="{% url 'courses:admin_enrollment_create' %}" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Student Selection -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    الطالب <span class="text-red-500">*</span>
+                </label>
+                <select name="user" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">-- اختر الطالب --</option>
+                    {% for student in users %}
+                    <option value="{{ student.id }}">
+                        {{ student.get_full_name|default:student.username }} ({{ student.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Course Selection -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    الدورة <span class="text-red-500">*</span>
+                </label>
+                <select name="course" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">-- اختر الدورة --</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">
+                        {{ course.title }} - ${{ course.price }} ({{ course.instructor.get_full_name|default:course.instructor.username }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    ملاحظات
+                </label>
+                <textarea name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700" placeholder="ملاحظات إضافية (اختياري)"></textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                    <i class="fas fa-save ml-2"></i>
+                    تسجيل
+                </button>
+                <a href="{% url 'courses:admin_enrollments' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                    <i class="fas fa-times ml-2"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

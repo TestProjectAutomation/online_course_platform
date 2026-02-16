@@ -1,88 +1,152 @@
-{% extends 'base.html' %} {% load static %} {% block title %}المفضلة{% endblock
-%} {% block content %}
-<div class="container py-5">
-  <div class="row">
-    <div class="col-12">
-      <h1 class="mb-4">
-        <i class="fas fa-heart text-danger"></i>
-        المفضلة
-        <small class="text-muted fs-6">({{ favorites_count }} دورة)</small>
-      </h1>
+{% extends 'base.html' %}
+{% load static %}
 
-      {% if favorites %}
-      <div class="row">
-        {% for course in favorites %}
-        <div class="col-md-4 mb-4">
-          <div class="card h-100 shadow-sm">
-            {% if course.image %}
-            <img
-              src="{{ course.image.url }}"
-              class="card-img-top"
-              alt="{{ course.title }}"
-              style="height: 200px; object-fit: cover"
-            />
-            {% endif %}
-            <div class="card-body">
-              <h5 class="card-title">{{ course.title }}</h5>
-              <p class="card-text text-muted">
-                {{ course.short_description|truncatechars:100 }}
-              </p>
+{% block title %}المفضلة - {{ block.super }}{% endblock %}
 
-              <div
-                class="d-flex justify-content-between align-items-center mb-2"
-              >
-                <span class="badge bg-info"
-                  >{{ course.get_level_display }}</span
-                >
-                <span class="text-warning">
-                  <i class="fas fa-star"></i> {{ course.rating|floatformat:1 }}
-                </span>
-              </div>
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">المفضلة</h1>
+        <p class="text-gray-600 dark:text-gray-400">الدورات التي قمت بحفظها لمشاهدتها لاحقاً</p>
+    </div>
 
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-primary">{{ course.price }} $</span>
-                <span class="text-muted">
-                  <i class="fas fa-users"></i> {{ course.students_count }}
-                </span>
-              </div>
-            </div>
-            <div
-              class="card-footer bg-transparent d-flex justify-content-between"
-            >
-              <a
-                href="{% url 'courses:course_detail' course.slug %}"
-                class="btn btn-primary btn-sm"
-              >
-                <i class="fas fa-eye"></i> عرض
-              </a>
-              <form
-                action="{% url 'courses:toggle_favorite' course.slug %}"
-                method="post"
-                class="d-inline"
-              >
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">
-                  <i class="fas fa-heart"></i> إزالة
+    {% if favorites %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for favorite in favorites %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
+            <!-- Course Image -->
+            <div class="relative h-48 overflow-hidden">
+                {% if favorite.image %}
+                <img src="{{ favorite.image.url }}" alt="{{ favorite.title }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80" 
+                     alt="{{ favorite.title }}" 
+                     class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                {% endif %}
+                
+                <!-- Remove from favorites button -->
+                <button onclick="toggleFavorite({{ favorite.id }})" 
+                        class="absolute top-3 left-3 w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                    <i class="fas fa-heart text-red-500"></i>
                 </button>
-              </form>
             </div>
-          </div>
+
+            <!-- Course Content -->
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs rounded-full">
+                        {{ favorite.category.name }}
+                    </span>
+                </div>
+
+                <h3 class="text-xl font-bold mb-2 line-clamp-2">
+                    <a href="{% url 'courses:course_detail' favorite.slug %}" class="hover:text-primary-600 dark:hover:text-primary-400 transition">
+                        {{ favorite.title }}
+                    </a>
+                </h3>
+
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    {{ favorite.short_description|default:favorite.description|truncatechars:100 }}
+                </p>
+
+                <!-- Instructor -->
+                <div class="flex items-center gap-3 mb-4">
+                    {% if favorite.instructor.avatar %}
+                    <img src="{{ favorite.instructor.avatar.url }}" alt="{{ favorite.instructor.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                        <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ favorite.instructor.first_name|first|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="font-semibold">{{ favorite.instructor.get_full_name|default:favorite.instructor.username }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-500">مدرب معتمد</div>
+                    </div>
+                </div>
+
+                <!-- Rating & Price -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center">
+                            {% with ''|center:5 as range %}
+                            {% for i in range %}
+                                {% if forloop.counter <= favorite.rating %}
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                {% elif forloop.counter <= favorite.rating|add:"0.5" %}
+                                <i class="fas fa-star-half-alt text-yellow-400 text-sm"></i>
+                                {% else %}
+                                <i class="far fa-star text-yellow-400 text-sm"></i>
+                                {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">({{ favorite.reviews.count }})</span>
+                    </div>
+                    <div class="text-xl font-bold">
+                        {% if favorite.price == 0 %}
+                        <span class="text-green-600 dark:text-green-400">مجاناً</span>
+                        {% else %}
+                        <span class="text-primary-600 dark:text-primary-400">${{ favorite.price }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
         {% endfor %}
-      </div>
-      {% else %}
-      <div class="text-center py-5">
-        <i class="fas fa-heart-broken fa-4x text-muted mb-3"></i>
-        <h3 class="text-muted">لا توجد دورات في المفضلة</h3>
-        <p class="mb-4">
-          يمكنك إضافة دورات إلى المفضلة لسهولة الوصول إليها لاحقاً
-        </p>
-        <a href="{% url 'courses:course_list' %}" class="btn btn-primary">
-          <i class="fas fa-search"></i> استعرض الدورات
-        </a>
-      </div>
-      {% endif %}
     </div>
-  </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-20">
+        <div class="text-8xl mb-4 text-gray-300 dark:text-gray-600">
+            <i class="far fa-heart"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">المفضلة فارغة</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">لم تقم بإضافة أي دورات إلى المفضلة بعد</p>
+        <a href="{% url 'courses:course_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+            <i class="fas fa-search ml-2"></i>
+            استعرض الدورات
+        </a>
+    </div>
+    {% endif %}
 </div>
+
+{% endblock %}
+
+
+
+
+{% block extra_js %}
+<script>
+function toggleFavorite(courseId) {
+    fetch('/ajax/toggle-favorite/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: new URLSearchParams({
+            'course_id': courseId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success' && !data.is_favorite) {
+            // Remove card from page if unfavorited
+            const card = event.target.closest('.group');
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                card.remove();
+                // Check if there are any favorites left
+                if (document.querySelectorAll('.group').length === 0) {
+                    location.reload();
+                }
+            }, 300);
+        }
+        showNotification(data.message, 'success');
+    });
+}
+</script>
 {% endblock %}

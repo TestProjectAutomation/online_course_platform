@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">{{ title }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">أدخل معلومات الدورة الجديدة</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                {% for error in form.non_field_errors %}
+                <p class="flex items-center gap-2">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ error }}
+                </p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Basic Information -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-info-circle"></i>
+                    المعلومات الأساسية
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- العنوان -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.title.label }}
+                            {% if form.title.field.required %}<span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-heading text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.title.name }}" id="{{ form.title.id_for_label }}" 
+                                   value="{{ form.title.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="أدخل عنوان الدورة">
+                        </div>
+                        {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                            <i class="fas fa-times-circle"></i>
+                            {{ form.title.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- التصنيف -->
+                    <div>
+                        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.category.label }}
+                            {% if form.category.field.required %}<span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-folder text-gray-400"></i>
+                            </div>
+                            <select name="{{ form.category.name }}" id="{{ form.category.id_for_label }}" 
+                                    class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition">
+                                {% for value, label in form.category.field.choices %}
+                                <option value="{{ value }}" {% if form.category.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.category.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- المستوى -->
+                    <div>
+                        <label for="{{ form.level.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.level.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-signal text-gray-400"></i>
+                            </div>
+                            <select name="{{ form.level.name }}" id="{{ form.level.id_for_label }}" 
+                                    class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition">
+                                {% for value, label in form.level.field.choices %}
+                                <option value="{{ value }}" {% if form.level.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.level.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.level.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- السعر -->
+                    <div>
+                        <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.price.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-dollar-sign text-gray-400"></i>
+                            </div>
+                            <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" 
+                                   value="{{ form.price.value|default:'' }}"
+                                   step="0.01" min="0"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="0.00">
+                        </div>
+                        {% if form.price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- المدة -->
+                    <div>
+                        <label for="{{ form.duration_hours.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.duration_hours.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-clock text-gray-400"></i>
+                            </div>
+                            <input type="number" name="{{ form.duration_hours.name }}" id="{{ form.duration_hours.id_for_label }}" 
+                                   value="{{ form.duration_hours.value|default:'' }}"
+                                   min="0"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="عدد الساعات">
+                        </div>
+                        {% if form.duration_hours.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.duration_hours.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- حقل اختيار المدرب - يظهر فقط للمشرفين -->
+                    {% if request.user.is_admin_user %}
+                    <div class="md:col-span-2">
+                        <label for="instructor" class="block text-sm font-medium mb-2">
+                            المدرب
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-chalkboard-teacher text-gray-400"></i>
+                            </div>
+                            <select name="instructor" id="instructor" 
+                                    class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition"
+                                    {% if not is_edit %}required{% endif %}>
+                                <option value="">-- اختر المدرب --</option>
+                                {% for instructor in instructors %}
+                                <option value="{{ instructor.id }}" 
+                                        {% if course and course.instructor.id == instructor.id %}selected{% endif %}
+                                        {% if request.user.is_instructor and instructor.id == request.user.id %}selected{% endif %}>
+                                    {{ instructor.get_full_name|default:instructor.username }} ({{ instructor.email }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if not instructors %}
+                        <p class="mt-2 text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            لا يوجد مدربين متاحين. قم بإضافة مدربين أولاً.
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Descriptions -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-align-left"></i>
+                    الوصف
+                </h2>
+                <div class="space-y-6">
+                    <!-- وصف قصير -->
+                    <div>
+                        <label for="{{ form.short_description.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.short_description.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute top-3 right-0 pr-3 flex pointer-events-none">
+                                <i class="fas fa-paragraph text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.short_description.name }}" id="{{ form.short_description.id_for_label }}" 
+                                   value="{{ form.short_description.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="وصف مختصر للدورة (اختياري)">
+                        </div>
+                        {% if form.short_description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.short_description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- وصف كامل -->
+                    <div>
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.description.label }}
+                            {% if form.description.field.required %}<span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute top-3 right-0 pr-3 flex pointer-events-none">
+                                <i class="fas fa-file-alt text-gray-400"></i>
+                            </div>
+                            <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" 
+                                      rows="6"
+                                      class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                      placeholder="وصف مفصل للدورة">{{ form.description.value|default:'' }}</textarea>
+                        </div>
+                        {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-image"></i>
+                    صورة الدورة
+                </h2>
+                <div>
+                    <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium mb-2">
+                        {{ form.image.label }}
+                    </label>
+                    
+                    <!-- معاينة الصورة إذا كانت موجودة -->
+                    {% if course and course.image %}
+                    <div class="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">الصورة الحالية:</p>
+                        <img src="{{ course.image.url }}" alt="{{ course.title }}" class="max-w-full h-48 object-cover rounded-lg shadow-md">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-upload text-gray-400"></i>
+                        </div>
+                        <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" 
+                               accept="image/*"
+                               class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300">
+                    </div>
+                    {% if form.image.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <i class="fas fa-info-circle"></i>
+                        الصيغ المسموحة: JPG, PNG, GIF. الحد الأقصى: 5MB
+                    </p>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-cog"></i>
+                    الإعدادات
+                </h2>
+                <div class="space-y-4">
+                    <!-- مميزة -->
+                    <div class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" name="{{ form.is_featured.name }}" id="{{ form.is_featured.id_for_label }}" 
+                                   class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 transition"
+                                   {% if form.is_featured.value %}checked{% endif %}>
+                        </div>
+                        <label for="{{ form.is_featured.id_for_label }}" class="flex-1 text-sm font-medium cursor-pointer">
+                            {{ form.is_featured.label }}
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">ظهور الدورة في قسم الدورات المميزة</span>
+                        </label>
+                        {% if form.is_featured.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.is_featured.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- نشطة -->
+                    <div class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                                   class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 transition"
+                                   {% if form.is_active.value %}checked{% endif %}>
+                        </div>
+                        <label for="{{ form.is_active.id_for_label }}" class="flex-1 text-sm font-medium cursor-pointer">
+                            {{ form.is_active.label }}
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">ظهور الدورة للمستخدمين</span>
+                        </label>
+                        {% if form.is_active.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-save"></i>
+                    حفظ
+                </button>
+                
+                <!-- زر الإلغاء - يعود للقائمة إذا كانت إضافة، أو لتفاصيل الدورة إذا كانت تعديل -->
+                {% if is_edit and course %}
+                <a href="{% url 'courses:admin_course_detail' course.id %}" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </a>
+                {% else %}
+                <a href="{% url 'courses:admin_courses' %}" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -13,6 +13,9 @@ from django.db import transaction
 import csv
 import json
 from django.views.decorators.http import require_POST
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+
 from .models import (
     Course, Category, User, Enrollment, Review, 
     Favorite, CourseModule, Lesson, LessonProgress
@@ -183,12 +186,13 @@ class CourseDetailView(DetailView):
     slug_field = 'slug'
     
     def get_context_data(self, **kwargs):
+        
         context = super().get_context_data(**kwargs)
         course = self.object
         
         # زيادة عدد المشاهدات
         course.views_count += 1
-        course.save(update_fields=['views_count'])
+        course.save(update_fields=['views_count'])  # تحديث الحقل فقط لتجنب المشاكل
         
         # بيانات المستخدم إذا كان مسجل الدخول
         if self.request.user.is_authenticated:
@@ -218,8 +222,10 @@ class CourseDetailView(DetailView):
         context['total_reviews'] = course.reviews.count()
         context['total_modules'] = course.modules.count()
         context['total_lessons'] = Lesson.objects.filter(module__course=course).count()
+        context['views_count'] = course.views_count  # إضافة عدد المشاهدات للقالب
         
         return context
+
 
 @login_required
 def course_learn_view(request, slug):
@@ -356,23 +362,54 @@ def mark_lesson_complete(request, lesson_id):
     
     return redirect('course_learn', slug=lesson.module.course.slug)
 
+
+@login_required
+@require_POST
+def enroll_course(request, slug):
+    """التسجيل في دورة"""
+    course = get_object_or_404(Course, slug=slug, is_active=True)
+    
+    # التحقق من أن المستخدم غير مسجل بالفعل
+    enrollment, created = Enrollment.objects.get_or_create(
+        user=request.user,
+        course=course,
+        defaults={'status': 'enrolled' if course.price == 0 else 'pending'}
+    )
+    
+    if created:
+        if course.price == 0:
+            messages.success(request, f'✅ تم تسجيلك في الدورة "{course.title}" بنجاح')
+        else:
+            messages.success(request, f'✅ تم إرسال طلب التسجيل في الدورة "{course.title}"، بانتظار الموافقة')
+    else:
+        if enrollment.status == 'enrolled':
+            messages.info(request, f'أنت مسجل بالفعل في هذه الدورة')
+        elif enrollment.status == 'pending':
+            messages.info(request, f'طلب التسجيل في هذه الدورة قيد المراجعة')
+        else:
+            messages.warning(request, f'لديك تسجيل سابق في هذه الدورة بحالة: {enrollment.get_status_display()}')
+    
+    return redirect('courses:course_detail', slug=slug)
+
+
 # ==================== User Authentication Views ====================
 
 def register_view(request):
     """صفحة التسجيل"""
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('courses:home')
     
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             messages.success(request, 'تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن')
-            return redirect('login')
+            return redirect('courses:login')
     else:
         form = UserRegistrationForm()
     
     return render(request, 'auth/register.html', {'form': form})
+
 
 @login_required
 def profile_view(request):
@@ -381,8 +418,8 @@ def profile_view(request):
         form = UserProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم تحديث الملف الشخصي بنجاح')
-            return redirect('profile')
+            messages.success(request, '✅ تم تحديث الملف الشخصي بنجاح')
+            return redirect('courses:profile')
     else:
         form = UserProfileForm(instance=request.user)
     
@@ -394,18 +431,74 @@ def profile_view(request):
         'reviews_written': Review.objects.filter(user=request.user).count(),
     }
     
+    # 🔴 الأهم: جلب قائمة المفضلة مع تفاصيل الدورات
+    favorites = Favorite.objects.filter(
+        user=request.user
+    ).select_related('course', 'course__category').order_by('-created_at')
+    
+    # آخر الأنشطة
     recent_activities = Enrollment.objects.filter(
         user=request.user
     ).select_related('course').order_by('-last_accessed')[:5]
     
+    # الدورات النشطة (قيد التقدم)
+    active_enrollments = Enrollment.objects.filter(
+        user=request.user,
+        status='enrolled'
+    ).select_related('course').order_by('-last_accessed')[:5]
+    
+    # آخر التقييمات
+    recent_reviews = Review.objects.filter(
+        user=request.user
+    ).select_related('course').order_by('-created_at')[:3]
+    
     context = {
         'form': form,
         'stats': stats,
+        'favorites': favorites,  # 🔴 تمرير قائمة المفضلة
+        'favorites_count': favorites.count(),  # عدد المفضلة
         'recent_activities': recent_activities,
+        'active_enrollments': active_enrollments,
+        'recent_reviews': recent_reviews,
     }
     return render(request, 'auth/profile.html', context)
 
+
+
+@login_required
+@require_POST
+def update_avatar(request):
+    """تحديث الصورة الشخصية للمستخدم"""
+    try:
+        user = request.user
+        if 'avatar' in request.FILES:
+            # حذف الصورة القديمة إذا وجدت
+            if user.avatar:
+                user.avatar.delete(save=False)
+            
+            # حفظ الصورة الجديدة
+            user.avatar = request.FILES['avatar']
+            user.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'تم تحديث الصورة بنجاح',
+                'avatar_url': user.avatar.url
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'لم يتم تحديد أي صورة'
+            }, status=400)
+            
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'حدث خطأ: {str(e)}'
+        }, status=500)
+
 # ==================== Dashboard Views ====================
+
 
 @login_required
 def user_dashboard(request):
@@ -434,6 +527,14 @@ def user_dashboard(request):
     
     overall_progress = int((completed_lessons / total_lessons) * 100) if total_lessons > 0 else 0
     
+    # إحصائيات إضافية
+    stats = {
+        'total_courses': enrollments.count(),
+        'in_progress': active_enrollments.count(),
+        'completed': completed_enrollments.count(),
+        'certificates': completed_enrollments.count(),  # أو أي منطق آخر للشهادات
+    }
+    
     context = {
         'enrollments': enrollments,
         'favorites': favorites,
@@ -442,22 +543,19 @@ def user_dashboard(request):
         'completed_enrollments': completed_enrollments,
         'overall_progress': overall_progress,
         'recent_activity': enrollments[:5],
-        'stats': {
-            'total_courses': enrollments.count(),
-            'in_progress': active_enrollments.count(),
-            'completed': completed_enrollments.count(),
-            'certificates': completed_enrollments.filter(course__has_certificate=True).count(),
-        }
+        'stats': stats,
     }
     
     return render(request, 'dashboard/user_dashboard.html', context)
+
+
 
 @login_required
 def instructor_dashboard(request):
     """لوحة تحكم المدرب"""
     if not request.user.is_instructor() and not request.user.is_admin_user():
         messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
-        return redirect('home')
+        return redirect('courses:home')
     
     # الدورات التي يدرسها
     taught_courses = Course.objects.filter(instructor=request.user)
@@ -504,22 +602,36 @@ def instructor_dashboard(request):
     
     return render(request, 'dashboard/instructor_dashboard.html', context)
 
+
 @staff_member_required
 def admin_dashboard(request):
     """لوحة تحكم الأدمن (كاملة وشاملة)"""
+    from django.db.models import Count, Avg, Sum
+    from .models import User, Course, Category, Enrollment, Review
+    
+    # تحديد ما إذا كان المستخدم سوبر أدمن
+    is_superuser = request.user.is_superuser
+    
     # إحصائيات عامة
     total_users = User.objects.count()
     total_students = User.objects.filter(role='user').count()
     total_instructors = User.objects.filter(role='instructor').count()
     total_admins = User.objects.filter(role='admin').count()
     
+    # إذا كان المستخدم سوبر أدمن، نضيفه إلى إحصائيات الأدمن
+    if is_superuser and request.user.role != 'admin':
+        total_admins += 1
+    
     total_courses = Course.objects.count()
     active_courses = Course.objects.filter(is_active=True).count()
     featured_courses = Course.objects.filter(is_featured=True).count()
     
     total_enrollments = Enrollment.objects.count()
-    pending_enrollments = Enrollment.objects.filter(status='pending').count()
+    pending_enrollments_count = Enrollment.objects.filter(status='pending').count()
     completed_enrollments = Enrollment.objects.filter(status='completed').count()
+    
+    # ✅ جلب queryset للتكرار عليه في القالب
+    pending_enrollments = Enrollment.objects.filter(status='pending').select_related('user', 'course').order_by('-enrolled_at')[:5]
     
     total_reviews = Review.objects.count()
     avg_rating = Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0
@@ -548,6 +660,9 @@ def admin_dashboard(request):
         course_count=Count('courses')
     ).values('name', 'course_count')
     
+    # قائمة المستخدمين مع تحديد السوبر أدمن
+    users = User.objects.all().order_by('-date_joined')[:10]  # آخر 10 مستخدمين فقط للأداء
+    
     context = {
         # إحصائيات
         'total_users': total_users,
@@ -558,18 +673,19 @@ def admin_dashboard(request):
         'active_courses': active_courses,
         'featured_courses': featured_courses,
         'total_enrollments': total_enrollments,
-        'pending_enrollments': pending_enrollments,
+        'pending_enrollments_count': pending_enrollments_count,  # ✅ العدد للت display
+        'pending_enrollments': pending_enrollments,  # ✅ الـ queryset للتكرار
         'completed_enrollments': completed_enrollments,
         'total_reviews': total_reviews,
         'avg_rating': round(avg_rating, 1),
         'total_revenue': total_revenue,
         
         # بيانات الجداول
-        'users': User.objects.all().order_by('-date_joined'),
-        'courses': Course.objects.all().select_related('category', 'instructor'),
-        'categories': Category.objects.annotate(courses_count=Count('courses')),
-        'enrollments': Enrollment.objects.all().select_related('user', 'course'),
-        'reviews': Review.objects.all().select_related('user', 'course'),
+        'users': users,
+        'courses': Course.objects.all().select_related('category', 'instructor')[:10],  # آخر 10 دورات
+        'categories': Category.objects.annotate(courses_count=Count('courses'))[:10],  # آخر 10 تصنيفات
+        'enrollments': Enrollment.objects.all().select_related('user', 'course')[:10],
+        'reviews': Review.objects.all().select_related('user', 'course')[:10],
         
         # آخر الأنشطة
         'recent_users': recent_users,
@@ -582,10 +698,15 @@ def admin_dashboard(request):
         'category_distribution': category_distribution,
         
         # طلبات pending
-        'pending_requests': pending_enrollments,
+        'pending_requests': pending_enrollments_count,
+        
+        # معلومات المستخدم الحالي
+        'current_user': request.user,
+        'is_superuser': is_superuser,
     }
     
     return render(request, 'dashboard/admin_dashboard.html', context)
+
 
 # ==================== Admin Management Views ====================
 
@@ -650,6 +771,8 @@ def admin_user_create(request):
     
     return render(request, 'admin/users/form.html', {'form': form, 'title': 'إنشاء مستخدم جديد'})
 
+
+
 @staff_member_required
 def admin_user_edit(request, user_id):
     """تعديل مستخدم"""
@@ -658,9 +781,31 @@ def admin_user_edit(request, user_id):
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'تم تحديث المستخدم {user.username} بنجاح')
-            return redirect('admin_user_detail', user_id=user.id)
+            try:
+                edited_user = form.save(commit=False)
+                
+                # تحديث الدور إذا تم تغييره (للمشرفين فقط)
+                if request.user.is_admin_user() and not user.is_superuser:
+                    new_role = request.POST.get('role')
+                    if new_role in dict(User.USER_ROLES):
+                        edited_user.role = new_role
+                
+                # تحديث حالة الحساب
+                is_active = request.POST.get('is_active')
+                if is_active is not None:
+                    edited_user.is_active = (is_active == 'true')
+                
+                edited_user.save()
+                
+                messages.success(request, f'✅ تم تحديث المستخدم {edited_user.username} بنجاح')
+                return redirect('courses:admin_user_detail', user_id=user.id)
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء تحديث المستخدم: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'⚠️ {form.fields[field].label}: {error}')
     else:
         form = UserProfileForm(instance=user)
     
@@ -669,6 +814,9 @@ def admin_user_edit(request, user_id):
         'user': user,
         'title': f'تعديل المستخدم: {user.username}'
     })
+
+
+
 
 @staff_member_required
 def admin_user_delete(request, user_id):
@@ -687,26 +835,65 @@ def admin_user_delete(request, user_id):
 def admin_user_toggle_active(request, user_id):
     """تفعيل/تعطيل مستخدم"""
     user = get_object_or_404(User, id=user_id)
-    user.is_active = not user.is_active
-    user.save()
     
-    status = 'مفعل' if user.is_active else 'معطل'
-    messages.success(request, f'تم {status} المستخدم {user.username}')
-    return redirect('admin_user_detail', user_id=user.id)
+    if request.method == 'POST':
+        user.is_active = not user.is_active
+        user.save()
+        
+        status = 'مفعل' if user.is_active else 'معطل'
+        messages.success(request, f'تم {status} المستخدم {user.username} بنجاح')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'is_active': user.is_active,
+                'message': f'تم {status} المستخدم'
+            })
+    
+    return redirect('courses:admin_user_detail', user_id=user.id)
+
 
 @staff_member_required
 def admin_user_change_role(request, user_id):
     """تغيير دور المستخدم"""
     user = get_object_or_404(User, id=user_id)
     
+    # منع تغيير دور السوبر أدمن
+    if user.is_superuser:
+        messages.error(request, '⚠️ لا يمكن تغيير دور المستخدم السوبر أدمن')
+        return redirect('courses:admin_user_detail', user_id=user.id)
+    
     if request.method == 'POST':
         new_role = request.POST.get('role')
         if new_role in dict(User.USER_ROLES):
+            old_role = user.role  # حفظ الدور القديم
+            old_role_display = user.get_role_display()  # اسم الدور القديم المقروء
+            
             user.role = new_role
             user.save()
-            messages.success(request, f'تم تغيير دور المستخدم إلى {user.get_role_display()}')
+            
+            new_role_display = user.get_role_display()  # اسم الدور الجديد المقروء
+            
+            messages.success(
+                request, 
+                f'✅ تم تغيير دور المستخدم {user.username} من "{old_role_display}" إلى "{new_role_display}"'
+            )
+            
+            # إذا كان الطلب AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'new_role': new_role,
+                    'role_display': new_role_display,
+                    'message': 'تم تغيير الدور بنجاح'
+                })
+            
+            return redirect('courses:admin_user_detail', user_id=user.id)
+        else:
+            messages.error(request, '⚠️ دور غير صالح')
     
-    return redirect('admin_user_detail', user_id=user.id)
+    return redirect('courses:admin_user_detail', user_id=user.id)
+
 
 # ---- Course Management ----
 
@@ -765,47 +952,187 @@ def admin_course_detail(request, course_id):
     }
     return render(request, 'admin/courses/detail.html', context)
 
+
+
 @staff_member_required
 def admin_course_create(request):
     """إنشاء دورة جديدة"""
+    from .models import User, Course
+    from django.utils.text import slugify
+    from django.db import IntegrityError
+    
+    # جلب قائمة المدربين للمشرفين
+    instructors = User.objects.filter(role='instructor') if request.user.is_admin_user() else []
+    
     if request.method == 'POST':
-        form = CourseForm(request.POST, request.FILES)
+        form = CourseForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            course = form.save(commit=False)
-            course.instructor = request.user if request.user.is_instructor() else form.cleaned_data.get('instructor')
-            course.save()
-            messages.success(request, f'تم إنشاء الدورة {course.title} بنجاح')
-            return redirect('admin_course_detail', course_id=course.id)
+            try:
+                course = form.save(commit=False)
+                
+                # تعيين المدرب
+                if request.user.is_instructor():
+                    course.instructor = request.user
+                else:
+                    # إذا كان الأدمن، يمكنه اختيار المدرب من النموذج
+                    instructor_id = request.POST.get('instructor')
+                    if instructor_id and instructor_id.isdigit():
+                        try:
+                            instructor = User.objects.get(id=int(instructor_id), role='instructor')
+                            course.instructor = instructor
+                        except User.DoesNotExist:
+                            messages.error(request, 'المدرب المحدد غير موجود')
+                            return render(request, 'admin/courses/form.html', {
+                                'form': form,
+                                'title': 'إنشاء دورة جديدة',
+                                'course': None,
+                                'instructors': instructors,
+                            })
+                    else:
+                        course.instructor = request.user
+                
+                # التحقق من وجود عنوان
+                if not course.title:
+                    messages.error(request, 'عنوان الدورة مطلوب')
+                    return render(request, 'admin/courses/form.html', {
+                        'form': form,
+                        'title': 'إنشاء دورة جديدة',
+                        'course': None,
+                        'instructors': instructors,
+                    })
+                
+                # إنشاء slug فريد
+                base_slug = slugify(course.title)
+                if not base_slug:
+                    base_slug = "course"
+                
+                slug = base_slug
+                counter = 1
+                
+                # التأكد من عدم وجود slug مكرر
+                while Course.objects.filter(slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                    # منع الحلقات اللانهائية
+                    if counter > 100:
+                        slug = f"{base_slug}-{course.id if course.id else 'new'}"
+                        break
+                
+                course.slug = slug
+                
+                # حفظ الدورة
+                course.save()
+                
+                messages.success(request, f'✅ تم إنشاء الدورة "{course.title}" بنجاح')
+                return redirect('courses:admin_course_detail', course_id=course.id)
+                
+            except IntegrityError as e:
+                # خطأ في قاعدة البيانات (عادةً بسبب slug مكرر)
+                messages.error(request, f'حدث خطأ في قاعدة البيانات: {str(e)}')
+            except Exception as e:
+                # أي خطأ آخر
+                messages.error(request, f'حدث خطأ غير متوقع: {str(e)}')
+                # طباعة الخطأ في السيرفر للت debugging
+                import traceback
+                traceback.print_exc()
+        else:
+            # عرض أخطاء النموذج
+            for field, errors in form.errors.items():
+                field_label = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    messages.error(request, f'⚠️ {field_label}: {error}')
     else:
-        form = CourseForm()
+        form = CourseForm(user=request.user)
         if request.user.is_instructor():
-            form.fields['instructor'].initial = request.user
+            # إزالة حقل اختيار المدرب للمدربين العاديين
+            if 'instructor' in form.fields:
+                form.fields.pop('instructor')
     
     return render(request, 'admin/courses/form.html', {
         'form': form,
-        'title': 'إنشاء دورة جديدة'
+        'title': 'إنشاء دورة جديدة',
+        'course': None,  # مهم: None للصفحة الجديدة
+        'instructors': instructors,
+        'is_edit': False,  # للتمييز بين الإضافة والتعديل
     })
+
+
 
 @staff_member_required
 def admin_course_edit(request, course_id):
     """تعديل دورة"""
+    from .models import User, Course
+    from django.utils.text import slugify
+    
     course = get_object_or_404(Course, id=course_id)
     
+    # التحقق من الصلاحية
+    if request.user.is_instructor() and course.instructor != request.user:
+        messages.error(request, 'ليس لديك صلاحية لتعديل هذه الدورة')
+        return redirect('courses:admin_courses')
+    
+    # جلب قائمة المدربين للمشرفين
+    instructors = User.objects.filter(role='instructor') if request.user.is_admin_user() else []
+    
     if request.method == 'POST':
-        form = CourseForm(request.POST, request.FILES, instance=course)
+        form = CourseForm(request.POST, request.FILES, instance=course, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'تم تحديث الدورة {course.title} بنجاح')
-            return redirect('admin_course_detail', course_id=course.id)
+            try:
+                edited_course = form.save(commit=False)
+                
+                # تحديث slug إذا تغير العنوان
+                if edited_course.title != course.title:
+                    base_slug = slugify(edited_course.title)
+                    if base_slug:
+                        slug = base_slug
+                        counter = 1
+                        
+                        from .models import Course
+                        while Course.objects.filter(slug=slug).exclude(id=course_id).exists():
+                            slug = f"{base_slug}-{counter}"
+                            counter += 1
+                        
+                        edited_course.slug = slug
+                
+                # تحديث المدرب (للمشرفين فقط)
+                if request.user.is_admin_user():
+                    instructor_id = request.POST.get('instructor')
+                    if instructor_id and instructor_id.isdigit():
+                        try:
+                            instructor = User.objects.get(id=int(instructor_id), role='instructor')
+                            edited_course.instructor = instructor
+                        except User.DoesNotExist:
+                            messages.warning(request, 'المدرب المحدد غير موجود، تم الاحتفاظ بالمدرب الحالي')
+                
+                edited_course.save()
+                
+                messages.success(request, f'✅ تم تحديث الدورة "{edited_course.title}" بنجاح')
+                return redirect('courses:admin_course_detail', course_id=course.id)
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء تحديث الدورة: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                field_label = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    messages.error(request, f'⚠️ {field_label}: {error}')
     else:
-        form = CourseForm(instance=course)
+        form = CourseForm(instance=course, user=request.user)
+        if request.user.is_instructor():
+            if 'instructor' in form.fields:
+                form.fields.pop('instructor')
     
     return render(request, 'admin/courses/form.html', {
         'form': form,
         'course': course,
-        'title': f'تعديل الدورة: {course.title}'
+        'title': f'تعديل الدورة: {course.title}',
+        'instructors': instructors,
+        'is_edit': True,
     })
-
+    
+    
+    
+    
 @staff_member_required
 def admin_course_delete(request, course_id):
     """حذف دورة"""
@@ -819,28 +1146,49 @@ def admin_course_delete(request, course_id):
     
     return render(request, 'admin/courses/delete.html', {'course': course})
 
+# ==================== Course Management Helpers ====================
+
 @staff_member_required
 def admin_course_toggle_active(request, course_id):
     """تفعيل/تعطيل دورة"""
     course = get_object_or_404(Course, id=course_id)
-    course.is_active = not course.is_active
-    course.save()
     
-    status = 'مفعلة' if course.is_active else 'معطلة'
-    messages.success(request, f'تم {status} الدورة {course.title}')
-    return redirect('admin_course_detail', course_id=course.id)
+    if request.method == 'POST':
+        course.is_active = not course.is_active
+        course.save()
+        
+        status = 'مفعلة' if course.is_active else 'معطلة'
+        messages.success(request, f'تم {status} الدورة {course.title} بنجاح')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'is_active': course.is_active,
+                'message': f'تم {status} الدورة'
+            })
+    
+    return redirect('courses:admin_course_detail', course_id=course.id)
 
 @staff_member_required
 def admin_course_toggle_featured(request, course_id):
     """تفعيل/تعطيل دورة مميزة"""
     course = get_object_or_404(Course, id=course_id)
-    course.is_featured = not course.is_featured
-    course.save()
     
-    status = 'مميزة' if course.is_featured else 'غير مميزة'
-    messages.success(request, f'أصبحت الدورة {status}')
-    return redirect('admin_course_detail', course_id=course.id)
-
+    if request.method == 'POST':
+        course.is_featured = not course.is_featured
+        course.save()
+        
+        status = 'مميزة' if course.is_featured else 'غير مميزة'
+        messages.success(request, f'أصبحت الدورة {status}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'is_featured': course.is_featured,
+                'message': f'أصبحت الدورة {status}'
+            })
+    
+    return redirect('courses:admin_course_detail', course_id=course.id)
 # ---- Module Management ----
 
 @staff_member_required
@@ -976,43 +1324,106 @@ def admin_categories(request):
     }
     return render(request, 'admin/categories/list.html', context)
 
+
 @staff_member_required
 def admin_category_create(request):
     """إنشاء تصنيف جديد"""
+    from django.utils.text import slugify  # استيراد slugify
+    from .models import Category
+    
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
-            category = form.save()
-            messages.success(request, f'تم إنشاء التصنيف {category.name} بنجاح')
-            return redirect('admin_categories')
+            try:
+                category = form.save(commit=False)
+                
+                # التأكد من أن slug فريد
+                if not category.slug:
+                    base_slug = slugify(category.name)
+                    slug = base_slug
+                    counter = 1
+                    
+                    # التحقق من وجود slug مماثل
+                    while Category.objects.filter(slug=slug).exists():
+                        slug = f"{base_slug}-{counter}"
+                        counter += 1
+                        # منع الحلقات اللانهائية
+                        if counter > 100:
+                            slug = f"{base_slug}-{counter}"
+                            break
+                    
+                    category.slug = slug
+                
+                category.save()
+                
+                messages.success(request, f'✅ تم إنشاء التصنيف "{category.name}" بنجاح')
+                return redirect('courses:admin_categories')
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'⚠️ {field}: {error}')
     else:
         form = CategoryForm()
     
     return render(request, 'admin/categories/form.html', {
         'form': form,
-        'title': 'إنشاء تصنيف جديد'
+        'title': 'إنشاء تصنيف جديد',
+        'category': None,
     })
 
 @staff_member_required
 def admin_category_edit(request, category_id):
     """تعديل تصنيف"""
+    from django.utils.text import slugify  # استيراد slugify
+    from .models import Category
+    
     category = get_object_or_404(Category, id=category_id)
     
     if request.method == 'POST':
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'تم تحديث التصنيف {category.name} بنجاح')
-            return redirect('admin_categories')
+            try:
+                edited_category = form.save(commit=False)
+                
+                # إذا تغير الاسم، قد نحتاج لتحديث الـ slug
+                if edited_category.name != category.name:
+                    base_slug = slugify(edited_category.name)
+                    slug = base_slug
+                    counter = 1
+                    
+                    # التحقق من وجود slug مماثل (مع استثناء التصنيف الحالي)
+                    while Category.objects.filter(slug=slug).exclude(id=category_id).exists():
+                        slug = f"{base_slug}-{counter}"
+                        counter += 1
+                        if counter > 100:
+                            slug = f"{base_slug}-{counter}"
+                            break
+                    
+                    edited_category.slug = slug
+                
+                edited_category.save()
+                messages.success(request, f'✅ تم تحديث التصنيف "{edited_category.name}" بنجاح')
+                return redirect('courses:admin_categories')
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء تحديث التصنيف: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'⚠️ {field}: {error}')
     else:
         form = CategoryForm(instance=category)
     
     return render(request, 'admin/categories/form.html', {
         'form': form,
         'category': category,
-        'title': f'تعديل التصنيف: {category.name}'
+        'title': f'تعديل التصنيف: {category.name}',
     })
-
+    
+      
 @staff_member_required
 def admin_category_delete(request, category_id):
     """حذف تصنيف"""
@@ -1102,6 +1513,8 @@ def admin_enrollment_create(request):
     }
     return render(request, 'admin/enrollments/create.html', context)
 
+# ==================== Enrollment Management Helpers ====================
+
 @staff_member_required
 def admin_enrollment_update_status(request, enrollment_id):
     """تحديث حالة التسجيل"""
@@ -1110,13 +1523,31 @@ def admin_enrollment_update_status(request, enrollment_id):
     if request.method == 'POST':
         new_status = request.POST.get('status')
         if new_status in dict(Enrollment.STATUS_CHOICES):
+            old_status = enrollment.status
             enrollment.status = new_status
+            
             if new_status == 'completed' and not enrollment.completed_at:
                 enrollment.completed_at = timezone.now()
+            
             enrollment.save()
+            
+            # Update course students count if enrollment approved
+            if new_status == 'enrolled' and old_status != 'enrolled':
+                course = enrollment.course
+                course.students_count = Enrollment.objects.filter(course=course, status='enrolled').count()
+                course.save()
+            
             messages.success(request, f'تم تحديث حالة التسجيل إلى {enrollment.get_status_display()}')
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'new_status': new_status,
+                    'status_display': enrollment.get_status_display(),
+                    'message': 'تم تحديث الحالة بنجاح'
+                })
     
-    return redirect('admin_enrollment_detail', enrollment_id=enrollment.id)
+    return redirect('courses:admin_enrollment_detail', enrollment_id=enrollment.id)
 
 @staff_member_required
 def admin_enrollment_delete(request, enrollment_id):
@@ -1149,18 +1580,198 @@ def admin_reviews(request):
     }
     return render(request, 'admin/reviews/list.html', context)
 
+# ==================== Review Management Helpers ====================
+
 @staff_member_required
 def admin_review_delete(request, review_id):
     """حذف تقييم"""
     review = get_object_or_404(Review, id=review_id)
     
     if request.method == 'POST':
-        info = f"{review.user.username} - {review.course.title}"
+        course = review.course
         review.delete()
-        messages.success(request, f'تم حذف التقييم {info} بنجاح')
-        return redirect('admin_reviews')
+        
+        messages.success(request, 'تم حذف التقييم بنجاح')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'message': 'تم حذف التقييم بنجاح',
+                'course_rating': course.rating,
+                'reviews_count': course.reviews.count()
+            })
     
-    return render(request, 'admin/reviews/delete.html', {'review': review})
+    return redirect('courses:admin_reviews')
+
+
+
+# ==================== AJAX Helpers ====================
+
+@login_required
+def ajax_get_dashboard_stats(request):
+    """API للحصول على إحصائيات لوحة التحكم"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from django.db.models import Count, Sum, Avg
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Get date range
+        days = int(request.GET.get('days', 30))
+        start_date = timezone.now() - timedelta(days=days)
+        
+        stats = {
+            'users': {
+                'total': User.objects.count(),
+                'new': User.objects.filter(date_joined__gte=start_date).count(),
+                'students': User.objects.filter(role='user').count(),
+                'instructors': User.objects.filter(role='instructor').count(),
+                'admins': User.objects.filter(role='admin').count(),
+            },
+            'courses': {
+                'total': Course.objects.count(),
+                'active': Course.objects.filter(is_active=True).count(),
+                'featured': Course.objects.filter(is_featured=True).count(),
+                'new': Course.objects.filter(created_at__gte=start_date).count(),
+            },
+            'enrollments': {
+                'total': Enrollment.objects.count(),
+                'pending': Enrollment.objects.filter(status='pending').count(),
+                'enrolled': Enrollment.objects.filter(status='enrolled').count(),
+                'completed': Enrollment.objects.filter(status='completed').count(),
+                'new': Enrollment.objects.filter(enrolled_at__gte=start_date).count(),
+            },
+            'reviews': {
+                'total': Review.objects.count(),
+                'avg_rating': Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0,
+                'new': Review.objects.filter(created_at__gte=start_date).count(),
+            },
+            'revenue': {
+                'total': Enrollment.objects.filter(status='enrolled').aggregate(total=Sum('course__price'))['total'] or 0,
+                'period': Enrollment.objects.filter(status='enrolled', enrolled_at__gte=start_date).aggregate(total=Sum('course__price'))['total'] or 0,
+            }
+        }
+        
+        return JsonResponse(stats)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def ajax_get_chart_data(request):
+    """API للحصول على بيانات الرسوم البيانية"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from django.db.models import Count
+        from django.utils import timezone
+        from datetime import timedelta
+        import calendar
+        
+        chart_type = request.GET.get('type', 'users')
+        months = int(request.GET.get('months', 6))
+        
+        labels = []
+        data = []
+        
+        if chart_type == 'users':
+            # Users growth chart
+            for i in range(months):
+                date = timezone.now() - timedelta(days=30 * i)
+                month_name = calendar.month_name[date.month][:3] + ' ' + str(date.year)[2:]
+                labels.insert(0, month_name)
+                
+                start_date = date.replace(day=1, hour=0, minute=0, second=0)
+                if i > 0:
+                    end_date = (start_date + timedelta(days=32)).replace(day=1)
+                else:
+                    end_date = timezone.now()
+                
+                count = User.objects.filter(date_joined__gte=start_date, date_joined__lt=end_date).count()
+                data.insert(0, count)
+        
+        elif chart_type == 'enrollments':
+            # Enrollments chart
+            for i in range(months):
+                date = timezone.now() - timedelta(days=30 * i)
+                month_name = calendar.month_name[date.month][:3] + ' ' + str(date.year)[2:]
+                labels.insert(0, month_name)
+                
+                start_date = date.replace(day=1, hour=0, minute=0, second=0)
+                if i > 0:
+                    end_date = (start_date + timedelta(days=32)).replace(day=1)
+                else:
+                    end_date = timezone.now()
+                
+                count = Enrollment.objects.filter(enrolled_at__gte=start_date, enrolled_at__lt=end_date).count()
+                data.insert(0, count)
+        
+        elif chart_type == 'revenue':
+            # Revenue chart
+            for i in range(months):
+                date = timezone.now() - timedelta(days=30 * i)
+                month_name = calendar.month_name[date.month][:3] + ' ' + str(date.year)[2:]
+                labels.insert(0, month_name)
+                
+                start_date = date.replace(day=1, hour=0, minute=0, second=0)
+                if i > 0:
+                    end_date = (start_date + timedelta(days=32)).replace(day=1)
+                else:
+                    end_date = timezone.now()
+                
+                total = Enrollment.objects.filter(
+                    status='enrolled',
+                    enrolled_at__gte=start_date,
+                    enrolled_at__lt=end_date
+                ).aggregate(total=Sum('course__price'))['total'] or 0
+                
+                data.insert(0, float(total))
+        
+        return JsonResponse({
+            'labels': labels,
+            'data': data
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def ajax_get_recent_activities(request):
+    """API للحصول على أحدث الأنشطة"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        activities = []
+        
+        # Recent enrollments
+        enrollments = Enrollment.objects.select_related('user', 'course').order_by('-enrolled_at')[:5]
+        for enrollment in enrollments:
+            activities.append({
+                'type': 'enrollment',
+                'user': enrollment.user.get_full_name() or enrollment.user.username,
+                'course': enrollment.course.title,
+                'time': enrollment.enrolled_at.isoformat(),
+                'time_ago': timesince(enrollment.enrolled_at),
+                'icon': 'user-plus',
+                'color': 'green'
+            })
+        
+        # Recent reviews
+        reviews = Review.objects.select_related('user', 'course').order_by('-created_at')[:5]
+        for review in reviews:
+            activities.append({
+                'type': 'review',
+                'user': review.user.get_full_name() or review.user.username,
+                'course': review.course.title,
+                'rating': review.rating,
+                'time': review.created_at.isoformat(),
+                'time_ago': timesince(review.created_at),
+                'icon': 'star',
+                'color': 'yellow'
+            })
+        
+        # Sort by time
+        activities.sort(key=lambda x: x['time'], reverse=True)
+        
+        return JsonResponse({
+            'activities': activities[:10]
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 # ==================== Reports & Exports ====================
 
@@ -1454,6 +2065,204 @@ def my_reviews(request):
     return render(request, 'courses/my_reviews.html', {
         'reviews': reviews
     })
-    
-    
+     
         
+@staff_member_required
+def admin_stats_view(request):
+    """عرض صفحة إحصائيات مبسطة"""
+    from .models import User, Course, Enrollment, Review
+    
+    total_users = User.objects.count()
+    total_instructors = User.objects.filter(role='instructor').count()
+    total_admins = User.objects.filter(role='admin').count()
+    
+    context = {
+        'total_users': total_users,
+        'total_instructors': total_instructors,
+        'total_admins': total_admins,
+        'total_courses': Course.objects.count(),
+        'total_enrollments': Enrollment.objects.count(),
+        'total_reviews': Review.objects.count(),
+        'avg_rating': Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0,
+        'recent_users': User.objects.order_by('-date_joined')[:6],
+        'recent_courses': Course.objects.select_related('category').order_by('-created_at')[:6],
+    }
+    
+    return render(request, 'admin/stats.html', context)
+
+
+
+class CustomLoginView(LoginView):
+    template_name = 'auth/login.html'
+    redirect_authenticated_user = True
+    
+    def get_success_url(self):
+        user = self.request.user
+        if user.is_admin_user() or user.is_superuser:
+            return reverse_lazy('courses:admin_dashboard')
+        elif user.is_instructor():
+            return reverse_lazy('courses:instructor_dashboard')
+        else:
+            return reverse_lazy('courses:user_dashboard')
+
+
+
+# ==================== نظام السلة ====================
+
+def add_to_cart(request, course_id):
+    """إضافة دورة إلى السلة"""
+    course = get_object_or_404(Course, id=course_id, is_active=True)
+    
+    # الحصول على السلة من الجلسة
+    cart = request.session.get('cart', [])
+    
+    if course_id not in cart:
+        cart.append(course_id)
+        request.session['cart'] = cart
+        messages.success(request, f'✅ تم إضافة "{course.title}" إلى السلة')
+    else:
+        messages.info(request, f'ℹ️ الدورة "{course.title}" موجودة بالفعل في السلة')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'courses:course_list'))
+
+def remove_from_cart(request, course_id):
+    """إزالة دورة من السلة"""
+    cart = request.session.get('cart', [])
+    
+    if course_id in cart:
+        cart.remove(course_id)
+        request.session['cart'] = cart
+        messages.success(request, '✅ تم إزالة الدورة من السلة')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'courses:cart_view'))
+
+def cart_view(request):
+    """عرض محتويات السلة"""
+    cart_ids = request.session.get('cart', [])
+    cart_courses = Course.objects.filter(id__in=cart_ids, is_active=True)
+    
+    # حساب الإجمالي
+    total = sum(course.price for course in cart_courses)
+    
+    context = {
+        'cart_courses': cart_courses,
+        'total': total,
+        'cart_count': len(cart_ids)
+    }
+    return render(request, 'cart/cart.html', context)
+
+def update_cart_quantity(request):
+    """تحديث كمية الدورة في السلة (AJAX)"""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        data = json.loads(request.body)
+        course_id = data.get('course_id')
+        action = data.get('action')
+        
+        cart = request.session.get('cart', [])
+        
+        if action == 'increase':
+            if course_id not in cart:
+                cart.append(course_id)
+        elif action == 'decrease':
+            if course_id in cart:
+                cart.remove(course_id)
+        
+        request.session['cart'] = cart
+        
+        # حساب الإجمالي الجديد
+        cart_courses = Course.objects.filter(id__in=cart)
+        total = sum(course.price for course in cart_courses)
+        
+        return JsonResponse({
+            'status': 'success',
+            'cart_count': len(cart),
+            'total': float(total)
+        })
+    
+    return JsonResponse({'status': 'error'}, status=400)
+
+def clear_cart(request):
+    """تفريغ السلة"""
+    request.session['cart'] = []
+    messages.success(request, '✅ تم تفريغ السلة')
+    return redirect('courses:cart_view')
+
+# ==================== طلبات الشراء ====================
+
+@login_required
+def submit_order(request):
+    """إرسال طلب شراء"""
+    if request.method == 'POST':
+        cart_ids = request.session.get('cart', [])
+        
+        if not cart_ids:
+            messages.error(request, '❌ السلة فارغة')
+            return redirect('courses:cart_view')
+        
+        cart_courses = Course.objects.filter(id__in=cart_ids, is_active=True)
+        
+        # حساب الإجمالي
+        total = sum(course.price for course in cart_courses)
+        
+        # هنا يمكنك إضافة منطق حفظ الطلب في قاعدة البيانات
+        # مثلاً إنشاء نموذج Order و OrderItem
+        
+        # إنشاء تسجيلات للدورات المجانية مباشرة، والمدفوعة كطلبات معلقة
+        enrolled_count = 0
+        pending_count = 0
+        
+        for course in cart_courses:
+            if course.price == 0:
+                # دورات مجانية - تسجيل مباشر
+                enrollment, created = Enrollment.objects.get_or_create(
+                    user=request.user,
+                    course=course,
+                    defaults={'status': 'enrolled'}
+                )
+                if created:
+                    enrolled_count += 1
+            else:
+                # دورات مدفوعة - طلب معلق
+                enrollment, created = Enrollment.objects.get_or_create(
+                    user=request.user,
+                    course=course,
+                    defaults={'status': 'pending'}
+                )
+                if created:
+                    pending_count += 1
+        
+        # تفريغ السلة بعد إرسال الطلب
+        request.session['cart'] = []
+        
+        # رسالة تأكيد
+        if enrolled_count > 0 and pending_count > 0:
+            messages.success(request, f'✅ تم تسجيلك في {enrolled_count} دورة مجانية، وتم إرسال {pending_count} طلب شراء للمراجعة')
+        elif enrolled_count > 0:
+            messages.success(request, f'✅ تم تسجيلك في {enrolled_count} دورة مجانية بنجاح')
+        elif pending_count > 0:
+            messages.success(request, f'✅ تم إرسال طلب الشراء بنجاح، بانتظار المراجعة')
+        
+        return redirect('courses:user_dashboard')
+    
+    return redirect('courses:cart_view')
+
+@login_required
+def order_history(request):
+    """عرض تاريخ الطلبات"""
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course').order_by('-enrolled_at')
+    
+    # تجميع الطلبات حسب الحالة
+    pending_orders = enrollments.filter(status='pending')
+    enrolled_orders = enrollments.filter(status='enrolled')
+    completed_orders = enrollments.filter(status='completed')
+    cancelled_orders = enrollments.filter(status='cancelled')
+    
+    context = {
+        'pending_orders': pending_orders,
+        'enrolled_orders': enrolled_orders,
+        'completed_orders': completed_orders,
+        'cancelled_orders': cancelled_orders,
+        'total_orders': enrollments.count(),
+    }
+    
+    return render(request, 'cart/orders.html', context)

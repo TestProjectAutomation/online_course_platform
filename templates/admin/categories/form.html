@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">{{ title }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">أدخل معلومات التصنيف الجديد</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Name -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.name.label }}
+                    {% if form.name.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">سيتم إنشاء slug تلقائياً</p>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.description.label }}
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Icon -->
+            <div>
+                <label for="{{ form.icon.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.icon.label }}
+                </label>
+                <div class="flex gap-2">
+                    {{ form.icon }}
+                    <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-{% if form.icon.value %}{{ form.icon.value }}{% else %}folder{% endif %} text-primary-600 dark:text-primary-400 preview-icon"></i>
+                    </div>
+                </div>
+                {% if form.icon.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.icon.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">مثال: code, chart-line, language, paint-brush</p>
+            </div>
+
+            <!-- Parent Category -->
+            <div>
+                <label for="{{ form.parent.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.parent.label }}
+                </label>
+                {{ form.parent }}
+                {% if form.parent.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.parent.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                    <i class="fas fa-save ml-2"></i>
+                    حفظ
+                </button>
+                <a href="{% url 'courses:admin_categories' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                    <i class="fas fa-times ml-2"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // Preview icon when typing
+    document.getElementById('{{ form.icon.id_for_label }}').addEventListener('input', function(e) {
+        const iconName = e.target.value || 'folder';
+        document.querySelector('.preview-icon').className = `fas fa-${iconName} text-primary-600 dark:text-primary-400 preview-icon`;
+    });
+</script>
+{% endblock %}

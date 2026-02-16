@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),  # هذا يضيف مسار set_language
+
     # لوحة تحكم Django Admin
     path('admin-panel/', admin.site.urls),
     

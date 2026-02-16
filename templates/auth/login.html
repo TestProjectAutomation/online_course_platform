@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تسجيل الدخول - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
+    <!-- خلفية مزخرفة -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-900 rounded-full opacity-20 blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-300 dark:bg-primary-800 rounded-full opacity-20 blur-3xl"></div>
+    </div>
+
+    <div class="max-w-md w-full space-y-8 relative z-10">
+        <!-- الشعار والعنوان -->
+        <div class="text-center">
+            <div class="flex justify-center mb-4">
+                <div class="bg-gradient-to-br from-primary-600 to-primary-700 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition duration-300">
+                    <i class="fas fa-graduation-cap text-4xl text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                مرحباً بعودتك! 👋
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+                سجل دخولك للوصول إلى دوراتك ومتابعة تقدمك
+            </p>
+        </div>
+
+        <!-- بطاقة تسجيل الدخول -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90">
+            <form class="mt-8 space-y-6" method="post" action="{% url 'courses:login' %}">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="bg-red-50 dark:bg-red-900/30 border-r-4 border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                        <p class="text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- حقل اسم المستخدم -->
+                <div class="space-y-2">
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-user ml-2 text-primary-600"></i>
+                        {{ form.username.label }}
+                    </label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user-circle text-gray-400 group-focus-within:text-primary-500 transition"></i>
+                        </div>
+                        <input type="text" 
+                               name="{{ form.username.name }}" 
+                               id="{{ form.username.id_for_label }}"
+                               value="{{ form.username.value|default:'' }}"
+                               class="w-full pr-10 px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:text-white transition group-hover:border-primary-300"
+                               placeholder="أدخل اسم المستخدم أو البريد الإلكتروني"
+                               {% if form.username.field.required %}required{% endif %}>
+                    </div>
+                    {% if form.username.errors %}
+                    <p class="text-sm text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
+                        <i class="fas fa-times-circle"></i>
+                        {{ form.username.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- حقل كلمة المرور -->
+                <div class="space-y-2">
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-lock ml-2 text-primary-600"></i>
+                        {{ form.password.label }}
+                    </label>
+                    <div class="relative group" x-data="{ showPassword: false }">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400 group-focus-within:text-primary-500 transition"></i>
+                        </div>
+                        <input :type="showPassword ? 'text' : 'password'"
+                               name="{{ form.password.name }}" 
+                               id="{{ form.password.id_for_label }}"
+                               class="w-full pr-10 px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:text-white transition group-hover:border-primary-300"
+                               placeholder="أدخل كلمة المرور"
+                               {% if form.password.field.required %}required{% endif %}>
+                        <button type="button" 
+                                @click="showPassword = !showPassword" 
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 hover:text-primary-600 transition">
+                            <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                    <p class="text-sm text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
+                        <i class="fas fa-times-circle"></i>
+                        {{ form.password.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- خيارات إضافية -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" name="remember" id="remember" class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition">
+                        <span class="mr-2 text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition">
+                            <i class="fas fa-check-circle ml-1 text-gray-400 group-hover:text-primary-500"></i>
+                            تذكرني
+                        </span>
+                    </label>
+
+                    <a href="#" class="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition flex items-center gap-1 group">
+                        <span>نسيت كلمة المرور؟</span>
+                        <i class="fas fa-arrow-left text-xs group-hover:translate-x-1 transition"></i>
+                    </a>
+                </div>
+
+                <!-- زر تسجيل الدخول -->
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-l from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl">
+                    <span class="absolute right-0 inset-y-0 flex items-center pr-3">
+                        <i class="fas fa-sign-in-alt group-hover:translate-x-1 transition"></i>
+                    </span>
+                    تسجيل الدخول
+                </button>
+            </form>
+
+            <!-- الفاصل -->
+            <div class="relative my-8">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                        أو تابع باستخدام
+                    </span>
+                </div>
+            </div>
+
+            <!-- أزرار التواصل الاجتماعي -->
+            <div class="grid grid-cols-2 gap-4">
+                <button class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-red-500 dark:hover:border-red-500 group transition-all hover:shadow-md">
+                    <i class="fab fa-google text-red-500 ml-2 text-lg"></i>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-red-500 transition">جوجل</span>
+                </button>
+                <button class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-600 dark:hover:border-blue-600 group transition-all hover:shadow-md">
+                    <i class="fab fa-facebook-f text-blue-600 ml-2 text-lg"></i>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">فيسبوك</span>
+                </button>
+            </div>
+
+            <!-- رابط إنشاء حساب -->
+            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                ليس لديك حساب؟ 
+                <a href="{% url 'courses:register' %}" class="font-bold text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition inline-flex items-center gap-1 group">
+                    <span>إنشاء حساب جديد</span>
+                    <i class="fas fa-arrow-left text-xs group-hover:translate-x-1 transition"></i>
+                </a>
+            </p>
+        </div>
+
+        <!-- معلومات إضافية -->
+        <div class="text-center text-xs text-gray-500 dark:text-gray-500 space-y-2">
+            <p>
+                <i class="fas fa-shield-alt ml-1"></i>
+                معلوماتك آمنة ومشفرة
+            </p>
+            <p>
+                <a href="#" class="hover:text-primary-600 transition">شروط الاستخدام</a>
+                <span class="mx-2">•</span>
+                <a href="#" class="hover:text-primary-600 transition">سياسة الخصوصية</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Alpine.js للتحكم في إظهار/إخفاء كلمة المرور -->
+<script src="//unpkg.com/alpinejs" defer></script>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // إضافة تأثيرات حركية
+    document.addEventListener('DOMContentLoaded', function() {
+        // إضافة تأثير focus للحقول
+        const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-primary-300');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-primary-300');
+            });
+        });
+
+        // التحقق من صحة المدخلات
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const username = document.getElementById('{{ form.username.id_for_label }}');
+            const password = document.getElementById('{{ form.password.id_for_label }}');
+            
+            if (!username.value.trim()) {
+                e.preventDefault();
+                showNotification('❌ الرجاء إدخال اسم المستخدم', 'error');
+            } else if (!password.value.trim()) {
+                e.preventDefault();
+                showNotification('❌ الرجاء إدخال كلمة المرور', 'error');
+            }
+        });
+
+        // دالة إظهار الإشعارات
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate-slideDown ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            notification.innerHTML = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(-50%) translateY(-20px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    });
+</script>
+
+<style>
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+    
+    .animate-slideDown {
+        animation: slideDown 0.3s ease-out;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">{{ title }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">تعديل معلومات المستخدم وصلاحياته</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Personal Information -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-user-circle"></i>
+                    المعلومات الشخصية
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- First Name -->
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.first_name.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
+                                   value="{{ form.first_name.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
+                        </div>
+                        {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.last_name.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
+                                   value="{{ form.last_name.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
+                        </div>
+                        {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.username.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-at text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" 
+                                   value="{{ form.username.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   {% if user.is_superuser %}readonly{% endif %}>
+                        </div>
+                        {% if form.username.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.email.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
+                                   value="{{ form.email.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
+                        </div>
+                        {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.phone_number.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-phone text-gray-400"></i>
+                            </div>
+                            <input type="text" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}" 
+                                   value="{{ form.phone_number.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="05xxxxxxxx">
+                        </div>
+                        {% if form.phone_number.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role & Permissions -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-yellow-600">
+                    <i class="fas fa-user-tag"></i>
+                    الدور والصلاحيات
+                </h2>
+                
+                <!-- Superuser Warning -->
+                {% if user.is_superuser %}
+                <div class="bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-crown text-purple-600 dark:text-purple-400 text-xl mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-purple-800 dark:text-purple-300 mb-1">مستخدم سوبر أدمن</h3>
+                            <p class="text-sm text-purple-700 dark:text-purple-400">
+                                هذا المستخدم هو سوبر أدمن ولا يمكن تغيير دوره. لديه جميع الصلاحيات بشكل تلقائي.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Role Selection -->
+                    <div class="{% if user.is_superuser %}opacity-50 pointer-events-none{% endif %}">
+                        <label for="role" class="block text-sm font-medium mb-2">
+                            <i class="fas fa-user-tag ml-1 text-yellow-600"></i>
+                            دور المستخدم
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                            <select name="role" id="role" 
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition"
+                                    {% if user.is_superuser %}disabled{% endif %}>
+                                <option value="user" {% if user.role == 'user' %}selected{% endif %}>طالب</option>
+                                <option value="instructor" {% if user.role == 'instructor' %}selected{% endif %}>مدرب</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>مشرف</option>
+                            </select>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-info-circle ml-1"></i>
+                            تغيير الدور سيؤثر على صلاحيات المستخدم في المنصة
+                        </p>
+                    </div>
+
+                    <!-- Account Status -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-toggle-on ml-1 text-gray-600"></i>
+                            حالة الحساب
+                        </label>
+                        <div class="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="is_active" value="true" class="w-4 h-4 text-green-600" {% if user.is_active %}checked{% endif %}>
+                                <span class="text-sm">
+                                    <i class="fas fa-check-circle text-green-600 ml-1"></i>
+                                    نشط
+                                </span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="is_active" value="false" class="w-4 h-4 text-red-600" {% if not user.is_active %}checked{% endif %}>
+                                <span class="text-sm">
+                                    <i class="fas fa-ban text-red-600 ml-1"></i>
+                                    غير نشط
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions Preview -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                            <span class="font-semibold text-sm">صلاحيات الطالب</span>
+                        </div>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 mr-4">
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> مشاهدة الدورات</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> التسجيل في الدورات</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إضافة تقييمات</li>
+                            <li><i class="fas fa-times text-red-500 ml-1"></i> إنشاء دورات</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span class="font-semibold text-sm">صلاحيات المدرب</span>
+                        </div>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 mr-4">
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> جميع صلاحيات الطالب</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إنشاء دورات</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إدارة دوراته</li>
+                            <li><i class="fas fa-times text-red-500 ml-1"></i> إدارة المستخدمين</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+                            <span class="font-semibold text-sm">صلاحيات المشرف</span>
+                        </div>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 mr-4">
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> جميع الصلاحيات</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إدارة المستخدمين</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إدارة الدورات</li>
+                            <li><i class="fas fa-check text-green-500 ml-1"></i> إدارة التصنيفات</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-align-left"></i>
+                    نبذة تعريفية
+                </h2>
+                <div>
+                    <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium mb-2">
+                        {{ form.bio.label }}
+                    </label>
+                    <textarea name="{{ form.bio.name }}" id="{{ form.bio.id_for_label }}" 
+                              rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                              placeholder="اكتب نبذة عن المستخدم...">{{ form.bio.value|default:'' }}</textarea>
+                    {% if form.bio.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.bio.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Avatar -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-camera"></i>
+                    الصورة الشخصية
+                </h2>
+                <div>
+                    <label for="{{ form.avatar.id_for_label }}" class="block text-sm font-medium mb-2">
+                        {{ form.avatar.label }}
+                    </label>
+                    
+                    <!-- Current Avatar Preview -->
+                    {% if user.avatar %}
+                    <div class="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">الصورة الحالية:</p>
+                        <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="w-24 h-24 rounded-full object-cover border-4 border-primary-200">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-upload text-gray-400"></i>
+                        </div>
+                        <input type="file" name="{{ form.avatar.name }}" id="{{ form.avatar.id_for_label }}" 
+                               accept="image/*"
+                               class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300">
+                    </div>
+                    {% if form.avatar.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.avatar.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i>
+                    حفظ التغييرات
+                </button>
+                <a href="{% url 'courses:admin_user_detail' user.id %}" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// تحديث معاينة الصلاحيات عند تغيير الدور
+document.getElementById('role')?.addEventListener('change', function() {
+    const role = this.value;
+    const permissions = document.querySelectorAll('.permission-preview');
+    
+    // تحديث الألوان أو إظهار/إخفاء حسب الدور
+    // يمكن إضافة تأثيرات بصرية هنا
+});
+
+// تأكيد تغيير الدور
+document.querySelector('form').addEventListener('submit', function(e) {
+    const roleSelect = document.getElementById('role');
+    if (roleSelect && !roleSelect.disabled) {
+        const currentRole = '{{ user.role }}';
+        const newRole = roleSelect.value;
+        
+        if (currentRole !== newRole) {
+            const roleNames = {
+                'user': 'طالب',
+                'instructor': 'مدرب',
+                'admin': 'مشرف'
+            };
+            
+            if (!confirm(`هل أنت متأكد من تغيير دور المستخدم من "${roleNames[currentRole]}" إلى "${roleNames[newRole]}"؟`)) {
+                e.preventDefault();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

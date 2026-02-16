@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تقييماتي - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">تقييماتي</h1>
+        <p class="text-gray-600 dark:text-gray-400">جميع التقييمات التي قمت بكتابتها للدورات</p>
+    </div>
+
+    {% if reviews %}
+    <div class="space-y-6">
+        {% for review in reviews %}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-start gap-4">
+                <!-- Course Image -->
+                <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                    {% if review.course.image %}
+                    <img src="{{ review.course.image.url }}" alt="{{ review.course.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
+                         alt="{{ review.course.title }}" 
+                         class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+
+                <!-- Review Content -->
+                <div class="flex-1">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <h3 class="text-xl font-bold">
+                                <a href="{% url 'courses:course_detail' review.course.slug %}" class="hover:text-primary-600 transition">
+                                    {{ review.course.title }}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.course.category.name }}</p>
+                        </div>
+                        <span class="text-sm text-gray-500 dark:text-gray-500">{{ review.created_at|date:'Y-m-d' }}</span>
+                    </div>
+
+                    <!-- Rating -->
+                    <div class="flex items-center gap-1 mb-3">
+                        {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= review.rating %}
+                        <i class="fas fa-star text-yellow-400"></i>
+                        {% else %}
+                        <i class="far fa-star text-yellow-400"></i>
+                        {% endif %}
+                        {% endfor %}
+                        <span class="mr-2 text-sm text-gray-600 dark:text-gray-400">({{ review.rating }}/5)</span>
+                    </div>
+
+                    <!-- Comment -->
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">{{ review.comment }}</p>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3">
+                        <a href="{% url 'courses:edit_review' review.id %}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                            <i class="fas fa-edit ml-1"></i>
+                            تعديل
+                        </a>
+                        <a href="{% url 'courses:delete_review' review.id %}" class="text-red-600 hover:text-red-700 text-sm font-semibold" onclick="return confirm('هل أنت متأكد من حذف هذا التقييم؟')">
+                            <i class="fas fa-trash ml-1"></i>
+                            حذف
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-20">
+        <div class="text-8xl mb-4 text-gray-300 dark:text-gray-600">
+            <i class="far fa-star"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">لا توجد تقييمات</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">لم تقم بتقييم أي دورة بعد</p>
+        <a href="{% url 'courses:course_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+            <i class="fas fa-search ml-2"></i>
+            استعرض الدورات
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

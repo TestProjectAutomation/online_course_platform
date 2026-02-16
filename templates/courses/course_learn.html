@@ -1,0 +1,700 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load course_extras %}
+
+{% block title %}{{ course.title }} - تعلم - {{ block.super }}{% endblock %}
+
+{% block content %}
+
+<div class="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+    <!-- Sidebar - Course Modules -->
+    <div id="courseSidebar" class="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0 hidden md:block transition-all duration-300 ease-in-out">
+        <div class="p-4">
+            <!-- Course Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-bold text-lg truncate">{{ course.title }}</h2>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Progress Overview with Circular Progress -->
+            <div class="mb-6 p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-20 h-20 bg-primary-200 dark:bg-primary-700 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-30 group-hover:scale-150 transition"></div>
+                
+                <div class="flex items-center gap-4 relative z-10">
+                    <!-- Circular Progress -->
+                    <div class="relative w-16 h-16">
+                        <svg class="w-16 h-16 transform -rotate-90">
+                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="none" class="text-gray-200 dark:text-gray-700"/>
+                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="none" 
+                                    stroke-dasharray="175.9" 
+                                    stroke-dashoffset="{{ enrollment.progress|divide:100|multiply:175.9 }}"
+                                    class="text-primary-600 dark:text-primary-400 transition-all duration-1000 ease-out"
+                                    style="stroke-dasharray: 175.9; stroke-dashoffset: {{ enrollment.progress|divide:100|multiply:175.9 }};"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-sm font-bold text-primary-600 dark:text-primary-400">{{ enrollment.progress }}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">التقدم العام</span>
+                            <span class="text-xs font-medium text-primary-600 bg-primary-100 dark:bg-primary-900 px-2 py-0.5 rounded-full">
+                                {{ completed_lessons }}/{{ total_lessons }}
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="progress-bar bg-primary-600 rounded-full h-2 transition-all duration-500" style="width: {{ enrollment.progress }}%"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1">
+                            <i class="fas fa-clock"></i>
+                            آخر تقدم: {{ enrollment.last_accessed|timesince }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search in Course -->
+            <div class="mb-4 relative">
+                <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="lessonSearch" placeholder="ابحث في الدروس..." 
+                       class="w-full pr-10 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
+            </div>
+
+            <!-- Modules List with Accordion -->
+            <div class="space-y-4" id="modulesContainer">
+                {% for module in modules %}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden module-card" data-module-id="{{ module.id }}">
+                    <button onclick="toggleModule({{ module.id }})" class="w-full bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-cubes text-primary-600"></i>
+                            <h3 class="font-semibold">{{ module.title }}</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ module.lessons.count }} دروس</span>
+                            <i class="fas fa-chevron-down transition-transform duration-300" id="chevron-{{ module.id }}"></i>
+                        </div>
+                    </button>
+                    
+                    <div id="module-{{ module.id }}" class="divide-y divide-gray-200 dark:divide-gray-700 hidden">
+                        {% for lesson in module.lessons.all %}
+                        {% with progress=lesson_progress|get_item:lesson.id %}
+                        <a href="{% url 'courses:lesson_view' course.slug lesson.id %}" 
+                           class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group lesson-item"
+                           data-lesson-title="{{ lesson.title }}"
+                           data-lesson-id="{{ lesson.id }}">
+                            <div class="flex-shrink-0 relative">
+                                {% if progress and progress.is_completed %}
+                                <div class="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center group-hover:scale-110 transition">
+                                    <i class="fas fa-check text-green-600 dark:text-green-400 text-xs"></i>
+                                </div>
+                                {% elif lesson.is_free %}
+                                <div class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center group-hover:scale-110 transition">
+                                    <i class="fas fa-star text-yellow-600 dark:text-yellow-400 text-xs"></i>
+                                </div>
+                                {% else %}
+                                <div class="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:scale-110 transition">
+                                    <i class="fas fa-play text-gray-500 dark:text-gray-400 text-xs"></i>
+                                </div>
+                                {% endif %}
+                                
+                                {% if progress and progress.last_watched_position > 0 and not progress.is_completed %}
+                                <span class="absolute -bottom-1 -right-1 w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium truncate {% if lesson.id == current_lesson.id %}text-primary-600{% endif %} group-hover:text-primary-600 transition">
+                                    {{ lesson.title }}
+                                </p>
+                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
+                                    <span><i class="far fa-clock ml-1"></i>{{ lesson.duration_minutes }} د</span>
+                                    {% if progress and progress.is_completed %}
+                                    <span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle ml-1"></i>مكتمل</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if progress and progress.last_watched_position > 0 and not progress.is_completed %}
+                            <div class="text-xs font-medium text-primary-600">
+                                {{ progress.last_watched_position }}%
+                            </div>
+                            {% endif %}
+                        </a>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Course Info Footer -->
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span><i class="fas fa-signal ml-1"></i> {{ course.get_level_display }}</span>
+                    <span><i class="fas fa-clock ml-1"></i> {{ course.duration_hours }} ساعة</span>
+                    <span><i class="fas fa-users ml-1"></i> {{ course.students_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar with Enhanced Controls -->
+        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'courses:course_detail' course.slug %}" 
+                       class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-arrow-right"></i>
+                        <span class="hidden sm:inline">العودة للدورة</span>
+                    </a>
+                    
+                    {% if current_lesson %}
+                    <span class="text-gray-300 dark:text-gray-600 mx-2">|</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">{{ current_lesson.title|truncatechars:30 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Quick Actions -->
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleFullscreen()" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tooltip" data-tooltip="ملء الشاشة">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    
+                    <button onclick="toggleSpeed()" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tooltip" data-tooltip="سرعة التشغيل">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </button>
+                    
+                    <button onclick="toggleNotes()" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition tooltip" data-tooltip="الملاحظات">
+                        <i class="fas fa-sticky-note"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lesson Content with Enhanced Features -->
+        <div class="flex-1 overflow-y-auto p-6 relative" id="mainContent">
+            {% if first_incomplete_lesson and not current_lesson %}
+            <!-- Enhanced Welcome Screen -->
+            <div class="max-w-4xl mx-auto text-center py-12 animate__animated animate__fadeIn">
+                <div class="relative inline-block">
+                    <div class="w-32 h-32 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-pulse-slow">
+                        <i class="fas fa-play text-4xl text-white"></i>
+                    </div>
+                    <span class="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-ping"></span>
+                </div>
+                
+                <h1 class="text-4xl font-bold mb-4 gradient-text">مرحباً بك في الدورة</h1>
+                <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">ابدأ رحلة التعلم الآن</p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'courses:lesson_view' course.slug first_incomplete_lesson.id %}" 
+                       class="inline-flex items-center px-8 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:scale-105 shadow-xl group">
+                        <i class="fas fa-play ml-2 group-hover:animate-pulse"></i>
+                        ابدأ التعلم
+                    </a>
+                    
+                    <button onclick="showCourseOverview()" 
+                            class="inline-flex items-center px-8 py-4 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition transform hover:scale-105 shadow-xl">
+                        <i class="fas fa-list ml-2"></i>
+                        نظرة عامة
+                    </button>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-3 gap-4 mt-12 max-w-2xl mx-auto">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                        <div class="text-2xl font-bold text-primary-600">{{ total_lessons }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">إجمالي الدروس</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                        <div class="text-2xl font-bold text-green-600">{{ course.duration_hours }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">ساعة تدريب</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                        <div class="text-2xl font-bold text-yellow-600">{{ course.students_count }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">طلاب مسجلين</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if current_lesson %}
+            <!-- Enhanced Current Lesson Display -->
+            <div class="max-w-5xl mx-auto">
+                <!-- Lesson Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-3xl font-bold gradient-text">{{ current_lesson.title }}</h1>
+                    
+                    <!-- Lesson Progress Badge -->
+                    {% with progress=lesson_progress|get_item:current_lesson.id %}
+                    {% if progress and progress.is_completed %}
+                    <span class="px-4 py-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full text-sm font-bold flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i>
+                        مكتمل
+                    </span>
+                    {% elif progress and progress.last_watched_position > 0 %}
+                    <span class="px-4 py-2 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm font-bold">
+                        {{ progress.last_watched_position }}% مكتمل
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                
+                <!-- Enhanced Video Player -->
+                <div class="bg-black rounded-2xl overflow-hidden mb-6 aspect-video relative group shadow-2xl">
+                    <video id="lessonVideo" class="w-full h-full" controls controlsList="nodownload">
+                        {% if current_lesson.video_file %}
+                        <source src="{{ current_lesson.video_file.url }}" type="video/mp4">
+                        {% elif current_lesson.video_url %}
+                        <source src="{{ current_lesson.video_url }}" type="video/mp4">
+                        {% endif %}
+                        متصفحك لا يدعم تشغيل الفيديو
+                    </video>
+                    
+                    <!-- Video Controls Overlay -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 rounded-full px-4 py-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
+                        <button onclick="setPlaybackSpeed(0.5)" class="text-white text-sm hover:text-primary-400 px-2">0.5x</button>
+                        <button onclick="setPlaybackSpeed(1)" class="text-white text-sm hover:text-primary-400 px-2">1x</button>
+                        <button onclick="setPlaybackSpeed(1.5)" class="text-white text-sm hover:text-primary-400 px-2">1.5x</button>
+                        <button onclick="setPlaybackSpeed(2)" class="text-white text-sm hover:text-primary-400 px-2">2x</button>
+                    </div>
+                </div>
+
+                <!-- Tabs for Lesson Content -->
+                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex gap-6">
+                        <button onclick="switchTab('content')" class="tab-button active pb-3 px-1 border-b-2 border-primary-600 text-primary-600 font-semibold">
+                            محتوى الدرس
+                        </button>
+                        <button onclick="switchTab('notes')" class="tab-button pb-3 px-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            ملاحظاتي
+                        </button>
+                        <button onclick="switchTab('resources')" class="tab-button pb-3 px-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            المصادر
+                        </button>
+                        <button onclick="switchTab('discussion')" class="tab-button pb-3 px-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            النقاش
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="content-tab" class="tab-content">
+                    {% if current_lesson.content %}
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg prose dark:prose-invert max-w-none">
+                        {{ current_lesson.content|safe|linebreaks }}
+                    </div>
+                    {% else %}
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+                        <i class="fas fa-file-alt text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                        <p class="text-gray-500 dark:text-gray-400">لا يوجد محتوى نصي لهذا الدرس</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div id="notes-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <textarea id="lessonNotes" rows="8" 
+                                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                  placeholder="اكتب ملاحظاتك هنا..."></textarea>
+                        <div class="flex justify-end mt-3">
+                            <button onclick="saveNotes()" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                                <i class="fas fa-save ml-2"></i>
+                                حفظ الملاحظات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resources-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <h3 class="font-bold mb-4">المصادر والمراجع</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                    <span>ملخص الدرس PDF</span>
+                                </div>
+                                <a href="#" class="text-primary-600 hover:text-primary-700">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </li>
+                            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-file-code text-blue-500 text-xl"></i>
+                                    <span>أمثلة برمجية</span>
+                                </div>
+                                <a href="#" class="text-primary-600 hover:text-primary-700">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="discussion-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <div class="text-center py-8">
+                            <i class="fas fa-comments text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400">قريباً...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Navigation -->
+                <div class="mt-8 flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <div>
+                        {% if prev_lesson %}
+                        <a href="{% url 'courses:lesson_view' course.slug prev_lesson.id %}" 
+                           class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition transform hover:-translate-x-1 group">
+                            <i class="fas fa-chevron-right ml-2 group-hover:animate-pulse"></i>
+                            <span class="hidden sm:inline">الدرس السابق</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="markLessonComplete({{ current_lesson.id }})" 
+                                class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center gap-2 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="hidden sm:inline">تحديد كمكتمل</span>
+                        </button>
+                        
+                        <button onclick="toggleBookmark({{ current_lesson.id }})" 
+                                class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center tooltip" data-tooltip="حفظ للرجوع">
+                            <i class="far fa-bookmark text-gray-600 dark:text-gray-400"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        {% if next_lesson %}
+                        <a href="{% url 'courses:lesson_view' course.slug next_lesson.id %}" 
+                           class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:translate-x-1 group">
+                            <span class="hidden sm:inline">الدرس التالي</span>
+                            <i class="fas fa-chevron-left mr-2 group-hover:animate-pulse"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Course Overview Modal -->
+<div id="courseOverviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">نظرة عامة على الدورة</h3>
+            <button onclick="closeOverview()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <p class="text-gray-600 dark:text-gray-400">{{ course.description|truncatechars:300 }}</p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <span class="text-sm text-gray-500">إجمالي الوحدات</span>
+                    <p class="text-xl font-bold">{{ modules|length }}</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <span class="text-sm text-gray-500">إجمالي الدروس</span>
+                    <p class="text-xl font-bold">{{ total_lessons }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentSpeed = 1;
+    let video = document.getElementById('lessonVideo');
+
+    // ==================== Sidebar Functions ====================
+    function toggleSidebar() {
+        const sidebar = document.querySelector('#courseSidebar');
+        sidebar.classList.toggle('hidden');
+        if (!sidebar.classList.contains('hidden')) {
+            sidebar.classList.add('animate__animated', 'animate__fadeInRight');
+        }
+    }
+
+    // ==================== Module Accordion ====================
+    function toggleModule(moduleId) {
+        const moduleContent = document.getElementById(`module-${moduleId}`);
+        const chevron = document.getElementById(`chevron-${moduleId}`);
+        
+        if (moduleContent.classList.contains('hidden')) {
+            moduleContent.classList.remove('hidden');
+            chevron.style.transform = 'rotate(180deg)';
+            
+            // Auto-open first lesson of module
+            const firstLesson = moduleContent.querySelector('a');
+            if (firstLesson) {
+                setTimeout(() => {
+                    firstLesson.classList.add('bg-primary-50', 'dark:bg-primary-900/20');
+                }, 300);
+            }
+        } else {
+            moduleContent.classList.add('hidden');
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // ==================== Lesson Search ====================
+    document.getElementById('lessonSearch')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const lessons = document.querySelectorAll('.lesson-item');
+        
+        lessons.forEach(lesson => {
+            const title = lesson.dataset.lessonTitle.toLowerCase();
+            if (title.includes(searchTerm)) {
+                lesson.style.display = 'flex';
+                lesson.classList.add('animate__animated', 'animate__fadeIn');
+            } else {
+                lesson.style.display = 'none';
+            }
+        });
+        
+        // Show/hide modules based on visible lessons
+        document.querySelectorAll('.module-card').forEach(module => {
+            const visibleLessons = module.querySelectorAll('.lesson-item[style="display: flex;"]').length;
+            if (visibleLessons === 0 && searchTerm !== '') {
+                module.style.display = 'none';
+            } else {
+                module.style.display = 'block';
+            }
+        });
+    });
+
+    // ==================== Video Controls ====================
+    function setPlaybackSpeed(speed) {
+        if (video) {
+            video.playbackRate = speed;
+            currentSpeed = speed;
+            showToast(`سرعة التشغيل: ${speed}x`, 'info');
+        }
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    // ==================== Tab Switching ====================
+    function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active', 'border-primary-600', 'text-primary-600');
+            btn.classList.add('text-gray-500');
+        });
+        event.target.classList.add('active', 'border-primary-600', 'text-primary-600');
+        
+        // Show selected tab content
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    }
+
+    // ==================== Notes Functions ====================
+    function toggleNotes() {
+        switchTab('notes');
+        document.querySelector('[onclick="switchTab(\'notes\')"]').click();
+    }
+
+    function saveNotes() {
+        const notes = document.getElementById('lessonNotes').value;
+        localStorage.setItem(`lesson_notes_{{ current_lesson.id }}`, notes);
+        showToast('✅ تم حفظ الملاحظات', 'success');
+    }
+
+    // Load saved notes
+    window.addEventListener('load', function() {
+        const savedNotes = localStorage.getItem(`lesson_notes_{{ current_lesson.id }}`);
+        if (savedNotes) {
+            document.getElementById('lessonNotes').value = savedNotes;
+        }
+    });
+
+    // ==================== Bookmark Functions ====================
+    function toggleBookmark(lessonId) {
+        const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        const index = bookmarks.indexOf(lessonId);
+        
+        if (index === -1) {
+            bookmarks.push(lessonId);
+            showToast('📌 تم حفظ الدرس', 'success');
+        } else {
+            bookmarks.splice(index, 1);
+            showToast('تم إزالة الدرس', 'info');
+        }
+        
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+    }
+
+    // ==================== Video Progress ====================
+    if (video) {
+        let saveTimeout;
+        
+        video.addEventListener('timeupdate', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                const position = Math.floor((video.currentTime / video.duration) * 100);
+                
+                fetch('/ajax/update-lesson-progress/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `lesson_id={{ current_lesson.id }}&position=${position}`
+                }).then(response => {
+                    if (response.ok) {
+                        // Update progress indicator
+                        const progressBadge = document.querySelector('.bg-primary-100');
+                        if (progressBadge) {
+                            progressBadge.textContent = `${position}% مكتمل`;
+                        }
+                    }
+                });
+            }, 3000);
+        });
+
+        // Auto-mark as complete when video ends
+        video.addEventListener('ended', function() {
+            if (confirm('🎉 هل تريد تحديد هذا الدرس كمكتمل؟')) {
+                markLessonComplete({{ current_lesson.id }});
+            }
+        });
+    }
+
+    // ==================== Mark Lesson Complete ====================
+    function markLessonComplete(lessonId) {
+        fetch(`/lesson/${lessonId}/complete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showToast('✅ تم إكمال الدرس بنجاح', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            }
+        });
+    }
+
+    // ==================== Modal Functions ====================
+    function showCourseOverview() {
+        document.getElementById('courseOverviewModal').classList.remove('hidden');
+        document.getElementById('courseOverviewModal').classList.add('flex');
+    }
+
+    function closeOverview() {
+        document.getElementById('courseOverviewModal').classList.add('hidden');
+        document.getElementById('courseOverviewModal').classList.remove('flex');
+    }
+
+    // ==================== Toast Notification ====================
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate__animated animate__fadeInDown ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 
+            'bg-blue-500'
+        } text-white`;
+        toast.innerHTML = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('animate__fadeOutUp');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
+
+    // ==================== Keyboard Shortcuts ====================
+    document.addEventListener('keydown', function(e) {
+        // Left arrow - previous lesson
+        if (e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey) {
+            const prevLink = document.querySelector('a[href*="lesson"][class*="prev"]');
+            if (prevLink) window.location.href = prevLink.href;
+        }
+        
+        // Right arrow - next lesson
+        if (e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey) {
+            const nextLink = document.querySelector('a[href*="lesson"][class*="next"]');
+            if (nextLink) window.location.href = nextLink.href;
+        }
+        
+        // Space - play/pause video
+        if (e.key === ' ' && video && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+        
+        // F - fullscreen
+        if (e.key === 'f' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toggleFullscreen();
+        }
+        
+        // M - toggle sidebar
+        if (e.key === 'm' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toggleSidebar();
+        }
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('courseOverviewModal');
+        if (event.target === modal) {
+            closeOverview();
+        }
+    });
+
+    // Auto-open first module on load
+    window.addEventListener('load', function() {
+        const firstModule = document.querySelector('[id^="module-"]');
+        if (firstModule && firstModule.classList.contains('hidden')) {
+            const moduleId = firstModule.id.split('-')[1];
+            toggleModule(moduleId);
+        }
+        
+        // Show welcome toast
+        setTimeout(() => {
+            showToast('👋 استمتع بالتعلم!', 'info');
+        }, 2000);
+    });
+</script>
+{% endblock %}

@@ -72,6 +72,7 @@ class Course(models.Model):
     description = models.TextField()
     short_description = models.CharField(max_length=200, blank=True)
     image = models.ImageField(upload_to='courses/')
+    vidost_url = models.URLField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='courses')
     instructor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses_taught')
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -81,6 +82,7 @@ class Course(models.Model):
     is_active = models.BooleanField(default=True)
     students_count = models.IntegerField(default=0)
     rating = models.FloatField(default=0.0)
+    views_count = models.IntegerField(default=0)  # أضف هذا السطر
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

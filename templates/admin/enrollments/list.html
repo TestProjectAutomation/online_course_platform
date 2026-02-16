@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة التسجيلات - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">إدارة التسجيلات</h1>
+            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة تسجيلات الطلاب في الدورات</p>
+        </div>
+        <a href="{% url 'courses:admin_enrollment_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
+            <i class="fas fa-plus-circle ml-2"></i>
+            تسجيل يدوي جديد
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <p class="text-gray-600 dark:text-gray-400 text-sm">الإجمالي</p>
+            <h3 class="text-2xl font-bold">{{ total_enrollments|default:'0' }}</h3>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-xl shadow-lg p-6">
+            <p class="text-green-600 dark:text-green-400 text-sm">مكتمل</p>
+            <h3 class="text-2xl font-bold text-green-600">{{ completed_count|default:'0' }}</h3>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-lg p-6">
+            <p class="text-blue-600 dark:text-blue-400 text-sm">مسجل</p>
+            <h3 class="text-2xl font-bold text-blue-600">{{ enrolled_count|default:'0' }}</h3>
+        </div>
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow-lg p-6">
+            <p class="text-yellow-600 dark:text-yellow-400 text-sm">معلق</p>
+            <h3 class="text-2xl font-bold text-yellow-600">{{ pending_count|default:'0' }}</h3>
+        </div>
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-xl shadow-lg p-6">
+            <p class="text-red-600 dark:text-red-400 text-sm">ملغي</p>
+            <h3 class="text-2xl font-bold text-red-600">{{ cancelled_count|default:'0' }}</h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">بحث</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" 
+                       placeholder="اسم الطالب، عنوان الدورة..." 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">الدورة</label>
+                <select name="course" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">جميع الدورات</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:'i' %}selected{% endif %}>
+                        {{ course.title|truncatechars:30 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">الحالة</label>
+                <select name="status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">جميع الحالات</option>
+                    {% for status_value, status_name in status_choices %}
+                    <option value="{{ status_value }}" {% if request.GET.status == status_value %}selected{% endif %}>
+                        {{ status_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <i class="fas fa-search ml-2"></i>
+                    بحث
+                </button>
+                <a href="{% url 'courses:admin_enrollments' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    <i class="fas fa-redo-alt"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Enrollments Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الطالب</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الدورة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">تاريخ التسجيل</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الحالة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">التقدم</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                {% if enrollment.user.avatar %}
+                                <img src="{{ enrollment.user.avatar.url }}" alt="{{ enrollment.user.get_full_name }}" class="w-8 h-8 rounded-full object-cover">
+                                {% else %}
+                                <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                    <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ enrollment.user.first_name|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-2">
+                                {% if enrollment.course.image %}
+                                <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}" class="w-10 h-10 rounded object-cover">
+                                {% endif %}
+                                <span class="text-sm">{{ enrollment.course.title|truncatechars:30 }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-sm">{{ enrollment.enrolled_at|date:'Y-m-d' }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 text-xs rounded-full 
+                                {% if enrollment.status == 'enrolled' %}bg-green-100 text-green-600
+                                {% elif enrollment.status == 'completed' %}bg-blue-100 text-blue-600
+                                {% elif enrollment.status == 'pending' %}bg-yellow-100 text-yellow-600
+                                {% else %}bg-red-100 text-red-600{% endif %}">
+                                {{ enrollment.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-primary-600 rounded-full h-2" style="width: {{ enrollment.progress }}%"></div>
+                                </div>
+                                <span class="text-sm">{{ enrollment.progress }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex gap-2">
+                                <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if enrollment.status == 'pending' %}
+                                <button onclick="updateEnrollmentStatus({{ enrollment.id }}, 'enrolled')" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="قبول">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button onclick="updateEnrollmentStatus({{ enrollment.id }}, 'cancelled')" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="رفض">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-12">
+                            <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">لا توجد تسجيلات</h3>
+                            <p class="text-gray-600 dark:text-gray-400">لم يتم العثور على أي تسجيلات</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if enrollments.has_other_pages %}
+        <div class="flex justify-center items-center gap-2 p-6 border-t border-gray-200 dark:border-gray-700">
+            {% if enrollments.has_previous %}
+            <a href="?page={{ enrollments.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+
+            {% for i in enrollments.paginator.page_range %}
+                {% if enrollments.number == i %}
+                <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ i }}</span>
+                {% elif i > enrollments.number|add:'-3' and i < enrollments.number|add:'3' %}
+                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                    {{ i }}
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if enrollments.has_next %}
+            <a href="?page={{ enrollments.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateEnrollmentStatus(enrollmentId, status) {
+    const action = status === 'enrolled' ? 'قبول' : 'رفض';
+    if (confirm(`هل أنت متأكد من ${action} هذا التسجيل؟`)) {
+        fetch(`/admin/enrollments/${enrollmentId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `status=${status}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

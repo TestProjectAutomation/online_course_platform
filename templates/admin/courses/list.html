@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الدورات - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">إدارة الدورات</h1>
+            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة جميع الدورات التدريبية</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'courses:admin_course_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
+                <i class="fas fa-plus-circle ml-2"></i>
+                إضافة دورة جديدة
+            </a>
+            <a href="{% url 'courses:admin_export_courses' %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center">
+                <i class="fas fa-download ml-2"></i>
+                تصدير
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي الدورات</p>
+                    <h3 class="text-3xl font-bold">{{ total_courses|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-book-open text-primary-600 dark:text-primary-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">الدورات النشطة</p>
+                    <h3 class="text-3xl font-bold">{{ active_courses|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">الدورات المميزة</p>
+                    <h3 class="text-3xl font-bold">{{ featured_courses|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-star text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">بحث</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="اسم الدورة، وصف..." 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">التصنيف</label>
+                <select name="category" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">جميع التصنيفات</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'i' %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">المدرب</label>
+                <select name="instructor" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">جميع المدربين</option>
+                    {% for instructor in instructors %}
+                    <option value="{{ instructor.id }}" {% if request.GET.instructor == instructor.id|stringformat:'i' %}selected{% endif %}>
+                        {{ instructor.get_full_name|default:instructor.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">الحالة</label>
+                <select name="status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">الكل</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <i class="fas fa-search ml-2"></i>
+                    بحث
+                </button>
+                <a href="{% url 'courses:admin_courses' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    <i class="fas fa-redo-alt"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Courses Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الدورة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">التصنيف</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">المدرب</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">السعر</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الطلاب</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">التقييم</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الحالة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">مميزة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                                    {% if course.image %}
+                                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                        <i class="fas fa-image text-primary-600 dark:text-primary-400"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="font-semibold">{{ course.title|truncatechars:30 }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-500">{{ course.created_at|date:'Y-m-d' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">{{ course.category.name }}</td>
+                        <td class="py-4 px-6">{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                        <td class="py-4 px-6 font-bold text-primary-600">${{ course.price }}</td>
+                        <td class="py-4 px-6">{{ course.students_count }}</td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-1">
+                                <span class="font-semibold">{{ course.rating }}</span>
+                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                <span class="text-xs text-gray-500 dark:text-gray-500">({{ course.reviews.count }})</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 text-xs rounded-full {% if course.is_active %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                                {{ course.is_active|yesno:'نشط,غير نشط' }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if course.is_featured %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex gap-2">
+                                <a href="{% url 'courses:admin_course_detail' course.id %}" class="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'courses:admin_course_edit' course.id %}" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button onclick="toggleCourseStatus({{ course.id }})" class="p-2 text-{% if course.is_active %}yellow{% else %}green{% endif %}-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition" title="{% if course.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                                    <i class="fas fa-{% if course.is_active %}ban{% else %}check-circle{% endif %}"></i>
+                                </button>
+                                <button onclick="toggleFeatured({{ course.id }})" class="p-2 text-{% if course.is_featured %}yellow{% else %}gray{% endif %}-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition" title="{% if course.is_featured %}إلغاء التميز{% else %}تمييز{% endif %}">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <a href="{% url 'courses:admin_course_delete' course.id %}" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-12">
+                            <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">لا توجد دورات</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-6">لم يتم العثور على أي دورات</p>
+                            <a href="{% url 'courses:admin_course_create' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                                <i class="fas fa-plus-circle ml-2"></i>
+                                إضافة دورة جديدة
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if courses.has_other_pages %}
+        <div class="flex justify-center items-center gap-2 p-6 border-t border-gray-200 dark:border-gray-700">
+            {% if courses.has_previous %}
+            <a href="?page={{ courses.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+
+            {% for i in courses.paginator.page_range %}
+                {% if courses.number == i %}
+                <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ i }}</span>
+                {% elif i > courses.number|add:'-3' and i < courses.number|add:'3' %}
+                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                    {{ i }}
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if courses.has_next %}
+            <a href="?page={{ courses.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleCourseStatus(courseId) {
+    if (confirm('هل أنت متأكد من تغيير حالة الدورة؟')) {
+        fetch(`/admin/courses/${courseId}/toggle-active/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+
+function toggleFeatured(courseId) {
+    if (confirm('هل أنت متأكد من تغيير حالة التميز؟')) {
+        fetch(`/admin/courses/${courseId}/toggle-featured/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

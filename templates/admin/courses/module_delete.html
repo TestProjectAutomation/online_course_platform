@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف وحدة - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-md">
+    <!-- Confirmation Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+        <div class="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-600 dark:text-red-400"></i>
+        </div>
+        
+        <h1 class="text-2xl font-bold mb-2">تأكيد الحذف</h1>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+            هل أنت متأكد من حذف الوحدة 
+            <span class="font-bold text-red-600 dark:text-red-400 block mt-2">
+                "{{ module.title }}"
+            </span>
+        </p>
+        
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-6 text-right">
+            <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                <i class="fas fa-info-circle ml-2"></i>
+                تحذير: هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع الدروس المرتبطة بهذه الوحدة.
+            </p>
+            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
+                عدد الدروس المرتبطة: {{ module.lessons.count }}
+            </p>
+        </div>
+        
+        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+            <h3 class="font-semibold">{{ module.title }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ module.description|default:'لا يوجد وصف'|truncatechars:50 }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">الترتيب: {{ module.order }}</p>
+        </div>
+        
+        <form method="post" class="flex gap-3">
+            {% csrf_token %}
+            <button type="submit" class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-semibold">
+                <i class="fas fa-trash ml-2"></i>
+                نعم، احذف
+            </button>
+            <a href="{% url 'courses:admin_course_detail' module.course.id %}" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                <i class="fas fa-times ml-2"></i>
+                إلغاء
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

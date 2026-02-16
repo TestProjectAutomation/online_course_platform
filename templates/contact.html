@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}اتصل بنا - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">اتصل بنا</h1>
+        <p class="text-xl max-w-3xl mx-auto text-white/90">نحن هنا للإجابة على استفساراتك ومساعدتك في أي وقت</p>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="py-20 bg-white dark:bg-gray-800">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Contact Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-8 sticky top-24">
+                    <h2 class="text-2xl font-bold mb-6">معلومات الاتصال</h2>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-map-marker-alt text-xl text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">العنوان</h3>
+                                <p class="text-gray-600 dark:text-gray-400">القاهرة، مصر</p>
+                                <p class="text-gray-600 dark:text-gray-400">شارع النصر، مبنى ١٢٣</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-phone-alt text-xl text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">الهاتف</h3>
+                                <a href="tel:{{ CONTACT_PHONE }}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition" dir="ltr">
+                                    {{ CONTACT_PHONE }}
+                                </a>
+                                <p class="text-sm text-gray-500 dark:text-gray-500">طوال أيام الأسبوع - ٩ص إلى ٥م</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-envelope text-xl text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">البريد الإلكتروني</h3>
+                                <a href="mailto:{{ CONTACT_EMAIL }}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                                    {{ CONTACT_EMAIL }}
+                                </a>
+                                <p class="text-sm text-gray-500 dark:text-gray-500">نرد خلال ٢٤ ساعة</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-clock text-xl text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">ساعات العمل</h3>
+                                <p class="text-gray-600 dark:text-gray-400">السبت - الخميس: ٩ص - ٩م</p>
+                                <p class="text-gray-600 dark:text-gray-400">الجمعة: مغلق</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-600">
+                        <h3 class="font-semibold mb-4">تابعنا على</h3>
+                        <div class="flex gap-3">
+                            <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                                <i class="fab fa-facebook-f text-primary-600"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                                <i class="fab fa-twitter text-primary-600"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                                <i class="fab fa-linkedin-in text-primary-600"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition">
+                                <i class="fab fa-youtube text-primary-600"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6">أرسل لنا رسالة</h2>
+                    
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ form.name.label }}
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium mb-2">
+                                {{ form.subject.label }}
+                            </label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.subject.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.message.id_for_label }}" class="block text-sm font-medium mb-2">
+                                {{ form.message.label }}
+                            </label>
+                            {{ form.message }}
+                            {% if form.message.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.message.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold shadow-lg">
+                                <i class="fas fa-paper-plane ml-2"></i>
+                                إرسال الرسالة
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Map (Optional) -->
+                    <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold mb-4">موقعنا</h3>
+                        <div class="rounded-xl overflow-hidden h-64 bg-gray-200 dark:bg-gray-700">
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13819.220785162732!2d31.2357116!3d30.0444196!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x145840c8d9c9d9c9%3A0x9c9c9c9c9c9c9c9c!2sCairo%2C%20Egypt!5e0!3m2!1sen!2seg!4v1620000000000!5m2!1sen!2seg" 
+                                width="100%" 
+                                height="100%" 
+                                style="border:0;" 
+                                allowfullscreen="" 
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Preview -->
+<section class="py-20 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">أسئلة شائعة</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-2">هل لديك استفسار آخر؟</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">قد تجد إجابتك في الأسئلة الشائعة</p>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div class="space-y-4">
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <h3 class="font-semibold mb-2">كيف يمكنني التسجيل في دورة؟</h3>
+                        <p class="text-gray-600 dark:text-gray-400">يمكنك التسجيل بعد إنشاء حساب على المنصة، ثم اختيار الدورة المناسبة والضغط على "اشترك الآن".</p>
+                    </div>
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <h3 class="font-semibold mb-2">هل الشهادات معتمدة؟</h3>
+                        <p class="text-gray-600 dark:text-gray-400">نعم، جميع الشهادات صادرة عن المنصة ومعتمدة من قبل مؤسسات تعليمية مرموقة.</p>
+                    </div>
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <h3 class="font-semibold mb-2">ما هي طرق الدفع المتاحة؟</h3>
+                        <p class="text-gray-600 dark:text-gray-400">يمكنك الدفع عبر بطاقات الائتمان، باي بال، أو التحويل البنكي.</p>
+                    </div>
+                </div>
+                <div class="text-center mt-6">
+                    <a href="{% url 'courses:faq' %}" class="text-primary-600 hover:text-primary-700 font-semibold">
+                        عرض جميع الأسئلة الشائعة
+                        <i class="fas fa-arrow-left mr-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة المستخدمين - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">إدارة المستخدمين</h1>
+            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة جميع المستخدمين المسجلين في المنصة</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'courses:admin_user_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
+                <i class="fas fa-user-plus ml-2"></i>
+                إضافة مستخدم جديد
+            </a>
+            <a href="{% url 'courses:admin_export_users' %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center">
+                <i class="fas fa-download ml-2"></i>
+                تصدير
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي المستخدمين</p>
+                    <h3 class="text-3xl font-bold">{{ total_users|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-primary-600 dark:text-primary-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">الطلاب</p>
+                    <h3 class="text-3xl font-bold">{{ students_count|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-graduate text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">المدربين</p>
+                    <h3 class="text-3xl font-bold">{{ instructors_count|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chalkboard-teacher text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">المشرفين</p>
+                    <h3 class="text-3xl font-bold">{{ admins_count|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-crown text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">بحث</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" 
+                       placeholder="اسم، بريد، رقم..." 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">الدور</label>
+                <select name="role" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">جميع الأدوار</option>
+                    <option value="user" {% if request.GET.role == 'user' %}selected{% endif %}>طالب</option>
+                    <option value="instructor" {% if request.GET.role == 'instructor' %}selected{% endif %}>مدرب</option>
+                    <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>مشرف</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">الحالة</label>
+                <select name="status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                    <option value="">الكل</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <i class="fas fa-search ml-2"></i>
+                    بحث
+                </button>
+                <a href="{% url 'courses:admin_users' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    <i class="fas fa-redo-alt"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">المستخدم</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">معلومات الاتصال</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الدور</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">تاريخ التسجيل</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الحالة</th>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_item in users %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 {% if user_item.is_superuser %}bg-purple-50/30 dark:bg-purple-900/10{% endif %}">
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                {% if user_item.avatar %}
+                                <img src="{{ user_item.avatar.url }}" alt="{{ user_item.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+                                {% else %}
+                                <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                    <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ user_item.first_name|first|upper }}{{ user_item.last_name|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-semibold flex items-center gap-2">
+                                        {{ user_item.get_full_name|default:user_item.username }}
+                                        {% if user_item.is_superuser %}
+                                        <span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 text-xs rounded-full font-bold">
+                                            <i class="fas fa-crown text-xs ml-1"></i>
+                                            SUPER
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-500">@{{ user_item.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="text-sm">{{ user_item.email }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-500">{{ user_item.phone_number|default:'لا يوجد رقم' }}</div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 text-xs rounded-full inline-flex items-center gap-1
+                                {% if user_item.is_superuser %}bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400
+                                {% elif user_item.role == 'admin' %}bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400
+                                {% elif user_item.role == 'instructor' %}bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400
+                                {% else %}bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400{% endif %}">
+                                {% if user_item.is_superuser %}
+                                <i class="fas fa-crown text-xs"></i>
+                                سوبر أدمن
+                                {% else %}
+                                {{ user_item.get_role_display }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-sm">{{ user_item.date_joined|date:'Y-m-d' }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 text-xs rounded-full {% if user_item.is_active %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                                {{ user_item.is_active|yesno:'نشط,غير نشط' }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex gap-2">
+                                <a href="{% url 'courses:admin_user_detail' user_item.id %}" class="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'courses:admin_user_edit' user_item.id %}" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <!-- زر تغيير الدور (Modal) -->
+                                <button onclick="openRoleModal({{ user_item.id }}, '{{ user_item.username }}', '{{ user_item.role }}', {{ user_item.is_superuser|lower }})" 
+                                        class="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition" 
+                                        title="تغيير الدور"
+                                        {% if user_item.is_superuser %}disabled{% endif %}>
+                                    <i class="fas fa-user-tag"></i>
+                                </button>
+                                <button onclick="toggleUserStatus({{ user_item.id }})" class="p-2 text-{% if user_item.is_active %}yellow{% else %}green{% endif %}-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition" title="{% if user_item.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                                    <i class="fas fa-{% if user_item.is_active %}ban{% else %}check-circle{% endif %}"></i>
+                                </button>
+                                <a href="{% url 'courses:admin_user_delete' user_item.id %}" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-12">
+                            <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                                <i class="fas fa-users-slash"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">لا يوجد مستخدمين</h3>
+                            <p class="text-gray-600 dark:text-gray-400">لم يتم العثور على أي مستخدمين</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if users.has_other_pages %}
+        <div class="flex justify-center items-center gap-2 p-6 border-t border-gray-200 dark:border-gray-700">
+            {% if users.has_previous %}
+            <a href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+
+            {% for i in users.paginator.page_range %}
+                {% if users.number == i %}
+                <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ i }}</span>
+                {% elif i > users.number|add:'-3' and i < users.number|add:'3' %}
+                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                    {{ i }}
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if users.has_next %}
+            <a href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal تغيير الدور -->
+<div id="roleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-user-tag text-yellow-600"></i>
+                    تغيير دور المستخدم
+                </h3>
+                <button onclick="closeRoleModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="modalUserInfo" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6">
+                <p class="text-sm text-gray-600 dark:text-gray-400">المستخدم:</p>
+                <p class="font-bold text-lg" id="modalUsername"></p>
+            </div>
+            
+            <form id="roleForm" method="post" action="">
+                {% csrf_token %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">اختر الدور الجديد</label>
+                    <select name="role" id="roleSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                        <option value="user">طالب</option>
+                        <option value="instructor">مدرب</option>
+                        <option value="admin">مشرف</option>
+                    </select>
+                </div>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-6">
+                    <p class="text-sm text-yellow-800 dark:text-yellow-200 flex items-start gap-2">
+                        <i class="fas fa-info-circle mt-0.5"></i>
+                        <span>تغيير دور المستخدم سيؤثر على صلاحياته في المنصة. المستخدمون السوبر أدمن لا يمكن تعديل دورهم.</span>
+                    </p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-semibold">
+                        <i class="fas fa-save ml-2"></i>
+                        حفظ التغييرات
+                    </button>
+                    <button type="button" onclick="closeRoleModal()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
+                        <i class="fas fa-times ml-2"></i>
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentUserId = null;
+
+function openRoleModal(userId, username, currentRole, isSuperuser) {
+    if (isSuperuser) {
+        showNotification('لا يمكن تعديل دور المستخدم السوبر أدمن', 'error');
+        return;
+    }
+    
+    currentUserId = userId;
+    document.getElementById('modalUsername').textContent = username;
+    document.getElementById('roleSelect').value = currentRole;
+    document.getElementById('roleForm').action = `/admin/users/${userId}/change-role/`;
+    document.getElementById('roleModal').classList.remove('hidden');
+    document.getElementById('roleModal').classList.add('flex');
+}
+
+function closeRoleModal() {
+    document.getElementById('roleModal').classList.add('hidden');
+    document.getElementById('roleModal').classList.remove('flex');
+    currentUserId = null;
+}
+
+function toggleUserStatus(userId) {
+    if (confirm('هل أنت متأكد من تغيير حالة المستخدم؟')) {
+        fetch(`/admin/users/${userId}/toggle-active/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate-slideDown ${
+        type === 'error' ? 'bg-red-500' : 'bg-green-500'
+    } text-white`;
+    notification.innerHTML = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('roleModal');
+    if (event.target === modal) {
+        closeRoleModal();
+    }
+});
+</script>
+
+<style>
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+.animate-slideDown {
+    animation: slideDown 0.3s ease-out;
+}
+</style>
+{% endblock %}

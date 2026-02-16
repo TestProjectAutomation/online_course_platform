@@ -1,180 +1,91 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}تقييم {{ course.title }}{% endblock %}
+{% block title %}إضافة تقييم - {{ course.title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">تقييم الدورة: {{ course.title }}</h4>
-                </div>
-                <div class="card-body">
-                    <!-- معلومات سريعة عن الدورة -->
-                    <div class="course-info mb-4 p-3 bg-light rounded">
-                        <div class="row">
-                            <div class="col-md-4">
-                                {% if course.image %}
-                                <img src="{{ course.image.url }}" class="img-fluid rounded" alt="{{ course.title }}">
-                                {% endif %}
-                            </div>
-                            <div class="col-md-8">
-                                <h5>{{ course.title }}</h5>
-                                <p class="text-muted">{{ course.short_description|truncatechars:100 }}</p>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge bg-info me-2">{{ course.get_level_display }}</span>
-                                    <span class="badge bg-warning me-2">
-                                        <i class="fas fa-star text-warning"></i> {{ course.rating|floatformat:1 }}
-                                    </span>
-                                    <span class="text-muted">
-                                        <i class="fas fa-users"></i> {{ course.students_count }} طالب
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">إضافة تقييم</h1>
+        <p class="text-gray-600 dark:text-gray-400">للدورة: {{ course.title }}</p>
+    </div>
 
-                    <!-- نموذج التقييم -->
-                    <form method="post" id="reviewForm">
-                        {% csrf_token %}
-                        
-                        <!-- حقل التقييم بالنجوم -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">تقييمك للدورة <span class="text-danger">*</span></label>
-                            <div class="rating-stars">
-                                <div class="stars" id="stars">
-                                    {% for i in "54321"|make_list %}
-                                    <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" 
-                                           {% if form.rating.value == i %}checked{% endif %} required>
-                                    <label for="star{{ i }}" class="star-label">
-                                        <i class="fas fa-star"></i>
-                                    </label>
-                                    {% endfor %}
-                                </div>
-                                <div class="rating-text mt-2" id="ratingText">
-                                    {% if form.rating.value %}
-                                        {% if form.rating.value == '5' %}ممتاز{% elif form.rating.value == '4' %}جيد جداً{% elif form.rating.value == '3' %}جيد{% elif form.rating.value == '2' %}مقبول{% else %}ضعيف{% endif %}
-                                    {% else %}
-                                        اختر تقييمك
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% if form.rating.errors %}
-                            <div class="text-danger">{{ form.rating.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- حقل التعليق -->
-                        <div class="mb-4">
-                            <label for="{{ form.comment.id_for_label }}" class="form-label fw-bold">
-                                تعليقك على الدورة
-                            </label>
-                            <textarea name="{{ form.comment.name }}" 
-                                      id="{{ form.comment.id_for_label }}" 
-                                      class="form-control {% if form.comment.errors %}is-invalid{% endif %}"
-                                      rows="5"
-                                      placeholder="اكتب رأيك في الدورة...">{% if form.comment.value %}{{ form.comment.value }}{% endif %}</textarea>
-                            {% if form.comment.errors %}
-                            <div class="invalid-feedback">{{ form.comment.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- إرشادات التقييم -->
-                        <div class="alert alert-info mb-4">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>إرشادات التقييم:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>كن موضوعياً في تقييمك</li>
-                                <li>تجنب استخدام لغة غير لائقة</li>
-                                <li>ركز على محتوى الدورة وجودتها</li>
-                                <li>يمكنك تعديل تقييمك في أي وقت</li>
-                            </ul>
-                        </div>
-                        
-                        <!-- أزرار الإجراء -->
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> إلغاء
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> 
-                                {% if existing_review %}تحديث التقييم{% else %}نشر التقييم{% endif %}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <!-- Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
             </div>
-        </div>
+            {% endif %}
+
+            <!-- Rating Stars -->
+            <div>
+                <label class="block text-sm font-medium mb-2">التقييم <span class="text-red-500">*</span></label>
+                <div class="flex items-center gap-2 rating-stars">
+                    {% for i in "12345"|make_list %}
+                    <button type="button" onclick="setRating({{ forloop.counter }})" class="text-3xl text-gray-300 hover:text-yellow-400 transition star" data-rating="{{ forloop.counter }}">
+                        <i class="far fa-star"></i>
+                    </button>
+                    {% endfor %}
+                </div>
+                {{ form.rating }}
+                {% if form.rating.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.rating.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Comment -->
+            <div>
+                <label for="{{ form.comment.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.comment.label }}
+                    {% if form.comment.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.comment.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                    <i class="fas fa-save ml-2"></i>
+                    حفظ التقييم
+                </button>
+                <a href="{% url 'courses:course_detail' course.slug %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                    <i class="fas fa-times ml-2"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 
-{% block extra_css %}
-<style>
-    .rating-stars {
-        direction: rtl;
-        unicode-bidi: bidi-override;
-    }
-    
-    .stars {
-        display: inline-flex;
-        flex-direction: row-reverse;
-    }
-    
-    .stars input {
-        display: none;
-    }
-    
-    .star-label {
-        font-size: 2rem;
-        color: #ddd;
-        cursor: pointer;
-        transition: color 0.2s;
-        margin: 0 2px;
-    }
-    
-    .star-label:hover,
-    .star-label:hover ~ .star-label,
-    .stars input:checked ~ .star-label {
-        color: #ffc107;
-    }
-    
-    .rating-text {
-        font-size: 1.1rem;
-        color: #666;
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script>
-    // تحديث نص التقييم عند اختيار النجوم
-    document.querySelectorAll('.stars input').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const ratingText = document.getElementById('ratingText');
-            const value = parseInt(this.value);
-            
-            const texts = {
-                5: 'ممتاز',
-                4: 'جيد جداً',
-                3: 'جيد',
-                2: 'مقبول',
-                1: 'ضعيف'
-            };
-            
-            ratingText.textContent = texts[value] || 'اختر تقييمك';
+    function setRating(rating) {
+        document.getElementById('id_rating').value = rating;
+        const stars = document.querySelectorAll('.rating-stars .star i');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('fas');
+                star.classList.add('far');
+            }
         });
-    });
-    
-    // التحقق من صحة النموذج قبل الإرسال
-    document.getElementById('reviewForm').addEventListener('submit', function(e) {
-        const rating = document.querySelector('input[name="rating"]:checked');
-        if (!rating) {
-            e.preventDefault();
-            alert('يرجى اختيار تقييم للدورة');
-        }
-    });
+    }
+
+    // Set initial rating if editing
+    {% if form.rating.value %}
+    setRating({{ form.rating.value }});
+    {% endif %}
 </script>
-{% endblock %}
 {% endblock %}

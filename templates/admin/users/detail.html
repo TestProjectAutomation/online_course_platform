@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ user.get_full_name|default:user.username }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">ملف المستخدم</h1>
+            <p class="text-gray-600 dark:text-gray-400">عرض وتعديل معلومات المستخدم</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'courses:admin_user_edit' user.id %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
+                <i class="fas fa-edit ml-2"></i>
+                تعديل
+            </a>
+            <a href="{% url 'courses:admin_users' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center">
+                <i class="fas fa-arrow-right ml-2"></i>
+                عودة
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- User Info Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sticky top-24">
+                <div class="text-center mb-6">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-primary-500">
+                    {% else %}
+                    <div class="w-32 h-32 rounded-full mx-auto mb-4 bg-primary-100 dark:bg-primary-900 flex items-center justify-center border-4 border-primary-500">
+                        <span class="text-4xl text-primary-600 dark:text-primary-400 font-bold">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <h2 class="text-2xl font-bold">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400">@{{ user.username }}</p>
+                    
+                    <div class="mt-4 flex justify-center gap-2">
+                        <span class="px-4 py-2 text-sm rounded-full 
+                            {% if user.role == 'admin' %}bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400
+                            {% elif user.role == 'instructor' %}bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400
+                            {% else %}bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400{% endif %}">
+                            <i class="fas 
+                                {% if user.role == 'admin' %}fa-crown
+                                {% elif user.role == 'instructor' %}fa-chalkboard-teacher
+                                {% else %}fa-user-graduate{% endif %} ml-1">
+                            </i>
+                            {{ user.get_role_display }}
+                        </span>
+                        
+                        <span class="px-4 py-2 text-sm rounded-full {% if user.is_active %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                            <i class="fas fa-{% if user.is_active %}check-circle{% else %}ban{% endif %} ml-1"></i>
+                            {{ user.is_active|yesno:'نشط,غير نشط' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-envelope text-primary-600 w-5"></i>
+                        <span class="text-sm">{{ user.email }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-phone text-primary-600 w-5"></i>
+                        <span class="text-sm">{{ user.phone_number|default:'لا يوجد رقم' }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-calendar text-primary-600 w-5"></i>
+                        <span class="text-sm">تاريخ التسجيل: {{ user.date_joined|date:'Y-m-d' }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-clock text-primary-600 w-5"></i>
+                        <span class="text-sm">آخر نشاط: {{ user.last_login|date:'Y-m-d H:i'|default:'لم يسجل الدخول بعد' }}</span>
+                    </div>
+                </div>
+
+                {% if user.bio %}
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold mb-2">نبذة تعريفية</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ user.bio }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    <button onclick="toggleUserStatus({{ user.id }})" class="w-full px-4 py-2 text-{% if user.is_active %}yellow{% else %}green{% endif %}-600 border border-{% if user.is_active %}yellow{% else %}green{% endif %}-300 hover:bg-{% if user.is_active %}yellow{% else %}green{% endif %}-50 dark:hover:bg-{% if user.is_active %}yellow{% else %}green{% endif %}-900/20 rounded-lg transition">
+                        <i class="fas fa-{% if user.is_active %}ban{% else %}check-circle{% endif %} ml-2"></i>
+                        {% if user.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
+                    </button>
+                    
+                    <a href="{% url 'courses:admin_user_delete' user.id %}" class="block w-full text-center px-4 py-2 text-red-600 border border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">
+                        <i class="fas fa-trash ml-2"></i>
+                        حذف الحساب
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Content -->
+        <div class="lg:col-span-2">
+            <!-- Enrollments -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-6">الدورات المسجل فيها</h2>
+                
+                {% if enrollments %}
+                <div class="space-y-4">
+                    {% for enrollment in enrollments %}
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                {% if enrollment.course.image %}
+                                <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
+                                     alt="{{ enrollment.course.title }}" 
+                                     class="w-full h-full object-cover">
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-1">
+                                    <h3 class="font-semibold">{{ enrollment.course.title }}</h3>
+                                    <span class="px-3 py-1 text-xs rounded-full 
+                                        {% if enrollment.status == 'enrolled' %}bg-green-100 text-green-600
+                                        {% elif enrollment.status == 'completed' %}bg-blue-100 text-blue-600
+                                        {% elif enrollment.status == 'pending' %}bg-yellow-100 text-yellow-600
+                                        {% else %}bg-red-100 text-red-600{% endif %}">
+                                        {{ enrollment.get_status_display }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">المدرب: {{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}</p>
+                                <div class="flex items-center gap-4 text-sm">
+                                    <span><i class="fas fa-calendar ml-1"></i> {{ enrollment.enrolled_at|date:'Y-m-d' }}</span>
+                                    <span><i class="fas fa-chart-line ml-1"></i> التقدم: {{ enrollment.progress }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-8">لم يسجل المستخدم في أي دورات بعد</p>
+                {% endif %}
+            </div>
+
+            <!-- Reviews -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-6">التقييمات</h2>
+                
+                {% if reviews %}
+                <div class="space-y-4">
+                    {% for review in reviews %}
+                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
+                        <div class="flex justify-between mb-2">
+                            <div>
+                                <h3 class="font-semibold">{{ review.course.title }}</h3>
+                                <div class="flex items-center gap-1 mt-1">
+                                    {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-500 dark:text-gray-500">{{ review.created_at|date:'Y-m-d' }}</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">{{ review.comment }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-8">لم يكتب المستخدم أي تقييمات بعد</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleUserStatus(userId) {
+    if (confirm('هل أنت متأكد من تغيير حالة المستخدم؟')) {
+        fetch(`/admin/users/${userId}/toggle-active/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

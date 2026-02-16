@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}التسجيل في الدورة - {{ course.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">التسجيل في الدورة</h1>
+        <p class="text-gray-600 dark:text-gray-400">{{ course.title }}</p>
+    </div>
+
+    <!-- Course Summary -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+        <div class="flex items-center gap-4">
+            <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                {% if course.image %}
+                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-full object-cover">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
+                     alt="{{ course.title }}" 
+                     class="w-full h-full object-cover">
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold mb-2">{{ course.title }}</h2>
+                <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <span><i class="fas fa-user ml-1"></i> {{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                    <span><i class="fas fa-tag ml-1"></i> {{ course.category.name }}</span>
+                    <span><i class="fas fa-signal ml-1"></i> {{ course.get_level_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Price Display -->
+            <div class="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-6 text-center">
+                <p class="text-gray-600 dark:text-gray-400 mb-2">سعر الدورة</p>
+                <p class="text-4xl font-bold text-primary-600 dark:text-primary-400">
+                    {% if course.price == 0 %}
+                    مجاناً
+                    {% else %}
+                    ${{ course.price }}
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Notes Field (if form has notes) -->
+            {% if form.notes %}
+            <div>
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium mb-2">
+                    {{ form.notes.label }}
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Terms Agreement -->
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="terms" name="terms" required class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500">
+                <label for="terms" class="text-sm text-gray-700 dark:text-gray-300">
+                    أوافق على <a href="#" class="text-primary-600 hover:text-primary-700">شروط وأحكام المنصة</a>
+                </label>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                    <i class="fas fa-check-circle ml-2"></i>
+                    تأكيد التسجيل
+                </button>
+                <a href="{% url 'courses:course_detail' course.slug %}" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
+                    <i class="fas fa-times ml-2"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

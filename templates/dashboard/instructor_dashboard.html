@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم المدرب - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 rounded-2xl p-8 mb-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">مرحباً أ. {{ user.first_name|default:user.username }}! 👨‍🏫</h1>
+                <p class="text-white/90">لوحة تحكم المدرب - إدارة الدورات والطلاب</p>
+            </div>
+            <div class="hidden md:block">
+                <i class="fas fa-chalkboard-teacher text-6xl opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي الدورات</p>
+                    <h3 class="text-3xl font-bold">{{ total_courses|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-book text-primary-600 dark:text-primary-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي الطلاب</p>
+                    <h3 class="text-3xl font-bold">{{ total_students|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">الإيرادات</p>
+                    <h3 class="text-3xl font-bold">${{ total_revenue|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">متوسط التقييم</p>
+                    <h3 class="text-3xl font-bold">{{ avg_rating|default:'0' }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-star text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold mb-4">إجراءات سريعة</h2>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'courses:admin_course_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
+                <i class="fas fa-plus-circle ml-2"></i>
+                إضافة دورة جديدة
+            </a>
+            <a href="{% url 'courses:admin_courses' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center">
+                <i class="fas fa-edit ml-2"></i>
+                إدارة الدورات
+            </a>
+            <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="px-6 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition flex items-center">
+                <i class="fas fa-clock ml-2"></i>
+                طلبات التسجيل ({{ pending_requests|default:'0' }})
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- My Courses -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">دوراتي</h2>
+                    <a href="{% url 'courses:admin_courses' %}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                        إدارة الدورات
+                        <i class="fas fa-arrow-left mr-1"></i>
+                    </a>
+                </div>
+
+                {% if taught_courses %}
+                <div class="space-y-4">
+                    {% for course in taught_courses %}
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition">
+                        <div class="flex gap-4">
+                            <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                                {% if course.image %}
+                                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
+                                     alt="{{ course.title }}" 
+                                     class="w-full h-full object-cover">
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-1">
+                                    <h3 class="font-semibold">{{ course.title }}</h3>
+                                    <span class="px-2 py-1 {% if course.is_active %}bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400{% else %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400{% endif %} text-xs rounded-full">
+                                        {{ course.is_active|yesno:'نشط,غير نشط' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    <span><i class="fas fa-users ml-1"></i> {{ course.students_count }} طالب</span>
+                                    <span><i class="fas fa-star ml-1 text-yellow-400"></i> {{ course.rating }}</span>
+                                    <span><i class="fas fa-dollar-sign ml-1"></i> ${{ course.price }}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <a href="{% url 'courses:admin_course_edit' course.id %}" class="text-primary-600 hover:text-primary-700 text-sm">
+                                        <i class="fas fa-edit ml-1"></i> تعديل
+                                    </a>
+                                    <a href="{% url 'courses:course_detail' course.slug %}" class="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm">
+                                        <i class="fas fa-eye ml-1"></i> عرض
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">لا توجد دورات بعد</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">ابدأ بإضافة أول دورة لك</p>
+                    <a href="{% url 'courses:admin_course_create' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                        <i class="fas fa-plus-circle ml-2"></i>
+                        إضافة دورة جديدة
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Enrollments -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mt-8">
+                <h2 class="text-xl font-bold mb-6">أحدث التسجيلات</h2>
+                
+                {% if recent_enrollments %}
+                <div class="space-y-4">
+                    {% for enrollment in recent_enrollments %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ enrollment.user.first_name|first|upper }}</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.course.title|truncatechars:30 }}</p>
+                            </div>
+                        </div>
+                        <div class="text-left">
+                            <span class="block text-sm">{{ enrollment.enrolled_at|date:'d M Y' }}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.enrolled_at|timesince }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 dark:text-gray-400 py-8">لا توجد تسجيلات حديثة</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Performance Overview -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4">نظرة عامة على الأداء</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm">معدل إكمال الدورات</span>
+                            <span class="text-sm font-semibold">{{ completion_rate|default:'0' }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-600 rounded-full h-2" style="width: {{ completion_rate|default:'0' }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm">رضا الطلاب</span>
+                            <span class="text-sm font-semibold">{{ satisfaction_rate|default:'0' }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-yellow-600 rounded-full h-2" style="width: {{ satisfaction_rate|default:'0' }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Requests -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4">طلبات التسجيل المعلقة</h2>
+                
+                <div class="text-center mb-4">
+                    <span class="text-4xl font-bold text-yellow-600">{{ pending_requests|default:'0' }}</span>
+                    <span class="text-gray-600 dark:text-gray-400 block">في انتظار المراجعة</span>
+                </div>
+                
+                <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="block w-full text-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
+                    مراجعة الطلبات
+                </a>
+            </div>
+
+            <!-- Active Students -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-4">الطلاب النشطين</h2>
+                
+                {% if active_students %}
+                <div class="space-y-3">
+                    {% for student in active_students %}
+                    <div class="flex items-center gap-3">
+                        {% if student.avatar %}
+                        <img src="{{ student.avatar.url }}" alt="{{ student.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                            <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ student.first_name|first|upper }}</span>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-semibold text-sm">{{ student.get_full_name|default:student.username }}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">{{ student.enrollments.count }} دورة مسجل فيها</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">لا يوجد طلاب نشطين حالياً</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

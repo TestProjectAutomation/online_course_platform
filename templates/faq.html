@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الأسئلة الشائعة - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">الأسئلة الشائعة</h1>
+        <p class="text-xl max-w-3xl mx-auto text-white/90">إجابات على أكثر الأسئلة شيوعاً حول المنصة والدورات التدريبية</p>
+    </div>
+</section>
+
+<!-- FAQ Categories -->
+<section class="py-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-wrap justify-center gap-3">
+            <button onclick="filterFAQ('all')" class="px-6 py-2 rounded-full bg-primary-600 text-white font-semibold transition" id="filter-all">
+                الكل
+            </button>
+            <button onclick="filterFAQ('general')" class="px-6 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900 transition" id="filter-general">
+                عام
+            </button>
+            <button onclick="filterFAQ('courses')" class="px-6 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900 transition" id="filter-courses">
+                الدورات
+            </button>
+            <button onclick="filterFAQ('payment')" class="px-6 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900 transition" id="filter-payment">
+                الدفع والاشتراكات
+            </button>
+            <button onclick="filterFAQ('certificates')" class="px-6 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900 transition" id="filter-certificates">
+                الشهادات
+            </button>
+            <button onclick="filterFAQ('technical')" class="px-6 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900 transition" id="filter-technical">
+                مشاكل تقنية
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Content -->
+<section class="py-20 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- General FAQs -->
+            <div class="faq-category" data-category="general">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-info-circle text-primary-600 ml-2"></i>
+                    أسئلة عامة
+                </h2>
+                <div class="space-y-4 mb-12">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">ما هي منصة التعلم؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            {{ SITE_NAME }} هي منصة تعليمية عربية تهدف إلى توفير تعليم عالي الجودة للجميع، في أي وقت ومن أي مكان. نقدم دورات في مختلف المجالات مع نخبة من أمهر المدربين والخبراء.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">كيف يمكنني إنشاء حساب؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            يمكنك إنشاء حساب جديد بالضغط على زر "إنشاء حساب" في أعلى الصفحة، ثم ملء النموذج بالبيانات المطلوبة. بعد التأكيد، يمكنك تسجيل الدخول والبدء في التعلم.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">هل المنصة مجانية؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            نوفر العديد من الدورات المجانية، بالإضافة إلى دورات مدفوعة بأسعار تنافسية. يمكنك تصفح الدورات ومعرفة تفاصيل السعر قبل التسجيل.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses FAQs -->
+            <div class="faq-category" data-category="courses">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-graduation-cap text-primary-600 ml-2"></i>
+                    الدورات التدريبية
+                </h2>
+                <div class="space-y-4 mb-12">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">كيف يمكنني التسجيل في دورة؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            بعد تسجيل الدخول، اختر الدورة المناسبة، ثم اضغط على "اشترك الآن" أو "سجل في الدورة". ستتم إضافتك إلى قائمة الطلاب المسجلين ويمكنك البدء فوراً.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">هل يمكنني استرداد المبلغ إذا لم تعجبني الدورة؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            نعم، نوفر سياسة استرداد أموال خلال 14 يوماً من تاريخ التسجيل إذا لم تكن راضياً عن الدورة، بشرط ألا يتجاوز نسبة المشاهدة 30%.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">كم مدة الوصول إلى الدورة بعد التسجيل؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            بعد التسجيل، سيكون لديك وصول مدى الحياة إلى محتوى الدورة، بما في ذلك أي تحديثات مستقبلية.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment FAQs -->
+            <div class="faq-category" data-category="payment">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-credit-card text-primary-600 ml-2"></i>
+                    الدفع والاشتراكات
+                </h2>
+                <div class="space-y-4 mb-12">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">ما هي طرق الدفع المتاحة؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            نقبل الدفع عبر:
+                            <ul class="list-disc mr-6 mt-2">
+                                <li>بطاقات الائتمان (فيزا، ماستركارد)</li>
+                                <li>باي بال</li>
+                                <li>التحويل البنكي</li>
+                                <li>محافظ إلكترونية (فودافون كاش)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">هل هناك خطط اشتراك شهرية؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            نعم، نوفر باقة اشتراك شهري تتيح لك الوصول غير المحدود إلى جميع الدورات على المنصة مقابل رسوم شهرية ثابتة.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificates FAQs -->
+            <div class="faq-category" data-category="certificates">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-certificate text-primary-600 ml-2"></i>
+                    الشهادات
+                </h2>
+                <div class="space-y-4 mb-12">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">كيف أحصل على الشهادة؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            بعد إكمال جميع متطلبات الدورة (مشاهدة الدروس وإتمام التقييمات)، ستتمكن من تحميل الشهادة من لوحة التحكم الخاصة بك.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">هل الشهادات معتمدة؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            نعم، جميع الشهادات صادرة عن المنصة ومعتمدة من قبل مؤسسات تعليمية مرموقة. يمكنك إضافتها إلى حسابك على LinkedIn والسيرة الذاتية.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical FAQs -->
+            <div class="faq-category" data-category="technical">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-cog text-primary-600 ml-2"></i>
+                    مشاكل تقنية
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">لا أستطيع مشاهدة الفيديوهات، ماذا أفعل؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            تأكد من:
+                            <ul class="list-disc mr-6 mt-2">
+                                <li>اتصال الإنترنت لديك</li>
+                                <li>تحديث متصفحك لآخر إصدار</li>
+                                <li>تعطيل إضافات حظر الإعلانات</li>
+                                <li>تجربة متصفح آخر</li>
+                            </ul>
+                            إذا استمرت المشكلة، تواصل معنا عبر صفحة اتصل بنا.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <button onclick="toggleFAQ(this)" class="w-full text-right px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-semibold">نسيت كلمة المرور، كيف يمكنني استعادتها؟</span>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+                        <div class="hidden px-6 pb-4 text-gray-600 dark:text-gray-400">
+                            اضغط على "نسيت كلمة المرور" في صفحة تسجيل الدخول، وأدخل بريدك الإلكتروني. سنرسل لك رابطاً لإعادة تعيين كلمة المرور.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Still have questions -->
+            <div class="mt-12 text-center bg-primary-50 dark:bg-primary-900/30 rounded-2xl p-8">
+                <i class="fas fa-question-circle text-5xl text-primary-600 mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">لم تجد إجابتك؟</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">نحن هنا لمساعدتك، تواصل معنا وسنرد عليك في أقرب وقت</p>
+                <a href="{% url 'courses:contact' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                    <i class="fas fa-envelope ml-2"></i>
+                    اتصل بنا
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+    function toggleFAQ(button) {
+        const content = button.nextElementSibling;
+        const icon = button.querySelector('i');
+        
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            content.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function filterFAQ(category) {
+        // Update active button
+        document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+            btn.classList.remove('bg-primary-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        });
+        
+        if (category === 'all') {
+            document.getElementById('filter-all').classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            document.getElementById('filter-all').classList.add('bg-primary-600', 'text-white');
+            
+            // Show all categories
+            document.querySelectorAll('.faq-category').forEach(cat => {
+                cat.style.display = 'block';
+            });
+        } else {
+            document.getElementById(`filter-${category}`).classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            document.getElementById(`filter-${category}`).classList.add('bg-primary-600', 'text-white');
+            
+            // Hide all categories
+            document.querySelectorAll('.faq-category').forEach(cat => {
+                cat.style.display = 'none';
+            });
+            
+            // Show selected category
+            document.querySelectorAll(`.faq-category[data-category="${category}"]`).forEach(cat => {
+                cat.style.display = 'block';
+            });
+        }
+    }
+</script>
+{% endblock %}
