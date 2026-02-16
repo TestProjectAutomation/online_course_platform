@@ -129,7 +129,7 @@ class CourseForm(forms.ModelForm):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'description', 'icon', 'parent']
+        fields = ['name', 'description', 'icon', 'img_gat', 'parent']  # تأكد من وجود img_gat هنا
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition',
@@ -144,12 +144,15 @@ class CategoryForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition',
                 'placeholder': 'fa-code, fa-chart-line, ...'
             }),
+            'img_gat': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300'
+            }),
             'parent': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition'
             }),
         }
-        
-        
+
+                
 
 class CourseModuleForm(forms.ModelForm):
     class Meta:
@@ -214,40 +217,6 @@ class EnrollmentForm(forms.ModelForm):
             }),
         }
 
-class ContactForm(forms.Form):
-    name = forms.CharField(
-        max_length=100, 
-        widget=forms.TextInput(attrs={
-            'class': TAILWIND_INPUT, 
-            'placeholder': 'الاسم الكامل'
-        })
-    )
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={
-            'class': TAILWIND_INPUT, 
-            'placeholder': 'البريد الإلكتروني'
-        })
-    )
-    subject = forms.CharField(
-        max_length=200, 
-        widget=forms.TextInput(attrs={
-            'class': TAILWIND_INPUT, 
-            'placeholder': 'الموضوع'
-        })
-    )
-    message = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': TAILWIND_TEXTAREA, 
-            'rows': 5, 
-            'placeholder': 'الرسالة'
-        })
-    )
-    
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if not email.endswith(('.com', '.net', '.org')):
-            raise forms.ValidationError('يرجى إدخال بريد إلكتروني صحيح')
-        return email
 
 class SearchForm(forms.Form):
     query = forms.CharField(

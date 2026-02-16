@@ -3,7 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+    <title>{% block title %}{{ meta_title|default:site_name|default:'منصة التعلم' }}{% endblock %}</title>
+
+    <!-- Meta Tags -->
+    <meta name="description" content="{% if meta_description %}{{ meta_description }}{% elif site_settings and site_settings.site_description %}{{ site_settings.site_description }}{% else %}منصة تعليمية متكاملة تقدم دورات في مختلف المجالات{% endif %}">
+    <meta name="keywords" content="{% if meta_keywords %}{{ meta_keywords }}{% elif site_settings and site_settings.site_keywords %}{{ site_settings.site_keywords }}{% else %}دورات,تعليم,تدريب,مهارات{% endif %}">
+    <meta name="author" content="{% if meta_author %}{{ meta_author }}{% elif site_settings and site_settings.meta_author %}{{ site_settings.meta_author }}{% else %}منصة التعلم{% endif %}">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="{{ meta_title|default:site_name|default:'منصة التعلم' }}">
+    <meta property="og:description" content="{% if meta_description %}{{ meta_description }}{% elif site_settings and site_settings.site_description %}{{ site_settings.site_description }}{% else %}منصة تعليمية متكاملة{% endif %}">
+    {% if meta_image %}
+    <meta property="og:image" content="{{ meta_image }}">
+    {% elif site_settings and site_settings.site_og_image %}
+    <meta property="og:image" content="{{ site_settings.site_og_image.url }}">
+    {% endif %}
+    <meta property="og:url" content="{{ meta_url|default:request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_name|default:'منصة التعلم' }}">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ meta_title|default:site_name|default:'منصة التعلم' }}">
+    <meta name="twitter:description" content="{% if meta_description %}{{ meta_description }}{% elif site_settings and site_settings.site_description %}{{ site_settings.site_description }}{% else %}منصة تعليمية متكاملة{% endif %}">
+    {% if meta_image %}
+    <meta name="twitter:image" content="{{ meta_image }}">
+    {% elif site_settings and site_settings.site_og_image %}
+    <meta name="twitter:image" content="{{ site_settings.site_og_image.url }}">
+    {% endif %}
+    
+    <!-- Favicon -->
+    {% if site_favicon %}
+    <link rel="icon" type="image/png" href="{{ site_favicon.url }}">
+    {% endif %}
+    {% if site_settings and site_settings.site_icon %}
+    <link rel="apple-touch-icon" href="{{ site_settings.site_icon.url }}">
+    <link rel="shortcut icon" href="{{ site_settings.site_icon.url }}">
+    {% endif %}
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +61,26 @@
     
     <!-- Alpine.js -->
     <script src="//unpkg.com/alpinejs" defer></script>
+    
+    <!-- Google Analytics -->
+    {% if site_settings and site_settings.google_analytics_id %}
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site_settings.google_analytics_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ site_settings.google_analytics_id }}');
+    </script>
+    {% endif %}
+    
+    <!-- Google Site Verification -->
+    {% if site_settings and site_settings.google_site_verification %}
+    <meta name="google-site-verification" content="{{ site_settings.google_site_verification }}">
+    {% endif %}
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
     
     <!-- Custom Styles -->
     <style>
@@ -184,8 +240,6 @@
             animation: shake 0.5s ease-in-out;
         }
 
-        /* ==================== إضافات جديدة للإشعارات ==================== */
-        
         /* Toast Notifications Container */
         .toast-container {
             position: fixed;
@@ -317,16 +371,6 @@
 
         /* Floating Action Button */
         .fab {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            display: flex;
-            align-items: center;
             justify-content: center;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             cursor: pointer;
@@ -485,6 +529,51 @@
                 transform: scale(1);
             }
         }
+
+        /* تحسينات للقوائم المنسدلة */
+        .dropdown-menu {
+            transform-origin: top;
+            animation: dropdownEnter 0.2s ease-out;
+        }
+
+        @keyframes dropdownEnter {
+            from {
+                opacity: 0;
+                transform: scaleY(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+        }
+
+        /* تنسيق الأزرار في الموبايل */
+        @media (max-width: 768px) {
+            .mobile-menu {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease-out;
+            }
+            
+            .mobile-menu.open {
+                max-height: 500px;
+            }
+        }
+
+        /* Maintenance Mode Banner */
+        .maintenance-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: 500;
+            position: relative;
+            z-index: 100;
+        }
+
+        .maintenance-banner i {
+            margin: 0 0.5rem;
+        }
     </style>
     
     <!-- Tailwind Custom Config -->
@@ -522,6 +611,15 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
 
+    <!-- Maintenance Mode Banner (للمشرفين فقط) -->
+    {% if maintenance_mode and user.is_staff %}
+    <div class="maintenance-banner">
+        <i class="fas fa-tools"></i>
+        الموقع في وضع الصيانة - هذا الإشعار يظهر فقط للمشرفين
+        <i class="fas fa-tools"></i>
+    </div>
+    {% endif %}
+
     <!-- Loading Spinner (Hidden by default) -->
     <div id="loading-spinner" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl glass modal-enter">
@@ -544,30 +642,40 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo & Brand -->
                 <div class="flex items-center space-x-4 space-x-reverse">
-                    <a href="{% url 'courses:home' %}" class="flex items-center space-x-2 space-x-reverse group">
+                    <a href="{% url 'core:home' %}" class="flex items-center space-x-2 space-x-reverse group">
                         <div class="relative">
+                            {% if site_logo %}
+                            <img src="{{ site_logo.url }}" alt="{{ site_name }}" class="h-10 w-auto group-hover:scale-110 transition">
+                            {% else %}
                             <i class="fas fa-graduation-cap text-3xl text-primary-600 group-hover:scale-110 transition"></i>
+                            {% endif %}
                             <span class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-ping-slow"></span>
                         </div>
-                        <span class="font-bold text-xl hidden sm:block gradient-text">{{ SITE_NAME }}</span>
+                        <span class="font-bold text-xl hidden sm:block gradient-text">{{ site_name|default:'منصة التعلم' }}</span>
                     </a>
                     
                     <!-- Desktop Navigation -->
                     <div class="hidden md:flex items-center space-x-4 space-x-reverse mr-8">
+                        {% for page in header_pages %}
+                        <a href="{% url 'core:page_detail' page.slug %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
+                            {{ page.title }}
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        {% endfor %}
                         <a href="{% url 'courses:course_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             الدورات
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:about' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
+                        <a href="{% url 'core:faq' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
+                            الأسئلة الشائعة
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        <a href="{% url 'core:about' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             عن المنصة
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="{% url 'courses:contact' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
+                        <a href="{% url 'core:contact' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
                             اتصل بنا
-                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
-                        </a>
-                        <a href="{% url 'courses:faq' %}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition relative group">
-                            الأسئلة الشائعة
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
                         </a>
                     </div>
@@ -595,9 +703,7 @@
                         </span>
                         {% endif %}
                     </a>
-<a href="{% url 'courses:order_history' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-    <i class="fas fa-shopping-bag ml-2 text-green-500"></i> طلباتي
-</a>
+
                     <!-- User Menu -->
                     {% if user.is_authenticated %}
                     <div class="relative" x-data="{ open: false }">
@@ -617,44 +723,77 @@
                         </button>
                         
                         <div x-show="open" @click.away="open = false" x-transition:enter="animate__animated animate__fadeInLeft animate__faster"
-                             class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
-                            <a href="{% url 'courses:profile' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-                                <i class="fas fa-user ml-2"></i> الملف الشخصي
-                            </a>
-                            <a href="{% url 'courses:user_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-                                <i class="fas fa-tachometer-alt ml-2"></i> لوحة التحكم
-                            </a>
+                             class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-2 z-50 border border-gray-200 dark:border-gray-700 dropdown-menu">
                             
-                            {% if user.is_instructor %}
-                            <a href="{% url 'courses:instructor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-                                <i class="fas fa-chalkboard-teacher ml-2"></i> لوحة المدرب
-                            </a>
-                            {% endif %}
-                            
-                            {% if user.is_admin_user %}
-                            <a href="{% url 'courses:admin_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-                                <i class="fas fa-crown ml-2"></i> لوحة الإدارة
-                            </a>
-                            {% endif %}
-                            
-                            <hr class="my-1 border-gray-200 dark:border-gray-700">
-                            
-                            <!-- Favorites with Badge -->
-                            <a href="{% url 'courses:profile' %}#favorites" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all relative">
-                                <i class="fas fa-heart ml-2 text-red-500"></i> المفضلة
-                                {% if favorites_count %}
-                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 mr-2 animate__animated animate__pulse animate__infinite">{{ favorites_count }}</span>
+                            <!-- User Info Header -->
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                                <p class="text-sm font-semibold">{{ user.get_full_name|default:user.username }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ user.email }}</p>
+                                {% if user.is_superuser %}
+                                <span class="superuser-badge mt-2">
+                                    <i class="fas fa-crown"></i>
+                                    مدير النظام
+                                </span>
                                 {% endif %}
-                            </a>
+                            </div>
                             
-                            <hr class="my-1 border-gray-200 dark:border-gray-700">
+                            <!-- Menu Items -->
+                            <div class="py-1">
+                                <a href="{% url 'courses:profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                    <i class="fas fa-user ml-3 w-5 text-primary-600"></i>
+                                    الملف الشخصي
+                                </a>
+                                
+                                <a href="{% url 'courses:user_dashboard' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                    <i class="fas fa-tachometer-alt ml-3 w-5 text-green-600"></i>
+                                    لوحة التحكم
+                                </a>
+                                
+                                <a href="{% url 'courses:order_history' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                    <i class="fas fa-shopping-bag ml-3 w-5 text-purple-600"></i>
+                                    طلباتي
+                                </a>
+                                
+                                <a href="{% url 'courses:profile' %}#favorites" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition relative">
+                                    <i class="fas fa-heart ml-3 w-5 text-red-500"></i>
+                                    المفضلة
+                                    {% if favorites_count %}
+                                    <span class="mr-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ favorites_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </div>
                             
-                            <form method="post" action="{% url 'courses:logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="block w-full text-right px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:pr-6 transition-all">
-                                    <i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج
-                                </button>
-                            </form>
+                            <!-- Role-based Links -->
+                            {% if user.is_instructor or user.is_superuser %}
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <div class="py-1">
+                                {% if user.is_instructor %}
+                                <a href="{% url 'courses:instructor_dashboard' %}" class="flex items-center px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition">
+                                    <i class="fas fa-chalkboard-teacher ml-3 w-5"></i>
+                                    لوحة المدرب
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_superuser %}
+                                <a href="{% url 'courses:admin_dashboard' %}" class="flex items-center px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
+                                    <i class="fas fa-cog ml-3 w-5"></i>
+                                    لوحة الإدارة
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Logout -->
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <div class="py-1">
+                                <form method="post" action="{% url 'courses:logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="flex items-center w-full text-right px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                        <i class="fas fa-sign-out-alt ml-3 w-5"></i>
+                                        تسجيل الخروج
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                     {% else %}
@@ -678,10 +817,10 @@
 
             <!-- Search Bar (Hidden by default) -->
             <div id="searchBar" class="hidden py-4 border-t border-gray-200 dark:border-gray-700 animate__animated animate__fadeIn">
-                <form action="{% url 'courses:course_list' %}" method="GET" class="flex gap-2">
+                <form action="{% url 'core:search' %}" method="GET" class="flex gap-2">
                     <div class="relative flex-1">
                         <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="search" placeholder="ابحث عن دورات، مدربين، مواضيع..." 
+                        <input type="text" name="q" placeholder="ابحث عن دورات، مدربين، مواضيع..." 
                                class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition">
                     </div>
                     <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ripple">
@@ -695,15 +834,48 @@
         <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div class="container mx-auto px-4 py-3">
                 <div class="flex flex-col space-y-2">
-                    <a href="{% url 'courses:course_list' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">الدورات</a>
-                    <a href="{% url 'courses:about' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">عن المنصة</a>
-                    <a href="{% url 'courses:contact' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">اتصل بنا</a>
-                    <a href="{% url 'courses:faq' %}" class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition hover:pr-6">الأسئلة الشائعة</a>
+                    {% for page in header_pages %}
+                    <a href="{% url 'core:page_detail' page.slug %}" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-file ml-3 w-5 text-primary-600"></i>
+                        {{ page.title }}
+                    </a>
+                    {% endfor %}
+                    <a href="{% url 'courses:course_list' %}" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-book-open ml-3 w-5 text-primary-600"></i>
+                        الدورات
+                    </a>
+                    <a href="{% url 'core:faq' %}" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-question-circle ml-3 w-5 text-yellow-600"></i>
+                        الأسئلة الشائعة
+                    </a>
+                    <a href="{% url 'core:about' %}" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-info-circle ml-3 w-5 text-blue-600"></i>
+                        عن المنصة
+                    </a>
+                    <a href="{% url 'core:contact' %}" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-envelope ml-3 w-5 text-green-600"></i>
+                        اتصل بنا
+                    </a>
+                    
+                    <!-- Search in Mobile -->
+                    <div class="relative mt-2">
+                        <form action="{% url 'core:search' %}" method="GET">
+                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" name="q" placeholder="بحث..." 
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                        </form>
+                    </div>
                     
                     {% if not user.is_authenticated %}
                     <hr class="my-2 border-gray-200 dark:border-gray-700">
-                    <a href="{% url 'courses:login' %}" class="px-3 py-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">تسجيل الدخول</a>
-                    <a href="{% url 'courses:register' %}" class="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition text-center">إنشاء حساب</a>
+                    <a href="{% url 'courses:login' %}" class="flex items-center px-3 py-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
+                        <i class="fas fa-sign-in-alt ml-3 w-5"></i>
+                        تسجيل الدخول
+                    </a>
+                    <a href="{% url 'courses:register' %}" class="flex items-center px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition text-center">
+                        <i class="fas fa-user-plus ml-3 w-5"></i>
+                        إنشاء حساب
+                    </a>
                     {% endif %}
                 </div>
             </div>
@@ -720,23 +892,18 @@
             {% elif message.tags == 'warning' %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800
             {% else %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800{% endif %}">
             <div class="flex items-center">
-                {% if message.tags == 'success' %}
-                <div class="w-8 h-8 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center ml-2">
-                    <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center ml-2
+                    {% if message.tags == 'success' %}bg-green-200 dark:bg-green-800
+                    {% elif message.tags == 'error' %}bg-red-200 dark:bg-red-800
+                    {% elif message.tags == 'warning' %}bg-yellow-200 dark:bg-yellow-800
+                    {% else %}bg-blue-200 dark:bg-blue-800{% endif %}">
+                    <i class="fas 
+                        {% if message.tags == 'success' %}fa-check-circle text-green-600 dark:text-green-400
+                        {% elif message.tags == 'error' %}fa-exclamation-circle text-red-600 dark:text-red-400
+                        {% elif message.tags == 'warning' %}fa-exclamation-triangle text-yellow-600 dark:text-yellow-400
+                        {% else %}fa-info-circle text-blue-600 dark:text-blue-400{% endif %}">
+                    </i>
                 </div>
-                {% elif message.tags == 'error' %}
-                <div class="w-8 h-8 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center ml-2">
-                    <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400"></i>
-                </div>
-                {% elif message.tags == 'warning' %}
-                <div class="w-8 h-8 bg-yellow-200 dark:bg-yellow-800 rounded-full flex items-center justify-center ml-2">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
-                </div>
-                {% else %}
-                <div class="w-8 h-8 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center ml-2">
-                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400"></i>
-                </div>
-                {% endif %}
                 <span>{{ message }}</span>
             </div>
             <button onclick="this.parentElement.remove()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition transform hover:scale-110">
@@ -747,40 +914,28 @@
     </div>
     {% endif %}
 
-    <!-- Breadcrumbs -->
-    {% if breadcrumbs %}
-    <div class="container mx-auto px-4 mt-4">
-        <nav class="flex" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 space-x-reverse md:space-x-3 md:space-x-reverse bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm">
-                {% for breadcrumb in breadcrumbs %}
-                <li class="inline-flex items-center">
-                    {% if not forloop.last %}
-                    <a href="{{ breadcrumb.url }}" class="text-gray-700 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center">
-                        {% if forloop.first %}
-                        <i class="fas fa-home ml-1"></i>
-                        {% endif %}
-                        {{ breadcrumb.name }}
-                    </a>
-                    <i class="fas fa-chevron-left mx-2 text-gray-400 text-sm"></i>
-                    {% else %}
-                    <span class="text-gray-500 dark:text-gray-300 flex items-center">
-                        {% if forloop.first %}
-                        <i class="fas fa-home ml-1"></i>
-                        {% endif %}
-                        {{ breadcrumb.name }}
-                    </span>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ol>
-        </nav>
-    </div>
-    {% endif %}
-
     <!-- Main Content -->
     <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
+
+    {% comment %} <!-- Newsletter Section -->
+    <section class="bg-primary-600 dark:bg-primary-800 py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-3xl font-bold text-white mb-4">اشترك في نشرتنا البريدية</h2>
+                <p class="text-primary-100 mb-8">احصل على أحدث الدورات والعروض الحصرية مباشرة على بريدك الإلكتروني</p>
+                <form action="{% url 'core:newsletter_subscribe' %}" method="POST" class="flex flex-col sm:flex-row gap-4">
+                    {% csrf_token %}
+                    <input type="email" name="email" placeholder="البريد الإلكتروني" required
+                           class="flex-1 px-6 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white dark:bg-gray-800 dark:text-white dark:border-gray-700">
+                    <button type="submit" class="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        اشتراك
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section> {% endcomment %}
 
     <!-- Footer -->
     <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
@@ -788,25 +943,48 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- About -->
                 <div class="space-y-4">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center group">
-                        <i class="fas fa-graduation-cap text-primary-600 ml-2 group-hover:rotate-12 transition"></i>
-                        <span class="gradient-text">{{ SITE_NAME }}</span>
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 group">
+                        {% if site_logo %}
+                        <img src="{{ site_logo.url }}" alt="{{ site_name }}" class="h-8 w-auto">
+                        {% else %}
+                        <i class="fas fa-graduation-cap text-2xl text-primary-600 group-hover:scale-110 transition-transform duration-300"></i>
+                        {% endif %}
+                        <span class="gradient-text">{{ site_name|default:'منصة التعلم' }}</span>
                     </h3>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">{{ SITE_DESCRIPTION }}</p>
-                    <div class="flex space-x-3 space-x-reverse">
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
-                            <i class="fab fa-facebook-f text-primary-600"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
-                            <i class="fab fa-twitter text-primary-600"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
-                            <i class="fab fa-linkedin-in text-primary-600"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900 transition transform hover:scale-110 hover:rotate-12">
-                            <i class="fab fa-youtube text-primary-600"></i>
-                        </a>
-                    </div>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                        {% if site_settings and site_settings.site_description %}
+                            {{ site_settings.site_description }}
+                        {% else %}
+                            منصة تعليمية متكاملة تقدم دورات في مختلف المجالات مع مدربين معتمدين
+                        {% endif %}
+                    </p>
+{% if social_links %}
+<div class="flex flex-wrap gap-4 mt-6">
+    {% for social in social_links %}
+    <a href="{{ social.url }}"
+       target="_blank"
+       aria-label="{{ social.name }}"
+       class="group relative w-12 h-12 rounded-full flex items-center justify-center
+              backdrop-blur-md bg-white/10 dark:bg-white/5
+              border border-white/20 dark:border-white/10
+              shadow-lg transition-all duration-300
+              hover:-translate-y-1 hover:shadow-xl">
+
+        <i class="{{ social.icon }} text-lg transition-all duration-300
+                  group-hover:scale-125"
+           style="color: {{ social.color }};">
+        </i>
+
+        <span class="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100
+                     transition-all duration-300"
+              style="background: radial-gradient(circle, {{ social.color }}30 0%, transparent 70%);">
+        </span>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
                 </div>
 
                 <!-- Quick Links -->
@@ -817,34 +995,30 @@
                             <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
                             جميع الدورات
                         </a></li>
-                        <li><a href="{% url 'courses:about' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                        {% for page in footer_pages %}
+                        <li><a href="{% url 'core:page_detail' page.slug %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
                             <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
-                            عن المنصة
+                            {{ page.title }}
                         </a></li>
-                        <li><a href="{% url 'courses:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
-                            <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
-                            اتصل بنا
-                        </a></li>
-                        <li><a href="{% url 'courses:faq' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                        {% endfor %}
+                        <li><a href="{% url 'core:faq' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
                             <i class="fas fa-arrow-left text-xs ml-2 group-hover:translate-x-1 transition"></i>
                             الأسئلة الشائعة
                         </a></li>
                     </ul>
                 </div>
 
-                <!-- Support -->
+                <!-- Support / Footer Pages -->
                 <div>
                     <h3 class="text-lg font-semibold mb-4">الدعم</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
-                            <i class="fas fa-shield-alt ml-2 group-hover:scale-110 transition"></i>
-                            سياسة الخصوصية
+                        {% for page in pages|slice:":3" %}
+                        <li><a href="{% url 'core:page_detail' page.slug %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                            <i class="fas fa-file-alt ml-2 group-hover:scale-110 transition"></i>
+                            {{ page.title }}
                         </a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
-                            <i class="fas fa-file-contract ml-2 group-hover:scale-110 transition"></i>
-                            شروط الاستخدام
-                        </a></li>
-                        <li><a href="{% url 'courses:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
+                        {% endfor %}
+                        <li><a href="{% url 'core:contact' %}" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition flex items-center group">
                             <i class="fas fa-headset ml-2 group-hover:scale-110 transition"></i>
                             المساعدة
                         </a></li>
@@ -855,50 +1029,81 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">معلومات الاتصال</h3>
                     <ul class="space-y-3">
+                        {% if contact_email %}
                         <li class="flex items-center text-gray-600 dark:text-gray-400 group">
                             <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
                                 <i class="fas fa-envelope text-primary-600 dark:text-primary-400"></i>
                             </div>
-                            <a href="mailto:{{ CONTACT_EMAIL }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition">{{ CONTACT_EMAIL }}</a>
+                            <a href="mailto:{{ contact_email }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition">{{ contact_email }}</a>
                         </li>
+                        {% endif %}
+                        
+                        {% if contact_phone %}
                         <li class="flex items-center text-gray-600 dark:text-gray-400 group">
                             <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
                                 <i class="fas fa-phone text-primary-600 dark:text-primary-400"></i>
                             </div>
-                            <a href="tel:{{ CONTACT_PHONE }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition" dir="ltr">{{ CONTACT_PHONE }}</a>
+                            <a href="tel:{{ contact_phone }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition" dir="ltr">{{ contact_phone }}</a>
                         </li>
+                        {% endif %}
+                        
+                        {% if contact_address %}
                         <li class="flex items-center text-gray-600 dark:text-gray-400 group">
                             <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center ml-2 group-hover:scale-110 transition">
                                 <i class="fas fa-map-marker-alt text-primary-600 dark:text-primary-400"></i>
                             </div>
-                            <span>القاهرة، مصر</span>
+                            <span>{{ contact_address }}</span>
                         </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
 
+            <!-- Partners -->
+            {% if partners %}
+            <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold mb-6 text-center gradient-text">شركاؤنا</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    {% for partner in partners %}
+                    <a href="{{ partner.website_url|default:'#' }}" target="_blank" class="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-lg transition group">
+                        {% if partner.logo %}
+                        <img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="max-h-12 w-auto grayscale group-hover:grayscale-0 transition">
+                        {% else %}
+                        <span class="text-gray-600 dark:text-gray-400 group-hover:text-primary-600 transition">{{ partner.name }}</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+   
             <!-- Stats with Counter Animation -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <div class="text-center group">
-                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_students|default:'0' }}</div>
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ stats.students_count|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">طالب مسجل</div>
                 </div>
                 <div class="text-center group">
-                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_courses|default:'0' }}</div>
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ stats.courses_count|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">دورة تدريبية</div>
                 </div>
                 <div class="text-center group">
-                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_instructors|default:'0' }}</div>
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ stats.instructors_count|default:'0' }}</div>
                     <div class="text-gray-600 dark:text-gray-400">مدرب معتمد</div>
                 </div>
                 <div class="text-center group">
-                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ site_stats.total_enrollments|default:'0' }}</div>
-                    <div class="text-gray-600 dark:text-gray-400">تسجيل في الدورات</div>
+                    <div class="text-3xl font-bold text-primary-600 group-hover:scale-110 transition counter">{{ stats.lessons_count|default:'0' }}</div>
+                    <div class="text-gray-600 dark:text-gray-400">درس تعليمي</div>
                 </div>
             </div>
 
+            <!-- Copyright -->
             <div class="text-center mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-gray-600 dark:text-gray-400">جميع الحقوق محفوظة &copy; {% now "Y" %} {{ SITE_NAME }}</p>
+                <p class="text-gray-600 dark:text-gray-400">{{ copyright_text|default:'جميع الحقوق محفوظة' }} - {% now "Y" %} <br> صمم بواسطة  <a href="https://mohamednabilpro.deplois.net/" class="text-red-600 dark:text-red-400"> MohaMed NabiL </a> </p>
+                {% if site_settings and site_settings.meta_author %}
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">بتقنية {{ site_settings.meta_author }}</p>
+                {% endif %}
             </div>
         </div>
     </footer>
@@ -1084,7 +1289,7 @@
             // Welcome toast for new users
             {% if not user.is_authenticated %}
             setTimeout(() => {
-                showNotification('👋 مرحباً بك في منصة التعلم', 'info');
+                showNotification('👋 مرحباً بك في منصة {{ site_name|default:"التعلم" }}', 'info');
             }, 1000);
             {% endif %}
         });

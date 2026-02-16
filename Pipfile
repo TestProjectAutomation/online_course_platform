@@ -11,6 +11,8 @@ psycopg2-binary = "*"
 python-decouple = "*"
 whitenoise = "*"
 django-jazzmin = "*"
+django-import-export = "*"
+django-rangefilter = "*"
 
 [dev-packages]
 

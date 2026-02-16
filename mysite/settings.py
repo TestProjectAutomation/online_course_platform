@@ -38,7 +38,7 @@ MAIN_DOMAIN = config('MAIN_DOMAIN', default='nextjobs.deplois.net').replace('htt
 
 ALLOWED_HOSTS = [MAIN_DOMAIN, f'www.{MAIN_DOMAIN}']
 if DEBUG:
-    ALLOWED_HOSTS += ['127.0.0.1', 'localhost']
+    ALLOWED_HOSTS += ['127.0.0.1', 'localhost', 'c3gwhgm0-5000.uks1.devtunnels.ms']
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -59,14 +59,18 @@ else:
 
 
 INSTALLED_APPS = [
-    'jazzmin',
+    # 'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rangefilter',
+    'import_export',
+
     'courses',
+    'core',
 ]
 
 
@@ -110,6 +114,18 @@ TEMPLATES = [
                 'courses.context_processors.stats_processor',
                 'courses.context_processors.breadcrumbs_processor',
                 'courses.context_processors.cart_processor',
+                
+                
+                # Custom context processors
+                'core.context_processors.site_settings',  # استبدل core باسم تطبيقك
+                'core.context_processors.contact_info',
+                'core.context_processors.social_links',
+                'core.context_processors.meta_tags',
+                'core.context_processors.breadcrumbs',
+                'core.context_processors.notifications',
+                'core.context_processors.cart_info',
+                'core.context_processors.current_year',
+                'core.context_processors.is_mobile',
 
             ],
         },
@@ -177,8 +193,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'courses.User'
@@ -222,194 +238,33 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 
 
-# =========================
-# Jazzmin - إعدادات محسنة للعربية مع دعم RTL
-# =========================
+# # =========================
+# # Jazzmin - إعدادات محسنة للعربية مع دعم RTL
+# # =========================
 
-JAZZMIN_SETTINGS = {
-    # المعلومات الأساسية
-    'site_title': 'منصة التعلم - لوحة التحكم',
-    'site_header': 'منصة التعلم',
-    'site_brand': 'منصة التعلم',
-    'site_logo': None,  # يمكنك إضافة شعار هنا: 'images/logo.png'
-    'site_logo_classes': 'img-circle',
-    'site_icon': None,
-    
-    # ترحيب وحقوق
-    'welcome_sign': 'مرحباً بك في لوحة تحكم منصة التعلم',
-    'copyright': f'جميع الحقوق محفوظة © منصة التعلم {timezone.now().year}',
-    
-    # المستخدم والصورة
-    'user_avatar': 'avatar',  # اسم حقل الصورة في نموذج User
-    
-    # إعدادات البحث
-    'search_model': [
-        'courses.Course', 
-        'courses.User', 
-        'courses.Category',
-        'courses.Lesson'
-    ],
-    
-    # الشريط العلوي - روابط
-    'topmenu_links': [
-        # عنوان الصفحة الرئيسية
-        {'name': 'الرئيسية', 'url': 'admin:index', 'permissions': ['auth.view_user']},
-        
-        # رابط العودة للموقع
-        {'name': 'عرض الموقع', 'url': '/', 'new_window': True},
-        
-        # روابط للتطبيقات المهمة
-        {'app': 'courses'},
-        
-        # قائمة المستخدمين
-        {'model': 'courses.User'},
-        
-        # روابط مخصصة
-        {'name': 'الدعم الفني', 'url': '/admin/support/', 'new_window': True},
-    ],
-    
-    # روابط مفيدة في الشريط الجانبي
-    'useful_links': {
-        'منصة التعلم': '/',
-        'توثيق Django': 'https://docs.djangoproject.com/',
-        'جيت هاب': 'https://github.com/',
-    },
-    
-    # إعدادات القوائم الجانبية
-    'show_sidebar': True,
-    'navigation_expanded': True,
-    'hide_apps': [],
-    'hide_models': [],
-    
-    # ترتيب التطبيقات في القائمة الجانبية
-    'order_with_respect_to': [
-        'courses',  # تطبيق الدورات أولاً
-        'courses.Course',
-        'courses.Category',
-        'courses.CourseModule',
-        'courses.Lesson',
-        'courses.User',
-        'courses.Enrollment',
-        'courses.Review',
-        'courses.Favorite',
-        'auth',     # ثم تطبيق المصادقة
-        'auth.User',
-        'auth.Group',
-    ],
-    
-    # أيقونات للتطبيقات والنماذج (باستخدام Font Awesome 5)
-    'icons': {
-        # تطبيق courses
-        'courses': 'fas fa-graduation-cap',
-        'courses.Course': 'fas fa-book-open',
-        'courses.Category': 'fas fa-folder-tree',
-        'courses.CourseModule': 'fas fa-cubes',
-        'courses.Lesson': 'fas fa-video',
-        'courses.User': 'fas fa-user-circle',
-        'courses.Enrollment': 'fas fa-user-graduate',
-        'courses.Review': 'fas fa-star',
-        'courses.Favorite': 'fas fa-heart',
-        
-        # تطبيق auth
-        'auth': 'fas fa-users-cog',
-        'auth.User': 'fas fa-user',
-        'auth.Group': 'fas fa-users',
-    },
-    
-    # أيقونات افتراضية
-    'default_icon_parents': 'fas fa-folder',
-    'default_icon_children': 'fas fa-file',
-    
-    # إعدادات نماذج التغيير
-    'changeform_format': 'horizontal_tabs',
-    'changeform_format_overrides': {
-        'courses.User': 'collapsible',
-        'auth.User': 'collapsible',
-        'courses.Course': 'vertical_tabs',
-        'courses.Category': 'vertical_tabs',
-    },
-    
-    # إعدادات اللغة
-    'language_chooser': True,  # إظهار قائمة اختيار اللغة
-    
-    # دعم النوافذ المنبثقة
-    'related_modal_active': True,
-    
-    # روابط مخصصة في شريط الأدوات
-    'custom_links': {
-        'courses': [{
-            'name': 'إحصائيات سريعة',
-            'url': '/admin/stats/',
-            'icon': 'fas fa-chart-pie',
-            'permissions': ['courses.view_course']
-        }]
-    },
-    
-    # CSS و JS مخصص
-    'custom_css': 'css/admin_custom.css',  # سنقوم بإنشائه
-    'custom_js': 'js/admin_custom.js',      # سنقوم بإنشائه
-    
-    # إظهار/إخفاء مصمم الواجهة
-    'show_ui_builder': True,
-}
 
-# =========================
-# Jazzmin UI Tweaks - إعدادات الواجهة
-# =========================
+# JAZZMIN_SETTINGS = {
+#     "site_title": "My Site",
+#     "site_header": "My Site",
+#     "site_brand": "My Site",
+#     "site_logo": "images/logo.png",
+#     "site_logo_classes": "img-circle",
+#     "welcome_sign": "Welcome to My Site",
+#     "copyright": "My Site",
+#     "search_model": ["auth.User", "auth.Group"],
+#     "user_avatar": None,
 
-JAZZMIN_UI_TWEAKS = {
-    # سمة Bootstrap - نختار سمات تدعم RTL بشكل جيد
-    'theme': 'flatly',  # أو 'cosmo', 'litera', 'minty', 'sandstone'
-    
-    # سمة الوضع الليلي
-    'dark_mode_theme': 'darkly',  # 'cyborg', 'vapor', 'superhero'
-    
-    # إعدادات الشريط العلوي (Navbar)
-    'navbar': 'navbar-dark',  # 'navbar-dark', 'navbar-light'
-    'navbar_fixed': True,
-    'navbar_small_text': False,
-    'navbar_expanded': True,
-    'brand_colour': 'navbar-primary',  # أو 'navbar-success', 'navbar-danger'
-    'no_navbar_border': False,
-    
-    # إعدادات الشريط الجانبي (Sidebar)
-    'sidebar': 'sidebar-dark-primary',  # 'sidebar-light-primary', 'sidebar-dark-warning'
-    'sidebar_fixed': True,
-    'sidebar_small_text': False,
-    'sidebar_nav_small_text': False,
-    'sidebar_disable_expand': False,
-    'sidebar_nav_child_indent': True,
-    'sidebar_nav_compact_style': False,
-    'sidebar_nav_legacy_style': False,
-    'sidebar_nav_flat_style': True,
-    
-    # إعدادات التذييل (Footer)
-    'footer_fixed': False,
-    'footer_small_text': False,
-    
-    # إعدادات النص العام
-    'body_small_text': False,
-    'brand_small_text': False,
-    
-    # الألوان المميزة
-    'accent': 'accent-primary',  # 'accent-info', 'accent-success'
-    
-    # ألوان الأزرار
-    'button_classes': {
-        'primary': 'btn-primary',
-        'secondary': 'btn-secondary',
-        'info': 'btn-info',
-        'warning': 'btn-warning',
-        'danger': 'btn-danger',
-        'success': 'btn-success',
-        'outline-primary': 'btn-outline-primary',
-        'outline-secondary': 'btn-outline-secondary',
-        'outline-info': 'btn-outline-info',
-        'outline-warning': 'btn-outline-warning',
-        'outline-danger': 'btn-outline-danger',
-        'outline-success': 'btn-outline-success',
-    },
-    
-    # تأثيرات إضافية
-    'actions_sticky_top': True,
-}
+#     "topmenu_links": [
+#         {"name": "Home", "url": "admin:dashboard", "permissions": ["auth.view_user"]},
+#         {"name": "Support", "url": "https://github.com/farridav/django-jazzmin/issues", "new_window": True},
+#         {"model": "auth.user"},
+#     ],
+#     "usermenu_links": [
+#         {"name": "Support", "url": "https://github.com/farridav/django-jazzmin/issues", "new_window": True},
+#         {"model": "auth.user"},
+#     ],
+#     "show_ui_builder": True,
+#     "changeform_format": "horizontal_tabs",
+#     "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
+#     "language_chooser": True,
+# }

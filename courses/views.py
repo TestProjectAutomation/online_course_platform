@@ -15,6 +15,8 @@ import json
 from django.views.decorators.http import require_POST
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
+from django.utils.timesince import timesince
+from core.models import ContactMessage, NewsletterSubscriber, Testimonial
 
 from .models import (
     Course, Category, User, Enrollment, Review, 
@@ -27,7 +29,7 @@ from .services import (
 from .forms import (
     CourseForm, CategoryForm, CourseModuleForm, LessonForm,
     ReviewForm, UserRegistrationForm, UserProfileForm,
-    EnrollmentForm, LoginForm, SearchForm, ContactForm
+    EnrollmentForm, LoginForm, SearchForm
 )
 
 # ==================== Mixins ====================
@@ -41,68 +43,6 @@ class InstructorRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and (
             self.request.user.is_instructor() or self.request.user.is_admin_user()
         )
-
-# ==================== Public Views ====================
-
-def home_view(request):
-    """الصفحة الرئيسية"""
-    featured_courses = CourseService.get_featured_courses()[:6]
-    latest_courses = CourseService.get_latest_courses()[:8]
-    categories = Category.objects.annotate(
-        course_count=Count('courses', filter=Q(courses__is_active=True))
-    )[:8]
-    
-    # إحصائيات سريعة
-    stats = {
-        'students_count': User.objects.filter(role='user').count(),
-        'courses_count': Course.objects.filter(is_active=True).count(),
-        'instructors_count': User.objects.filter(role='instructor').count(),
-        'lessons_count': Lesson.objects.count(),
-    }
-    
-    context = {
-        'featured_courses': featured_courses,
-        'latest_courses': latest_courses,
-        'categories': categories,
-        'stats': stats,
-        'testimonials': Review.objects.select_related('user', 'course').order_by('-rating')[:3],
-    }
-    return render(request, 'home.html', context)
-
-def about_view(request):
-    """صفحة من نحن"""
-    context = {
-        'team_members': User.objects.filter(role='instructor').select_related('user')[:4],
-        'stats': {
-            'years_experience': 5,
-            'happy_students': User.objects.filter(role='user').count(),
-            'courses_count': Course.objects.filter(is_active=True).count(),
-            'certified_instructors': User.objects.filter(role='instructor').count(),
-        }
-    }
-    return render(request, 'about.html', context)
-
-def contact_view(request):
-    """صفحة اتصل بنا"""
-    if request.method == 'POST':
-        form = ContactForm(request.POST)
-        if form.is_valid():
-            # هنا يمكن إرسال البريد الإلكتروني أو حفظ الرسالة
-            messages.success(request, 'تم إرسال رسالتك بنجاح، سنتواصل معك قريباً')
-            return redirect('contact')
-    else:
-        form = ContactForm()
-    
-    return render(request, 'contact.html', {'form': form})
-
-def faq_view(request):
-    """صفحة الأسئلة الشائعة"""
-    faqs = [
-        {'question': 'كيف يمكنني التسجيل في دورة؟', 'answer': 'يمكنك التسجيل بعد إنشاء حساب وتفعيله...'},
-        {'question': 'هل الشهادات معتمدة؟', 'answer': 'نعم، جميع الشهادات صادرة عن المنصة ومعتمدة...'},
-        # أضف المزيد من الأسئلة
-    ]
-    return render(request, 'faq.html', {'faqs': faqs})
 
 # ==================== Course Views ====================
 
@@ -497,6 +437,74 @@ def update_avatar(request):
             'message': f'حدث خطأ: {str(e)}'
         }, status=500)
 
+# ==================== instructor views ====================
+
+def instructor_profile(request, instructor_id):
+    """صفحة الملف الشخصي للمدرب (عامة)"""
+    # جلب بيانات المدرب
+    instructor = get_object_or_404(User, id=instructor_id, role='instructor')
+    
+    # جلب دورات المدرب النشطة
+    courses = (
+        Course.objects
+        .filter(instructor=instructor, is_active=True)
+        .select_related('category')
+        .annotate(
+            enrolled_students=Count(
+                'enrollments',
+                filter=Q(enrollments__status='enrolled'),
+                distinct=True
+            ),
+            reviews_total=Count('reviews', distinct=True),
+            rating_avg=Avg('reviews__rating')
+        )
+        .order_by('-created_at')
+    )
+    # إحصائيات المدرب
+    total_students = Enrollment.objects.filter(
+        course__instructor=instructor,
+        status='enrolled'
+    ).values('user').distinct().count()
+    
+    total_reviews = Review.objects.filter(course__instructor=instructor).count()
+    avg_rating = Review.objects.filter(course__instructor=instructor).aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    # توزيع مستويات الدورات
+    level_distribution = {
+        'beginner': courses.filter(level='beginner').count(),
+        'intermediate': courses.filter(level='intermediate').count(),
+        'advanced': courses.filter(level='advanced').count(),
+        'all': courses.filter(level='all').count(),
+    }
+    
+    # آخر التقييمات على دورات المدرب
+    recent_reviews = Review.objects.filter(
+        course__instructor=instructor
+    ).select_related('user', 'course').order_by('-created_at')[:5]
+    
+    # دورات مشابهة من مدربين آخرين (للتوصيات)
+    similar_courses = Course.objects.filter(
+        category__in=courses.values('category'),
+        is_active=True
+    ).exclude(
+        instructor=instructor
+    ).select_related('instructor', 'category').distinct()[:4]
+    
+    context = {
+        'instructor': instructor,
+        'courses': courses,
+        'total_courses': courses.count(),
+        'total_students': total_students,
+        'total_reviews': total_reviews,
+        'avg_rating': round(avg_rating, 1),
+        'level_distribution': level_distribution,
+        'recent_reviews': recent_reviews,
+        'similar_courses': similar_courses,
+    }
+    
+    return render(request, 'instructor/profile.html', context)
+
+
 # ==================== Dashboard Views ====================
 
 
@@ -663,6 +671,23 @@ def admin_dashboard(request):
     # قائمة المستخدمين مع تحديد السوبر أدمن
     users = User.objects.all().order_by('-date_joined')[:10]  # آخر 10 مستخدمين فقط للأداء
     
+    
+    
+    # إحصائيات core
+    total_contact_messages = ContactMessage.objects.count()
+    unread_messages = ContactMessage.objects.filter(is_read=False).count()
+    total_subscribers = NewsletterSubscriber.objects.count()
+    active_subscribers = NewsletterSubscriber.objects.filter(is_active=True).count()
+    total_testimonials = Testimonial.objects.count()
+    pending_testimonials = Testimonial.objects.filter(is_active=False).count()
+
+    # آخر العناصر
+    recent_messages = ContactMessage.objects.order_by('-created_at')[:5]
+    recent_subscribers = NewsletterSubscriber.objects.order_by('-created_at')[:5]
+    recent_testimonials = Testimonial.objects.order_by('-created_at')[:5]
+
+
+
     context = {
         # إحصائيات
         'total_users': total_users,
@@ -703,6 +728,17 @@ def admin_dashboard(request):
         # معلومات المستخدم الحالي
         'current_user': request.user,
         'is_superuser': is_superuser,
+        
+            'total_contact_messages': total_contact_messages,
+            'unread_messages': unread_messages,
+            'total_subscribers': total_subscribers,
+            'active_subscribers': active_subscribers,
+            'total_testimonials': total_testimonials,
+            'pending_testimonials': pending_testimonials,
+            'recent_messages': recent_messages,
+            'recent_subscribers': recent_subscribers,
+            'recent_testimonials': recent_testimonials,
+
     }
     
     return render(request, 'dashboard/admin_dashboard.html', context)
@@ -1324,44 +1360,59 @@ def admin_categories(request):
     }
     return render(request, 'admin/categories/list.html', context)
 
-
 @staff_member_required
 def admin_category_create(request):
     """إنشاء تصنيف جديد"""
-    from django.utils.text import slugify  # استيراد slugify
+    from django.utils.text import slugify
     from .models import Category
+    import os
     
     if request.method == 'POST':
-        form = CategoryForm(request.POST)
+        print("="*50)
+        print("POST Data:", request.POST)
+        print("FILES Data:", request.FILES)
+        print("="*50)
+        
+        # مهم جداً: إضافة request.FILES
+        form = CategoryForm(request.POST, request.FILES)
+        
         if form.is_valid():
             try:
+                # لا تستخدم commit=False إذا كنت تريد حفظ الصور تلقائياً
+                # فقط استخدم form.save() مباشرة
                 category = form.save(commit=False)
                 
-                # التأكد من أن slug فريد
+                # التأكد من وجود slug
                 if not category.slug:
                     base_slug = slugify(category.name)
                     slug = base_slug
                     counter = 1
-                    
-                    # التحقق من وجود slug مماثل
                     while Category.objects.filter(slug=slug).exists():
                         slug = f"{base_slug}-{counter}"
                         counter += 1
-                        # منع الحلقات اللانهائية
-                        if counter > 100:
-                            slug = f"{base_slug}-{counter}"
-                            break
-                    
                     category.slug = slug
                 
+                # حفظ الصورة إذا وجدت
+                if 'img_gat' in request.FILES:
+                    category.img_gat = request.FILES['img_gat']
+                    print(f"✅ تم استلام الصورة: {request.FILES['img_gat'].name}")
+                
+                # حفظ الكائن
                 category.save()
+                
+                # طباعة مسار الصورة للتأكد
+                if category.img_gat:
+                    print(f"✅ تم حفظ الصورة في: {category.img_gat.path}")
+                    print(f"✅ رابط الصورة: {category.img_gat.url}")
                 
                 messages.success(request, f'✅ تم إنشاء التصنيف "{category.name}" بنجاح')
                 return redirect('courses:admin_categories')
                 
             except Exception as e:
+                print(f"❌ خطأ: {str(e)}")
                 messages.error(request, f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}')
         else:
+            print("❌ أخطاء في النموذج:", form.errors)
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'⚠️ {field}: {error}')
@@ -1374,41 +1425,63 @@ def admin_category_create(request):
         'category': None,
     })
 
+
 @staff_member_required
 def admin_category_edit(request, category_id):
     """تعديل تصنيف"""
-    from django.utils.text import slugify  # استيراد slugify
+    from django.utils.text import slugify
     from .models import Category
+    import os
     
     category = get_object_or_404(Category, id=category_id)
     
     if request.method == 'POST':
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.POST, request.FILES, instance=category)
+        
         if form.is_valid():
             try:
+                # حفظ الصورة القديمة مؤقتاً
+                old_image = category.img_gat
+                
+                # تحديث البيانات بدون حفظ الصورة
                 edited_category = form.save(commit=False)
                 
-                # إذا تغير الاسم، قد نحتاج لتحديث الـ slug
+                # تحديث slug إذا تغير الاسم
                 if edited_category.name != category.name:
                     base_slug = slugify(edited_category.name)
                     slug = base_slug
                     counter = 1
-                    
-                    # التحقق من وجود slug مماثل (مع استثناء التصنيف الحالي)
                     while Category.objects.filter(slug=slug).exclude(id=category_id).exists():
                         slug = f"{base_slug}-{counter}"
                         counter += 1
-                        if counter > 100:
-                            slug = f"{base_slug}-{counter}"
-                            break
-                    
                     edited_category.slug = slug
                 
-                edited_category.save()
+                # التعامل مع الصورة الجديدة
+                if 'img_gat' in request.FILES:
+                    # تعيين الصورة الجديدة
+                    edited_category.img_gat = request.FILES['img_gat']
+                    
+                    # حفظ أولاً
+                    edited_category.save()
+                    
+                    # حذف الصورة القديمة بعد الحفظ
+                    if old_image and old_image != edited_category.img_gat:
+                        try:
+                            if os.path.exists(old_image.path):
+                                os.remove(old_image.path)
+                        except Exception as e:
+                            print(f"خطأ في حذف الصورة القديمة: {e}")
+                else:
+                    # لا توجد صورة جديدة، فقط حفظ
+                    edited_category.save()
+                
                 messages.success(request, f'✅ تم تحديث التصنيف "{edited_category.name}" بنجاح')
                 return redirect('courses:admin_categories')
                 
             except Exception as e:
+                print(f"❌ خطأ: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 messages.error(request, f'حدث خطأ أثناء تحديث التصنيف: {str(e)}')
         else:
             for field, errors in form.errors.items():
@@ -1421,9 +1494,9 @@ def admin_category_edit(request, category_id):
         'form': form,
         'category': category,
         'title': f'تعديل التصنيف: {category.name}',
-    })
-    
-      
+    })     
+     
+
 @staff_member_required
 def admin_category_delete(request, category_id):
     """حذف تصنيف"""
@@ -2266,3 +2339,368 @@ def order_history(request):
     }
     
     return render(request, 'cart/orders.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ==================== صفحة صفحة (Page) عامة ====================
+
+def page_detail(request, slug):
+    """عرض صفحة ثابتة"""
+    from .models import Page
+    page = get_object_or_404(Page, slug=slug, is_active=True, is_published=True)
+    
+    # زيادة عدد المشاهدات
+    page.increment_views()
+    
+    # تعيين الصفحة الحالية للـ context processor
+    request.current_page = page
+    
+    return render(request, 'page_detail.html', {'page': page})
+
+# ==================== دوال الملف الشخصي ====================
+
+@login_required
+def profile_settings(request):
+    """إعدادات الملف الشخصي"""
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ تم تحديث الإعدادات بنجاح')
+            return redirect('courses:profile_settings')
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'auth/profile_settings.html', {'form': form})
+
+@login_required
+def change_password(request):
+    """تغيير كلمة المرور"""
+    if request.method == 'POST':
+        form = auth_views.PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_views.update_session_auth_hash(request, user)
+            messages.success(request, '✅ تم تغيير كلمة المرور بنجاح')
+            return redirect('courses:profile')
+    else:
+        form = auth_views.PasswordChangeForm(request.user)
+    
+    return render(request, 'auth/change_password.html', {'form': form})
+
+# ==================== دوال التقارير المتقدمة ====================
+
+@staff_member_required
+def admin_reports_detail(request, report_type):
+    """تقارير مفصلة"""
+    from django.db.models import Count, Sum, Avg
+    from datetime import datetime, timedelta
+    
+    # تحديد نطاق التاريخ
+    period = request.GET.get('period', 'month')
+    if period == 'week':
+        start_date = timezone.now() - timedelta(days=7)
+    elif period == 'month':
+        start_date = timezone.now() - timedelta(days=30)
+    elif period == 'year':
+        start_date = timezone.now() - timedelta(days=365)
+    else:
+        start_date = timezone.now() - timedelta(days=30)
+    
+    context = {
+        'report_type': report_type,
+        'period': period,
+        'start_date': start_date,
+    }
+    
+    if report_type == 'users':
+        # تقرير المستخدمين
+        context['data'] = {
+            'total': User.objects.count(),
+            'new': User.objects.filter(date_joined__gte=start_date).count(),
+            'by_role': User.objects.values('role').annotate(count=Count('id')),
+            'by_month': User.objects.filter(date_joined__gte=start_date).extra(
+                select={'month': "strftime('%%Y-%%m', date_joined)"}
+            ).values('month').annotate(count=Count('id')).order_by('month'),
+        }
+    
+    elif report_type == 'courses':
+        # تقرير الدورات
+        context['data'] = {
+            'total': Course.objects.count(),
+            'active': Course.objects.filter(is_active=True).count(),
+            'by_level': Course.objects.values('level').annotate(count=Count('id')),
+            'by_category': Course.objects.values('category__name').annotate(count=Count('id')),
+            'top_rated': Course.objects.order_by('-rating')[:10],
+            'most_viewed': Course.objects.order_by('-views_count')[:10],
+        }
+    
+    elif report_type == 'enrollments':
+        # تقرير التسجيلات
+        context['data'] = {
+            'total': Enrollment.objects.count(),
+            'by_status': Enrollment.objects.values('status').annotate(count=Count('id')),
+            'by_month': Enrollment.objects.filter(enrolled_at__gte=start_date).extra(
+                select={'month': "strftime('%%Y-%%m', enrolled_at)"}
+            ).values('month').annotate(count=Count('id')).order_by('month'),
+            'revenue': Enrollment.objects.filter(status='enrolled').aggregate(
+                total=Sum('course__price')
+            )['total'] or 0,
+        }
+    
+    elif report_type == 'revenue':
+        # تقرير الإيرادات
+        enrollments = Enrollment.objects.filter(
+            status='enrolled',
+            enrolled_at__gte=start_date
+        ).select_related('course')
+        
+        total_revenue = sum(e.course.price for e in enrollments)
+        
+        context['data'] = {
+            'total_revenue': total_revenue,
+            'by_course': enrollments.values('course__title').annotate(
+                revenue=Sum('course__price'),
+                count=Count('id')
+            ).order_by('-revenue')[:10],
+            'by_month': enrollments.extra(
+                select={'month': "strftime('%%Y-%%m', enrolled_at)"}
+            ).values('month').annotate(
+                revenue=Sum('course__price'),
+                count=Count('id')
+            ).order_by('month'),
+        }
+    
+    return render(request, f'admin/reports/{report_type}.html', context)
+
+# ==================== دوال الإشعارات ====================
+
+@login_required
+def notifications_view(request):
+    """عرض الإشعارات"""
+    # يمكنك إنشاء نموذج Notification إذا أردت
+    # أو استخدام إشعارات Django
+    notifications = []  # استبدل هذا ب query حقيقي
+    
+    context = {
+        'notifications': notifications,
+        'unread_count': 0,  # استبدل بعدد الإشعارات غير المقروءة
+    }
+    return render(request, 'notifications.html', context)
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    """تحديد إشعار كمقروء"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # منطق تحديث الإشعار
+        return JsonResponse({'status': 'success'})
+    return redirect('courses:notifications')
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    """تحديد كل الإشعارات كمقروءة"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # منطق تحديث كل الإشعارات
+        return JsonResponse({'status': 'success'})
+    return redirect('courses:notifications')
+
+# ==================== دوال البحث المتقدم ====================
+
+def advanced_search(request):
+    """بحث متقدم في الدورات"""
+    form = SearchForm(request.GET)
+    results = []
+    
+    if form.is_valid():
+        query = form.cleaned_data.get('query', '')
+        category = form.cleaned_data.get('category')
+        level = form.cleaned_data.get('level')
+        min_price = form.cleaned_data.get('min_price')
+        max_price = form.cleaned_data.get('max_price')
+        min_rating = form.cleaned_data.get('min_rating')
+        sort_by = form.cleaned_data.get('sort_by', '-created_at')
+        
+        results = Course.objects.filter(is_active=True)
+        
+        if query:
+            results = results.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(instructor__username__icontains=query) |
+                Q(instructor__first_name__icontains=query) |
+                Q(instructor__last_name__icontains=query)
+            )
+        
+        if category:
+            results = results.filter(category_id=category)
+        
+        if level:
+            results = results.filter(level=level)
+        
+        if min_price is not None:
+            results = results.filter(price__gte=min_price)
+        
+        if max_price is not None:
+            results = results.filter(price__lte=max_price)
+        
+        if min_rating is not None:
+            results = results.filter(rating__gte=min_rating)
+        
+        # ترتيب النتائج
+        if sort_by in ['title', '-title', 'price', '-price', 'rating', '-rating', 'created_at', '-created_at']:
+            results = results.order_by(sort_by)
+        else:
+            results = results.order_by('-created_at')
+    
+    paginator = Paginator(results, 12)
+    page = request.GET.get('page')
+    results = paginator.get_page(page)
+    
+    context = {
+        'form': form,
+        'results': results,
+        'total_results': paginator.count,
+        'query': request.GET.urlencode(),
+    }
+    return render(request, 'search/advanced.html', context)
+
+# ==================== دوال شهادات الإكمال ====================
+
+@login_required
+def certificate_view(request, enrollment_id):
+    """عرض شهادة إتمام دورة"""
+    enrollment = get_object_or_404(
+        Enrollment, 
+        id=enrollment_id, 
+        user=request.user,
+        status='completed'
+    )
+    
+    return render(request, 'certificate.html', {
+        'enrollment': enrollment,
+        'user': request.user,
+        'course': enrollment.course,
+        'completion_date': enrollment.completed_at,
+    })
+
+@login_required
+def download_certificate(request, enrollment_id):
+    """تحميل شهادة إتمام دورة (PDF)"""
+    enrollment = get_object_or_404(
+        Enrollment, 
+        id=enrollment_id, 
+        user=request.user,
+        status='completed'
+    )
+    
+    # هنا يمكنك استخدام مكتبة مثل reportlab أو weasyprint
+    # لإنشاء ملف PDF للشهادة
+    
+    messages.info(request, 'سيتم إضافة خاصية تحميل الشهادة قريباً')
+    return redirect('courses:certificate_view', enrollment_id=enrollment.id)
+
+# ==================== دوال API إضافية ====================
+
+@login_required
+def api_get_user_progress(request):
+    """API للحصول على تقدم المستخدم في دورة معينة"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        course_id = request.GET.get('course_id')
+        
+        if course_id:
+            enrollment = Enrollment.objects.filter(
+                user=request.user,
+                course_id=course_id,
+                status='enrolled'
+            ).first()
+            
+            if enrollment:
+                total_lessons = Lesson.objects.filter(module__course_id=course_id).count()
+                completed_lessons = LessonProgress.objects.filter(
+                    enrollment=enrollment,
+                    is_completed=True
+                ).count()
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'progress': enrollment.progress,
+                    'completed_lessons': completed_lessons,
+                    'total_lessons': total_lessons,
+                    'percentage': int((completed_lessons / total_lessons) * 100) if total_lessons > 0 else 0
+                })
+        
+        return JsonResponse({'status': 'error', 'message': 'لم يتم العثور على الدورة'}, status=404)
+    
+    return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def api_get_recommendations(request):
+    """API للحصول على توصيات دورات للمستخدم"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # الحصول على تصنيفات الدورات التي سجل فيها المستخدم
+        user_categories = Enrollment.objects.filter(
+            user=request.user,
+            status='enrolled'
+        ).values_list('course__category', flat=True).distinct()
+        
+        # اقتراح دورات من نفس التصنيفات
+        recommendations = Course.objects.filter(
+            category__in=user_categories,
+            is_active=True
+        ).exclude(
+            enrollments__user=request.user
+        ).distinct()[:6]
+        
+        data = []
+        for course in recommendations:
+            data.append({
+                'id': course.id,
+                'title': course.title,
+                'slug': course.slug,
+                'price': float(course.price),
+                'rating': float(course.rating),
+                'instructor': course.instructor.get_full_name() or course.instructor.username,
+                'image': course.image.url if course.image else None,
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'recommendations': data
+        })
+    
+    return JsonResponse({'status': 'error'}, status=400)
+
+# ==================== معالج الأخطاء ====================
+
+def handler404(request, exception):
+    """صفحة خطأ 404"""
+    return render(request, 'errors/404.html', status=404)
+
+def handler500(request):
+    """صفحة خطأ 500"""
+    return render(request, 'errors/500.html', status=500)
+
+def handler403(request, exception):
+    """صفحة خطأ 403"""
+    return render(request, 'errors/403.html', status=403)
+
+def handler400(request, exception):
+    """صفحة خطأ 400"""
+    return render(request, 'errors/400.html', status=400)

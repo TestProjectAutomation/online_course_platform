@@ -11,8 +11,8 @@
             <h1 class="text-3xl font-bold mb-2">إدارة التصنيفات</h1>
             <p class="text-gray-600 dark:text-gray-400">عرض وإضافة وتعديل تصنيفات الدورات</p>
         </div>
-        <a href="{% url 'courses:admin_category_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
-            <i class="fas fa-plus-circle ml-2"></i>
+        <a href="{% url 'courses:admin_category_create' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+            <i class="fas fa-plus-circle"></i>
             إضافة تصنيف جديد
         </a>
     </div>
@@ -36,6 +36,7 @@
             <table class="w-full">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
+                        <th class="text-right py-4 px-6 text-sm font-semibold">الصورة</th>
                         <th class="text-right py-4 px-6 text-sm font-semibold">التصنيف</th>
                         <th class="text-right py-4 px-6 text-sm font-semibold">الوصف</th>
                         <th class="text-right py-4 px-6 text-sm font-semibold">عدد الدورات</th>
@@ -46,40 +47,70 @@
                 </thead>
                 <tbody>
                     {% for category in categories %}
-                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <!-- عمود الصورة -->
                         <td class="py-4 px-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-{{ category.icon|default:'folder' }} text-primary-600 dark:text-primary-400"></i>
+                            <div class="flex items-center justify-center">
+                                {% if category.img_gat %}
+                                <div class="relative group">
+                                    <img src="{{ category.img_gat.url }}" alt="{{ category.name }}" 
+                                         class="w-16 h-16 rounded-xl object-cover border-2 border-primary-200 dark:border-primary-800 shadow-md group-hover:scale-110 transition duration-300">
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-xl transition"></div>
                                 </div>
-                                <div>
-                                    <div class="font-semibold">{{ category.name }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-500">slug: {{ category.slug }}</div>
+                                {% else %}
+                                <div class="w-16 h-16 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 rounded-xl flex items-center justify-center border-2 border-primary-200 dark:border-primary-800">
+                                    <i class="fas fa-{{ category.icon|default:'folder' }} text-2xl text-primary-600 dark:text-primary-400"></i>
                                 </div>
+                                {% endif %}
                             </div>
                         </td>
+                        
+                        <!-- اسم التصنيف -->
+                        <td class="py-4 px-6">
+                            <div class="font-semibold">{{ category.name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-500">slug: {{ category.slug }}</div>
+                        </td>
+                        
+                        <!-- الوصف -->
                         <td class="py-4 px-6">
                             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ category.description|default:'لا يوجد وصف'|truncatechars:50 }}</p>
                         </td>
+                        
+                        <!-- عدد الدورات -->
                         <td class="py-4 px-6">
-                            <span class="px-3 py-1 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm">
+                            <span class="px-3 py-1 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm font-semibold">
                                 {{ category.courses_count }}
                             </span>
                         </td>
+                        
+                        <!-- التصنيف الأب -->
                         <td class="py-4 px-6">
                             {% if category.parent %}
-                            <span class="text-sm">{{ category.parent.name }}</span>
+                            <span class="text-sm flex items-center gap-1">
+                                <i class="fas fa-sitemap text-gray-400 text-xs"></i>
+                                {{ category.parent.name }}
+                            </span>
                             {% else %}
                             <span class="text-sm text-gray-500 dark:text-gray-500">-</span>
                             {% endif %}
                         </td>
-                        <td class="py-4 px-6 text-sm">{{ category.created_at|date:'Y-m-d' }}</td>
+                        
+                        <!-- تاريخ الإضافة -->
+                        <td class="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                            {{ category.created_at|date:'Y-m-d' }}
+                        </td>
+                        
+                        <!-- الإجراءات -->
                         <td class="py-4 px-6">
                             <div class="flex gap-2">
-                                <a href="{% url 'courses:admin_category_edit' category.id %}" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="تعديل">
+                                <a href="{% url 'courses:admin_category_edit' category.id %}" 
+                                   class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition transform hover:scale-110" 
+                                   title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'courses:admin_category_delete' category.id %}" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="حذف">
+                                <a href="{% url 'courses:admin_category_delete' category.id %}" 
+                                   class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition transform hover:scale-110" 
+                                   title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>
@@ -87,13 +118,14 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-12">
-                            <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                        <td colspan="7" class="text-center py-12">
+                            <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4 animate-bounce-slow">
                                 <i class="fas fa-folder-open"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2">لا توجد تصنيفات</h3>
+                            <h3 class="text-2xl font-bold mb-2">لا توجد تصنيفات</h3>
                             <p class="text-gray-600 dark:text-gray-400 mb-6">قم بإضافة تصنيفات جديدة لتنظيم الدورات</p>
-                            <a href="{% url 'courses:admin_category_create' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                            <a href="{% url 'courses:admin_category_create' %}" 
+                               class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:scale-105 shadow-lg">
                                 <i class="fas fa-plus-circle ml-2"></i>
                                 إضافة تصنيف جديد
                             </a>
@@ -105,4 +137,38 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // إضافة تأثيرات بصرية (اختياري)
+    document.addEventListener('DOMContentLoaded', function() {
+        // إضافة tooltip للصور
+        const images = document.querySelectorAll('img[alt]');
+        images.forEach(img => {
+            img.addEventListener('mouseenter', function() {
+                this.title = this.alt;
+            });
+        });
+    });
+</script>
+
+<style>
+    /* تحسين ظهور الصور */
+    .group:hover img {
+        transform: scale(1.1);
+    }
+    
+    /* أنميشن بسيط للصفوف */
+    tr {
+        transition: all 0.3s ease;
+    }
+    
+    tr:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .dark tr:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+</style>
 {% endblock %}

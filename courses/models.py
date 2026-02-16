@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
 from django.urls import reverse
 from django.utils import timezone
-
+from django.utils.translation import gettext_lazy as _
 class User(AbstractUser):
     USER_ROLES = (
         ('admin', 'Admin'),
@@ -39,7 +39,13 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
-    icon = models.CharField(max_length=50, default='fa-folder')
+    icon = models.CharField(max_length=50, default='fa-folder', blank=True, null=True)
+    img_gat = models.ImageField(  # تأكد من أن اسم الحقل img_gat
+        verbose_name="صورة التصنيف",
+        upload_to='categories/',  # سيتم رفع الصور إلى media/categories/
+        null=True, 
+        blank=True
+    )
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -50,9 +56,17 @@ class Category(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Category.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
-    
+            
+            
     def get_courses_count(self):
         return self.courses.filter(is_active=True).count()
     

@@ -6,20 +6,8 @@ from .views import CustomLoginView
 app_name = 'courses'
 
 urlpatterns = [
-    # ==================== Public Pages ====================
-    path('', views.home_view, name='home'),
-    path('about/', views.about_view, name='about'),
-    path('contact/', views.contact_view, name='contact'),
-    path('faq/', views.faq_view, name='faq'),
-    
     # ==================== Authentication ====================
     path('register/', views.register_view, name='register'),
-    # path('login/', auth_views.LoginView.as_view(
-    #     template_name='auth/login.html',
-    #     redirect_authenticated_user=True,
-    #     next_page='courses:user_dashboard'  # إضافة هذا السطر
-    # ), name='login'),
-    
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(
         next_page='courses:home'
@@ -120,5 +108,7 @@ urlpatterns = [
     path('cart/submit-order/', views.submit_order, name='submit_order'),
     path('orders/', views.order_history, name='order_history'),
 
+    # ==================== Instructor Public Profile ====================
+    path('instructor/<int:instructor_id>/', views.instructor_profile, name='instructor_profile'),
 
 ]

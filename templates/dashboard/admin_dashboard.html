@@ -29,7 +29,7 @@
                     </span>
                     {% endif %}
                 </div>
-                <p class="text-white/90">لوحة تحكم المدير العام - إدارة كاملة للمنصة</p>
+                <p class="text-white/90">لوحة تحكم المدير العام - إدارة كاملة للمنصة والمحتوى</p>
             </div>
             <div class="hidden md:block">
                 <i class="fas fa-crown text-6xl opacity-50"></i>
@@ -103,7 +103,7 @@
                     <p class="text-xs">مكتمل</p>
                 </div>
                 <div class="text-center">
-                    <span class="font-bold">{{ pending_enrollments|default:'0' }}</span>
+                    <span class="font-bold">{{ pending_enrollments_count|default:'0' }}</span>
                     <p class="text-xs">معلق</p>
                 </div>
             </div>
@@ -132,7 +132,49 @@
         </div>
     </div>
 
-    <!-- Quick Actions Cards -->
+    <!-- إحصائيات إضافية من core -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-envelope text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">رسائل التواصل</p>
+                    <h3 class="text-2xl font-bold">{{ total_contact_messages|default:'0' }}</h3>
+                    <p class="text-xs text-green-600">{{ unread_messages|default:'0' }} غير مقروءة</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-newspaper text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">المشتركين</p>
+                    <h3 class="text-2xl font-bold">{{ total_subscribers|default:'0' }}</h3>
+                    <p class="text-xs text-green-600">{{ active_subscribers|default:'0' }} نشط</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-star text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">شهادات العملاء</p>
+                    <h3 class="text-2xl font-bold">{{ total_testimonials|default:'0' }}</h3>
+                    <p class="text-xs text-yellow-600">{{ pending_testimonials|default:'0' }} بانتظار المراجعة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Cards - موسعة لتشمل جميع النماذج -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <a href="{% url 'courses:admin_user_create' %}" 
            class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500 group">
@@ -183,10 +225,50 @@
         </a>
     </div>
 
-    <!-- Main Content Grid -->
+    <!-- إجراءات سريعة إضافية من core -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <a href="/admin/core/contactmessage/" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow hover:shadow-lg transition flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                <i class="fas fa-envelope text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold">رسائل التواصل</h4>
+                <p class="text-sm text-gray-500">إدارة رسائل الزوار</p>
+            </div>
+            {% if unread_messages > 0 %}
+            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ unread_messages }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/core/newslettersubscriber/" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow hover:shadow-lg transition flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <i class="fas fa-users text-green-600 dark:text-green-400"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold">المشتركين</h4>
+                <p class="text-sm text-gray-500">إدارة النشرة البريدية</p>
+            </div>
+        </a>
+
+        <a href="/admin/core/testimonial/" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow hover:shadow-lg transition flex items-center gap-3">
+            <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                <i class="fas fa-star text-yellow-600 dark:text-yellow-400"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold">شهادات العملاء</h4>
+                <p class="text-sm text-gray-500">إدارة التقييمات</p>
+            </div>
+            {% if pending_testimonials > 0 %}
+            <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">{{ pending_testimonials }}</span>
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Main Content Grid - موسع -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Users Management -->
+        <!-- Column 1: Users & Reviews -->
         <div class="lg:col-span-2">
+            <!-- Users Management -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold flex items-center gap-2">
@@ -303,6 +385,45 @@
                 </div>
             </div>
 
+            <!-- Recent Contact Messages -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fas fa-envelope text-indigo-600"></i>
+                        أحدث رسائل التواصل
+                    </h2>
+                    <a href="/admin/core/contactmessage/" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                        عرض الكل
+                        <i class="fas fa-arrow-left mr-1"></i>
+                    </a>
+                </div>
+
+                {% if recent_messages %}
+                <div class="space-y-4">
+                    {% for message in recent_messages %}
+                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-semibold">{{ message.name }}</h4>
+                                <p class="text-xs text-gray-500">{{ message.email }}</p>
+                            </div>
+                            <span class="text-xs text-gray-500">{{ message.created_at|date:'Y-m-d H:i' }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{{ message.message }}</p>
+                        <div class="flex gap-2">
+                            {% if not message.is_read %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-600 text-xs rounded-full">غير مقروءة</span>
+                            {% endif %}
+                            <span class="text-xs text-gray-500">{{ message.subject|truncatechars:30 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 dark:text-gray-400 py-4">لا توجد رسائل تواصل</p>
+                {% endif %}
+            </div>
+
             <!-- Courses Management -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -402,7 +523,7 @@
             </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- Column 2: Sidebar -->
         <div class="lg:col-span-1">
             <!-- Pending Enrollments -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
@@ -410,13 +531,9 @@
                     <h2 class="text-xl font-bold flex items-center gap-2">
                         <i class="fas fa-clock text-yellow-500"></i>
                         طلبات التسجيل
-                        {% if pending_enrollments_count > 0 %}
-                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-600 rounded-full">{{ pending_enrollments_count }}</span>
-                        {% endif %}
                     </h2>
                     <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="text-primary-600 hover:text-primary-700 text-sm">
                         عرض الكل
-                        <i class="fas fa-arrow-left mr-1"></i>
                     </a>
                 </div>
                 
@@ -435,26 +552,11 @@
                             <div>
                                 <h4 class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</h4>
                                 <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.course.title|truncatechars:20 }}</p>
-                                <p class="text-xs text-gray-400 mt-1">{{ enrollment.enrolled_at|date:'Y-m-d' }}</p>
                             </div>
                         </div>
-                        <div class="flex gap-1">
-                            <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=enrolled" 
-                            class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-800 transition" 
-                            title="قبول"
-                            onclick="return confirm('هل أنت متأكد من قبول هذا التسجيل؟')">
-                                <i class="fas fa-check text-green-600"></i>
-                            </a>
-                            <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=cancelled" 
-                            class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 transition" 
-                            title="رفض"
-                            onclick="return confirm('هل أنت متأكد من رفض هذا التسجيل؟')">
-                                <i class="fas fa-times text-red-600"></i>
-                            </a>
-                            <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition" title="عرض التفاصيل">
-                                <i class="fas fa-eye text-blue-600"></i>
-                            </a>
-                        </div>
+                        <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="text-primary-600 hover:text-primary-700">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
@@ -505,8 +607,40 @@
                 {% endif %}
             </div>
 
+            <!-- Recent Testimonials -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fas fa-quote-right text-indigo-600"></i>
+                        شهادات العملاء
+                    </h2>
+                    <a href="/admin/core/testimonial/" class="text-primary-600 hover:text-primary-700 text-sm">
+                        إدارة
+                    </a>
+                </div>
+                
+                {% if recent_testimonials %}
+                <div class="space-y-4">
+                    {% for testimonial in recent_testimonials %}
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-semibold text-sm">{{ testimonial.name }}</span>
+                            {% if not testimonial.is_active %}
+                            <span class="px-2 py-0.5 bg-yellow-100 text-yellow-600 text-xs rounded-full">بانتظار الموافقة</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1 line-clamp-2">"{{ testimonial.content }}"</p>
+                        <p class="text-xs text-gray-500">{{ testimonial.position }} - {{ testimonial.company }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 dark:text-gray-400 py-4">لا توجد شهادات</p>
+                {% endif %}
+            </div>
+
             <!-- Categories Summary -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold flex items-center gap-2">
                         <i class="fas fa-folder text-primary-600"></i>
@@ -534,6 +668,39 @@
                     <i class="fas fa-folder-open text-4xl mb-2 opacity-50"></i>
                     <p>لا توجد تصنيفات</p>
                 </div>
+                {% endif %}
+            </div>
+
+            <!-- Newsletter Subscribers -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fas fa-newspaper text-green-600"></i>
+                        أحدث المشتركين
+                    </h2>
+                    <a href="/admin/core/newslettersubscriber/" class="text-primary-600 hover:text-primary-700 text-sm">
+                        إدارة
+                    </a>
+                </div>
+                
+                {% if recent_subscribers %}
+                <div class="space-y-3">
+                    {% for subscriber in recent_subscribers|slice:":5" %}
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
+                        <div>
+                            <span class="text-sm font-medium">{{ subscriber.email|truncatechars:25 }}</span>
+                            {% if subscriber.name %}
+                            <p class="text-xs text-gray-500">{{ subscriber.name }}</p>
+                            {% endif %}
+                        </div>
+                        {% if subscriber.is_verified %}
+                        <span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">موثق</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 dark:text-gray-400 py-4">لا يوجد مشتركين</p>
                 {% endif %}
             </div>
         </div>
@@ -578,6 +745,7 @@
     </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
     // تحديث البيانات بشكل دوري (اختياري)

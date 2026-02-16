@@ -12,7 +12,8 @@ urlpatterns = [
     
     # تطبيق الدورات (جميع مسارات التطبيق)
     path('', include('courses.urls')),
-    
+    path('', include('core.urls')),
+
     # إعادة توجيه الصفحة الرئيسية
     path('home/', RedirectView.as_view(url='/', permanent=True)),
 ]

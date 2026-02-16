@@ -33,7 +33,7 @@
                     <span class="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm rounded-full">
                         {{ course.category.name }}
                     </span>
-                    <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-full">
+                    <   span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-full">
                         <i class="fas fa-signal ml-1"></i> {{ course.get_level_display }}
                     </span>
                     {% if course.price == 0 %}
@@ -45,22 +45,56 @@
                 
                 <h1 class="text-3xl lg:text-4xl font-bold mb-4">{{ course.title }}</h1>
                 <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">{{ course.short_description|default:course.description|truncatechars:200 }}</p>
-                
-                <!-- Instructor -->
-                <div class="flex items-center gap-4 mb-6">
-                    {% if course.instructor.avatar %}
-                    <img src="{{ course.instructor.avatar.url }}" alt="{{ course.instructor.get_full_name }}" class="w-16 h-16 rounded-full object-cover border-2 border-primary-500">
-                    {% else %}
-                    <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center border-2 border-primary-500">
-                        <span class="text-2xl text-primary-600 dark:text-primary-400 font-semibold">{{ course.instructor.first_name|first|upper }}</span>
+                <!-- Instructor with Cover -->
+                    <div class="relative mb-8">
+                        <!-- Mini Cover (اختياري - إذا كان للمدرب صورة غلاف) -->
+                        {% if course.instructor.cover_image %}
+                        <div class="h-32 rounded-xl overflow-hidden mb-4">
+                            <img src="{{ course.instructor.cover_image.url }}" alt="" class="w-full h-full object-cover">
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Instructor Info -->
+                        <div class="flex items-center gap-4">
+                            {% if course.instructor.avatar %}
+                            <img src="{{ course.instructor.avatar.url }}" alt="{{ course.instructor.get_full_name }}" class="w-20 h-20 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl -mt-10">
+                            {% else %}
+                            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-xl -mt-10">
+                                <span class="text-3xl text-white font-bold">{{ course.instructor.first_name|first|upper }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">مدرب الدورة</div>
+                                        <a href="{% url 'courses:instructor_profile' course.instructor.id %}" class="text-xl font-semibold hover:text-primary-600 transition inline-flex items-center gap-1 group">
+                                            {{ course.instructor.get_full_name|default:course.instructor.username }}
+                                            <i class="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition"></i>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Stats -->
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-center">
+                                            <div class="text-lg font-bold text-primary-600">{{ course.instructor.courses_taught.count }}</div>
+                                            <div class="text-xs text-gray-500">دورة</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-lg font-bold text-yellow-600">{{ course.instructor.avg_rating|default:'0' }}</div>
+                                            <div class="text-xs text-gray-500">تقييم</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-lg font-bold text-green-600">{{ course.instructor.total_students|default:'0' }}</div>
+                                            <div class="text-xs text-gray-500">طالب</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ course.instructor.bio|truncatechars:100 }}</p>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
-                    <div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">مدرب الدورة</div>
-                        <div class="text-xl font-semibold">{{ course.instructor.get_full_name|default:course.instructor.username }}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ course.instructor.bio|truncatechars:60 }}</div>
-                    </div>
-                </div>
                     <!-- Stats with Icons -->
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                         <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
