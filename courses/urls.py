@@ -25,7 +25,8 @@ urlpatterns = [
     path('course/<slug:slug>/learn/', views.course_learn_view, name='course_learn'),
     path('course/<slug:course_slug>/lesson/<int:lesson_id>/', views.lesson_view, name='lesson_view'),
     path('lesson/<int:lesson_id>/complete/', views.mark_lesson_complete, name='mark_lesson_complete'),
-    
+    path('course/<int:course_id>/contact/', views.contact_about_course, name='contact_about_course'),
+
     # ==================== User Actions ====================
     path('course/<slug:slug>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('course/<slug:slug>/review/', views.add_review, name='add_review'),
@@ -107,6 +108,12 @@ urlpatterns = [
     path('cart/submit-order/', views.submit_order, name='submit_order'),
     path('orders/', views.order_history, name='order_history'),
     path('cart/count/', views.cart_count, name='cart_count'),
+    path('order-success/', views.order_success, name='order_success'),
+    
+    # ==================== Admin: Orders Management ====================
+    path('admin/orders/', views.admin_orders, name='admin_orders'),
+    path('admin/orders/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
+    path('admin/orders/<int:order_id>/update-status/', views.admin_order_update_status, name='admin_order_update_status'),
 
     # ==================== Instructor Public Profile ====================
     path('instructor/<int:instructor_id>/', views.instructor_profile, name='instructor_profile'),

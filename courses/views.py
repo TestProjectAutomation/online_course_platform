@@ -18,13 +18,15 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.utils.timesince import timesince
 from core.models import ContactMessage, NewsletterSubscriber, Testimonial
-
+from django.conf import settings
+from urllib.parse import quote
+from django.core.mail import send_mail
 from datetime import timedelta, datetime
 from django.contrib.auth import get_user_model
 
 from .models import (
     Course, Category, User, Enrollment, Review, 
-    Favorite, CourseModule, Lesson, LessonProgress
+    Favorite, CourseModule, Lesson, LessonProgress, Order, OrderItem
 )
 from .services import (
     CourseService, EnrollmentService, FavoriteService, 
@@ -33,7 +35,7 @@ from .services import (
 from .forms import (
     CourseForm, CategoryForm, CourseModuleForm, LessonForm,
     ReviewForm, UserRegistrationForm, UserProfileForm,
-    EnrollmentForm, LoginForm, SearchForm
+    EnrollmentForm, LoginForm, SearchForm,
 )
 
 # ==================== Mixins ====================
@@ -130,19 +132,31 @@ class CourseDetailView(DetailView):
     slug_field = 'slug'
     
     def get_context_data(self, **kwargs):
-        
         context = super().get_context_data(**kwargs)
         course = self.object
         
         # زيادة عدد المشاهدات
         course.views_count += 1
-        course.save(update_fields=['views_count'])  # تحديث الحقل فقط لتجنب المشاكل
+        course.save(update_fields=['views_count'])
         
         # بيانات المستخدم إذا كان مسجل الدخول
         if self.request.user.is_authenticated:
             context['is_favorite'] = FavoriteService.is_favorite(self.request.user, course)
             context['is_enrolled'] = EnrollmentService.is_enrolled(self.request.user, course)
             context['user_review'] = ReviewService.get_user_review(self.request.user, course)
+            
+            # ✅ التحقق من وجود تسجيل سابق
+            context['existing_enrollment'] = Enrollment.objects.filter(
+                user=self.request.user,
+                course=course
+            ).first()
+            
+            # ✅ التحقق من وجود طلب شراء معلق
+            context['has_pending_order'] = Order.objects.filter(
+                user=self.request.user,
+                items__course=course,
+                status='pending'
+            ).exists()
             
             if context['is_enrolled']:
                 enrollment = Enrollment.objects.get(user=self.request.user, course=course)
@@ -171,6 +185,7 @@ class CourseDetailView(DetailView):
         return context
 
 
+
 @login_required
 def course_learn_view(request, slug):
     """صفحة مشاهدة الدورة (للمسجلين فقط)"""
@@ -185,7 +200,8 @@ def course_learn_view(request, slug):
     
     if not enrollment:
         messages.error(request, 'يجب التسجيل في الدورة أولاً')
-        return redirect('course_detail', slug=slug)
+        # ✅ إضافة بادئة courses:
+        return redirect('courses:course_detail', slug=slug)
     
     # تحديث آخر وصول
     enrollment.last_accessed = timezone.now()
@@ -217,10 +233,11 @@ def course_learn_view(request, slug):
     
     return render(request, 'courses/course_learn.html', context)
 
+
 @login_required
 def lesson_view(request, course_slug, lesson_id):
     """مشاهدة درس معين"""
-    course = get_object_or_404(Course, slug=course_slug)
+    course = get_object_or_404(Course, slug=course_slug, is_active=True)
     lesson = get_object_or_404(Lesson, id=lesson_id, module__course=course)
     
     # التحقق من الوصول (مجاني أو مسجل)
@@ -229,33 +246,11 @@ def lesson_view(request, course_slug, lesson_id):
             user=request.user,
             course=course,
             status='enrolled'
-        ).exists()
-        
-        if not enrollment:
-            messages.error(request, 'يجب التسجيل في الدورة لمشاهدة هذا الدرس')
-            return redirect('course_detail', slug=course_slug)
-    
-    # تسجيل التقدم
-    if request.user.is_authenticated:
-        enrollment = Enrollment.objects.filter(
-            user=request.user,
-            course=course,
-            status='enrolled'
         ).first()
         
-        if enrollment:
-            progress, created = LessonProgress.objects.get_or_create(
-                enrollment=enrollment,
-                lesson=lesson
-            )
-            
-            # تحديث آخر موضع مشاهدة (إذا كان طلب AJAX)
-            if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                data = json.loads(request.body)
-                if 'position' in data:
-                    progress.last_watched_position = data['position']
-                    progress.save()
-                    return JsonResponse({'status': 'success'})
+        if not enrollment or not enrollment.has_access:
+            messages.error(request, 'يجب التسجيل في الدورة لمشاهدة هذا الدرس')
+            return redirect('courses:course_detail', slug=course_slug)
     
     # الدروس السابقة والتالية
     all_lessons = list(Lesson.objects.filter(module__course=course).order_by('module__order', 'order'))
@@ -274,6 +269,8 @@ def lesson_view(request, course_slug, lesson_id):
     
     return render(request, 'courses/lesson.html', context)
 
+
+
 @login_required
 def mark_lesson_complete(request, lesson_id):
     """تحديد درس كمكتمل"""
@@ -291,9 +288,13 @@ def mark_lesson_complete(request, lesson_id):
                 lesson=lesson
             )
             progress.is_completed = True
+            progress.completed_at = timezone.now()
             progress.save()
             
-            messages.success(request, 'تم إكمال الدرس بنجاح')
+            # تحديث تقدم الدورة
+            enrollment.update_progress()
+            
+            messages.success(request, f'✅ تم إكمال الدرس "{lesson.title}" بنجاح')
             
             # التوجيه إلى الدرس التالي
             next_lesson = Lesson.objects.filter(
@@ -302,9 +303,13 @@ def mark_lesson_complete(request, lesson_id):
             ).first()
             
             if next_lesson:
-                return redirect('lesson_view', course_slug=enrollment.course.slug, lesson_id=next_lesson.id)
+                return redirect('courses:lesson_view', course_slug=enrollment.course.slug, lesson_id=next_lesson.id)
+            
+            # إذا كان آخر درس، التوجيه إلى صفحة تعلم الدورة
+            messages.success(request, '🎉 مبروك! لقد أكملت جميع دروس الدورة')
+            return redirect('courses:course_learn', slug=enrollment.course.slug)
     
-    return redirect('course_learn', slug=lesson.module.course.slug)
+    return redirect('courses:course_detail', slug=lesson.module.course.slug)
 
 
 @login_required
@@ -313,27 +318,97 @@ def enroll_course(request, slug):
     """التسجيل في دورة"""
     course = get_object_or_404(Course, slug=slug, is_active=True)
     
-    # التحقق من أن المستخدم غير مسجل بالفعل
-    enrollment, created = Enrollment.objects.get_or_create(
+    # التحقق من وجود تسجيل سابق (بأي حالة)
+    existing_enrollment = Enrollment.objects.filter(
+        user=request.user,
+        course=course
+    ).first()
+    
+    if existing_enrollment:
+        if existing_enrollment.status == 'completed':
+            messages.info(request, f'🎉 لقد أكملت هذه الدورة بالفعل! يمكنك مراجعتها في أي وقت')
+            return redirect('courses:course_detail', slug=slug)
+        elif existing_enrollment.status == 'enrolled':
+            messages.info(request, f'✅ أنت مسجل بالفعل في هذه الدورة')
+            return redirect('courses:course_detail', slug=slug)
+        elif existing_enrollment.status == 'pending':
+            messages.info(request, f'⏳ لديك طلب تسجيل معلق لهذه الدورة بالفعل. سيتم الرد عليك قريباً')
+            return redirect('courses:course_detail', slug=slug)
+        else:
+            messages.warning(request, f'⚠️ لديك تسجيل سابق في هذه الدورة بحالة: {existing_enrollment.get_status_display()}')
+            return redirect('courses:course_detail', slug=slug)
+    
+    if course.price == 0:
+        # ✅ دورة مجانية - تذهب إلى طلبات التسجيل (Enrollment) بانتظار الموافقة
+        enrollment = Enrollment(
+            user=request.user,
+            course=course,
+            status='pending',  # في انتظار موافقة الأدمن
+            has_lifetime_access=True,
+            notes='طلب تسجيل في دورة مجانية'
+        )
+        enrollment.save()
+        
+        messages.success(request, f'✅ تم إرسال طلب التسجيل في الدورة المجانية "{course.title}" للمراجعة')
+        
+        # يمكن إضافة إشطار للمشرفين هنا
+        # notify_admin_new_enrollment(enrollment)
+        
+        return redirect('courses:course_detail', slug=slug)
+        
+    else:
+        # ✅ دورة مدفوعة - التحقق من وجود طلب شراء معلق
+        existing_order = Order.objects.filter(
+            user=request.user,
+            items__course=course,
+            status='pending'
+        ).exists()
+        
+        if existing_order:
+            messages.info(request, f'⏳ لديك طلب شراء معلق لهذه الدورة بالفعل. سيتم التواصل معك قريباً')
+            return redirect('courses:course_detail', slug=slug)
+        
+        # إضافة إلى السلة
+        cart = request.session.get('cart', [])
+        if course.id not in cart:
+            cart.append(course.id)
+            request.session['cart'] = cart
+            messages.success(request, f'✅ تمت إضافة "{course.title}" إلى السلة')
+        else:
+            messages.info(request, f'ℹ️ الدورة "{course.title}" موجودة بالفعل في السلة')
+        
+        return redirect('courses:cart_view')
+    
+
+
+@login_required
+def contact_about_course(request, course_id):
+    """صفحة التواصل بخصوص دورة معينة"""
+    course = get_object_or_404(Course, id=course_id)
+    
+    # التحقق من أن المستخدم لديه تسجيل مكتمل
+    enrollment = Enrollment.objects.filter(
         user=request.user,
         course=course,
-        defaults={'status': 'enrolled' if course.price == 0 else 'pending'}
-    )
+        status='completed'
+    ).first()
     
-    if created:
-        if course.price == 0:
-            messages.success(request, f'✅ تم تسجيلك في الدورة "{course.title}" بنجاح')
-        else:
-            messages.success(request, f'✅ تم إرسال طلب التسجيل في الدورة "{course.title}"، بانتظار الموافقة')
-    else:
-        if enrollment.status == 'enrolled':
-            messages.info(request, f'أنت مسجل بالفعل في هذه الدورة')
-        elif enrollment.status == 'pending':
-            messages.info(request, f'طلب التسجيل في هذه الدورة قيد المراجعة')
-        else:
-            messages.warning(request, f'لديك تسجيل سابق في هذه الدورة بحالة: {enrollment.get_status_display()}')
+    if not enrollment:
+        messages.error(request, 'لا يمكنك الوصول إلى هذه الصفحة')
+        return redirect('courses:course_detail', slug=course.slug)
     
-    return redirect('courses:course_detail', slug=slug)
+    # رقم الواتساب من الإعدادات
+    whatsapp_number = getattr(settings, 'WHATSAPP_NUMBER', '201234567890')
+    
+    # إنشاء الرسالة في القالب بدلاً من هنا
+    context = {
+        'course': course,
+        'enrollment': enrollment,
+        'whatsapp_number': whatsapp_number,
+        'user_name': request.user.get_full_name() or request.user.username,
+    }
+    
+    return render(request, 'courses/contact_about_course.html', context)
 
 
 # ==================== User Authentication Views ====================
@@ -523,6 +598,12 @@ def user_dashboard(request):
         user=request.user
     ).select_related('course')
     
+    # ✅ إضافة طلبات الشراء
+    pending_orders = Order.objects.filter(
+        user=request.user,
+        status='pending'
+    ).order_by('-created_at')
+    
     pending_enrollments = enrollments.filter(status='pending')
     active_enrollments = enrollments.filter(status='enrolled')
     completed_enrollments = enrollments.filter(status='completed')
@@ -544,22 +625,24 @@ def user_dashboard(request):
         'total_courses': enrollments.count(),
         'in_progress': active_enrollments.count(),
         'completed': completed_enrollments.count(),
-        'certificates': completed_enrollments.count(),  # أو أي منطق آخر للشهادات
+        'certificates': completed_enrollments.count(),
     }
     
     context = {
         'enrollments': enrollments,
         'favorites': favorites,
         'pending_enrollments': pending_enrollments,
+        'pending_orders': pending_orders,  # ✅ إضافة طلبات الشراء
         'active_enrollments': active_enrollments,
         'completed_enrollments': completed_enrollments,
         'overall_progress': overall_progress,
         'recent_activity': enrollments[:5],
+        'total_lessons': total_lessons,
+        'completed_lessons': completed_lessons,
         'stats': stats,
     }
     
     return render(request, 'dashboard/user_dashboard.html', context)
-
 
 
 @login_required
@@ -619,7 +702,7 @@ def instructor_dashboard(request):
 def admin_dashboard(request):
     """لوحة تحكم الأدمن (كاملة وشاملة)"""
     from django.db.models import Count, Avg, Sum
-    from .models import User, Course, Category, Enrollment, Review
+    from .models import User, Course, Category, Enrollment, Review, Order  # ✅ استيراد Order
     
     # تحديد ما إذا كان المستخدم سوبر أدمن
     is_superuser = request.user.is_superuser
@@ -644,6 +727,13 @@ def admin_dashboard(request):
     
     # ✅ جلب queryset للتكرار عليه في القالب
     pending_enrollments = Enrollment.objects.filter(status='pending').select_related('user', 'course').order_by('-enrolled_at')[:5]
+    for enrollment in pending_enrollments:
+        enrollment.is_free_course = enrollment.course.price == 0
+
+    # ✅ إحصائيات الطلبات
+    total_orders = Order.objects.count()
+    pending_orders_count = Order.objects.filter(status='pending').count()
+    pending_orders = Order.objects.filter(status='pending').select_related('user').prefetch_related('items__course').order_by('-created_at')[:5]
     
     total_reviews = Review.objects.count()
     avg_rating = Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0
@@ -659,6 +749,9 @@ def admin_dashboard(request):
     recent_enrollments = Enrollment.objects.select_related('user', 'course').order_by('-enrolled_at')[:5]
     recent_reviews = Review.objects.select_related('user', 'course').order_by('-created_at')[:5]
     
+    free_courses_count = Course.objects.filter(price=0, is_active=True).count()
+    free_enrollments_pending = Enrollment.objects.filter(course__price=0, status='pending').count()
+
     # توزيع المستويات
     level_distribution = {
         'beginner': Course.objects.filter(level='beginner').count(),
@@ -675,8 +768,6 @@ def admin_dashboard(request):
     # قائمة المستخدمين مع تحديد السوبر أدمن
     users = User.objects.all().order_by('-date_joined')[:10]  # آخر 10 مستخدمين فقط للأداء
     
-    
-    
     # إحصائيات core
     total_contact_messages = ContactMessage.objects.count()
     unread_messages = ContactMessage.objects.filter(is_read=False).count()
@@ -690,8 +781,6 @@ def admin_dashboard(request):
     recent_subscribers = NewsletterSubscriber.objects.order_by('-created_at')[:5]
     recent_testimonials = Testimonial.objects.order_by('-created_at')[:5]
 
-
-
     context = {
         # إحصائيات
         'total_users': total_users,
@@ -702,17 +791,23 @@ def admin_dashboard(request):
         'active_courses': active_courses,
         'featured_courses': featured_courses,
         'total_enrollments': total_enrollments,
-        'pending_enrollments_count': pending_enrollments_count,  # ✅ العدد للت display
-        'pending_enrollments': pending_enrollments,  # ✅ الـ queryset للتكرار
+        'pending_enrollments_count': pending_enrollments_count,
+        'pending_enrollments': pending_enrollments,
         'completed_enrollments': completed_enrollments,
+        
+        # ✅ إحصائيات الطلبات
+        'total_orders': total_orders,
+        'pending_orders_count': pending_orders_count,
+        'pending_orders': pending_orders,
+        
         'total_reviews': total_reviews,
         'avg_rating': round(avg_rating, 1),
         'total_revenue': total_revenue,
         
         # بيانات الجداول
         'users': users,
-        'courses': Course.objects.all().select_related('category', 'instructor')[:10],  # آخر 10 دورات
-        'categories': Category.objects.annotate(courses_count=Count('courses'))[:10],  # آخر 10 تصنيفات
+        'courses': Course.objects.all().select_related('category', 'instructor')[:10],
+        'categories': Category.objects.annotate(courses_count=Count('courses'))[:10],
         'enrollments': Enrollment.objects.all().select_related('user', 'course')[:10],
         'reviews': Review.objects.all().select_related('user', 'course')[:10],
         
@@ -726,26 +821,27 @@ def admin_dashboard(request):
         'level_distribution': level_distribution,
         'category_distribution': category_distribution,
         
-        # طلبات pending
-        'pending_requests': pending_enrollments_count,
-        
         # معلومات المستخدم الحالي
         'current_user': request.user,
         'is_superuser': is_superuser,
         
-            'total_contact_messages': total_contact_messages,
-            'unread_messages': unread_messages,
-            'total_subscribers': total_subscribers,
-            'active_subscribers': active_subscribers,
-            'total_testimonials': total_testimonials,
-            'pending_testimonials': pending_testimonials,
-            'recent_messages': recent_messages,
-            'recent_subscribers': recent_subscribers,
-            'recent_testimonials': recent_testimonials,
+        # إحصائيات core
+        'total_contact_messages': total_contact_messages,
+        'unread_messages': unread_messages,
+        'total_subscribers': total_subscribers,
+        'active_subscribers': active_subscribers,
+        'total_testimonials': total_testimonials,
+        'pending_testimonials': pending_testimonials,
+        'recent_messages': recent_messages,
+        'recent_subscribers': recent_subscribers,
+        'recent_testimonials': recent_testimonials,
+        'free_courses_count': free_courses_count,
+        'free_enrollments_pending': free_enrollments_pending,
 
     }
     
     return render(request, 'dashboard/admin_dashboard.html', context)
+
 
 
 # ==================== Admin Management Views ====================
@@ -1620,6 +1716,7 @@ def admin_enrollment_create(request):
 
 # ==================== Enrollment Management Helpers ====================
 
+
 @staff_member_required
 def admin_enrollment_update_status(request, enrollment_id):
     """تحديث حالة التسجيل"""
@@ -1631,12 +1728,17 @@ def admin_enrollment_update_status(request, enrollment_id):
             old_status = enrollment.status
             enrollment.status = new_status
             
+            # ✅ عند الموافقة على التسجيل، تأكد من تفعيل الوصول مدى الحياة
+            if new_status == 'enrolled':
+                enrollment.has_lifetime_access = True
+                enrollment.access_expires_at = None  # إلغاء أي تاريخ انتهاء
+            
             if new_status == 'completed' and not enrollment.completed_at:
                 enrollment.completed_at = timezone.now()
             
             enrollment.save()
             
-            # Update course students count if enrollment approved
+            # تحديث عدد الطلاب
             if new_status == 'enrolled' and old_status != 'enrolled':
                 course = enrollment.course
                 course.students_count = Enrollment.objects.filter(course=course, status='enrolled').count()
@@ -1653,6 +1755,8 @@ def admin_enrollment_update_status(request, enrollment_id):
                 })
     
     return redirect('courses:admin_enrollment_detail', enrollment_id=enrollment.id)
+
+
 
 @staff_member_required
 def admin_enrollment_delete(request, enrollment_id):
@@ -2532,9 +2636,22 @@ class CustomLoginView(LoginView):
 
 # ==================== نظام السلة ====================
 
+
 def add_to_cart(request, course_id):
-    """إضافة دورة إلى السلة"""
+    """إضافة دورة مدفوعة إلى السلة (تدعم AJAX)"""
     course = get_object_or_404(Course, id=course_id, is_active=True)
+    
+    # ✅ منع إضافة الدورات المجانية إلى السلة
+    if course.price == 0:
+        message = '⚠️ الدورات المجانية لا تضاف إلى السلة، يمكنك التسجيل مباشرة'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'message': message,
+                'cart_count': len(request.session.get('cart', []))
+            })
+        messages.warning(request, message)
+        return redirect(request.META.get('HTTP_REFERER', 'courses:course_list'))
     
     cart = request.session.get('cart', [])
     
@@ -2555,9 +2672,9 @@ def add_to_cart(request, course_id):
             'cart_count': len(cart)
         })
     
+    # إذا كان طلب عادي
     messages.success(request, message)
     return redirect(request.META.get('HTTP_REFERER', 'courses:course_list'))
-
 
 def remove_from_cart(request, course_id):
     """إزالة دورة من السلة"""
@@ -2575,15 +2692,20 @@ def cart_view(request):
     cart_ids = request.session.get('cart', [])
     cart_courses = Course.objects.filter(id__in=cart_ids, is_active=True)
     
-    # حساب الإجمالي
+    # التحقق من وجود دورات مجانية في السلة
+    free_courses_in_cart = cart_courses.filter(price=0).exists()
+    
+    # حساب الإجمالي (دورات مدفوعة فقط)
     total = sum(course.price for course in cart_courses)
     
     context = {
         'cart_courses': cart_courses,
         'total': total,
-        'cart_count': len(cart_ids)
+        'cart_count': len(cart_ids),
+        'free_courses_in_cart': free_courses_in_cart,
     }
     return render(request, 'cart/cart.html', context)
+
 
 def update_cart_quantity(request):
     """تحديث كمية الدورة في السلة (AJAX)"""
@@ -2594,12 +2716,8 @@ def update_cart_quantity(request):
         
         cart = request.session.get('cart', [])
         
-        if action == 'increase':
-            if course_id not in cart:
-                cart.append(course_id)
-        elif action == 'decrease':
-            if course_id in cart:
-                cart.remove(course_id)
+        if action == 'decrease' and course_id in cart:
+            cart.remove(course_id)
         
         request.session['cart'] = cart
         
@@ -2623,7 +2741,7 @@ def clear_cart(request):
 
 
 def cart_count(request):
-    """API للحصول على عدد العناصر في السلة"""
+    """إرجاع عدد العناصر في السلة (لطلبات AJAX)"""
     cart = request.session.get('cart', [])
     return JsonResponse({
         'count': len(cart),
@@ -2632,10 +2750,107 @@ def cart_count(request):
     
 
 # ==================== طلبات الشراء ====================
+@staff_member_required
+def admin_orders(request):
+    """عرض جميع الطلبات للمشرفين"""
+    orders = Order.objects.all().select_related('user').prefetch_related('items__course').order_by('-created_at')
+    
+    # تصفية حسب الحالة
+    status = request.GET.get('status')
+    if status:
+        orders = orders.filter(status=status)
+    
+    # بحث
+    search = request.GET.get('search')
+    if search:
+        orders = orders.filter(
+            Q(id__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(user__email__icontains=search) |
+            Q(customer_name__icontains=search)
+        )
+    
+    # إحصائيات
+    total_orders = orders.count()
+    pending_orders = orders.filter(status='pending').count()
+    processing_orders = orders.filter(status='processing').count()
+    completed_orders = orders.filter(status='completed').count()
+    cancelled_orders = orders.filter(status='cancelled').count()
+    
+    # إجمالي الإيرادات
+    total_revenue = orders.filter(status='completed').aggregate(total=Sum('total'))['total'] or 0
+    
+    paginator = Paginator(orders, 20)
+    page = request.GET.get('page')
+    orders = paginator.get_page(page)
+    
+    context = {
+        'orders': orders,
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        'processing_orders': processing_orders,
+        'completed_orders': completed_orders,
+        'cancelled_orders': cancelled_orders,
+        'total_revenue': total_revenue,
+    }
+    return render(request, 'admin/orders/list.html', context)
+
+
+@staff_member_required
+def admin_order_detail(request, order_id):
+    """عرض تفاصيل الطلب"""
+    order = get_object_or_404(Order.objects.select_related('user').prefetch_related('items__course'), id=order_id)
+    
+    context = {
+        'order': order,
+        'items': order.items.all(),
+    }
+    return render(request, 'admin/orders/detail.html', context)
+
+
+@staff_member_required
+def admin_order_update_status(request, order_id):
+    """تحديث حالة الطلب"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(Order.STATUS_CHOICES):
+            old_status = order.status
+            order.status = new_status
+            order.save()
+            
+            messages.success(request, f'✅ تم تحديث حالة الطلب #{order.id} إلى {order.get_status_display()}')
+            
+            # إذا تمت الموافقة على الطلب (completed)، يمكن تفعيل التسجيل للدورات
+            if new_status == 'completed' and old_status != 'completed':
+                # تفعيل التسجيل للدورات
+                for item in order.items.all():
+                    enrollment, created = Enrollment.objects.get_or_create(
+                        user=order.user,
+                        course=item.course,
+                        defaults={
+                            'status': 'enrolled',
+                            'has_lifetime_access': True,
+                            'notes': f'تم التسجيل عبر الطلب #{order.id}'
+                        }
+                    )
+                    if not created and enrollment.status != 'enrolled':
+                        enrollment.status = 'enrolled'
+                        enrollment.has_lifetime_access = True
+                        enrollment.save()
+                
+                messages.success(request, f'✅ تم تفعيل التسجيل في الدورات للمستخدم {order.user.username}')
+            
+            return redirect('courses:admin_order_detail', order_id=order.id)
+    
+    return redirect('courses:admin_orders')
+
+
 
 @login_required
 def submit_order(request):
-    """إرسال طلب شراء"""
+    """إرسال طلب شراء للدورات المدفوعة فقط"""
     if request.method == 'POST':
         cart_ids = request.session.get('cart', [])
         
@@ -2643,52 +2858,105 @@ def submit_order(request):
             messages.error(request, '❌ السلة فارغة')
             return redirect('courses:cart_view')
         
+        # ✅ التأكد من أن جميع الدورات في السلة مدفوعة
         cart_courses = Course.objects.filter(id__in=cart_ids, is_active=True)
+        
+        # تصفية الدورات المجانية (لا يجب أن تكون في السلة)
+        free_courses = cart_courses.filter(price=0)
+        if free_courses.exists():
+            # إزالة الدورات المجانية من السلة
+            free_ids = list(free_courses.values_list('id', flat=True))
+            cart_ids = [id for id in cart_ids if id not in free_ids]
+            request.session['cart'] = cart_ids
+            
+            messages.warning(request, 'تمت إزالة الدورات المجانية من السلة (يمكنك التسجيل فيها مباشرة)')
+            
+            if not cart_ids:
+                return redirect('courses:cart_view')
+            
+            cart_courses = Course.objects.filter(id__in=cart_ids, is_active=True)
         
         # حساب الإجمالي
         total = sum(course.price for course in cart_courses)
         
-        # هنا يمكنك إضافة منطق حفظ الطلب في قاعدة البيانات
-        # مثلاً إنشاء نموذج Order و OrderItem
+        # اسم المستخدم
+        user_name = request.user.get_full_name() or request.user.username
         
-        # إنشاء تسجيلات للدورات المجانية مباشرة، والمدفوعة كطلبات معلقة
-        enrolled_count = 0
-        pending_count = 0
+        # حفظ الطلب في قاعدة البيانات
+        order = Order.objects.create(
+            user=request.user,
+            total=total,
+            status='pending',
+            notes='طلب شراء لدورات مدفوعة',
+            customer_name=user_name,
+            customer_email=request.user.email,
+            customer_phone=request.user.phone_number or ''
+        )
         
+        # حفظ تفاصيل الطلب
         for course in cart_courses:
-            if course.price == 0:
-                # دورات مجانية - تسجيل مباشر
-                enrollment, created = Enrollment.objects.get_or_create(
-                    user=request.user,
-                    course=course,
-                    defaults={'status': 'enrolled'}
-                )
-                if created:
-                    enrolled_count += 1
-            else:
-                # دورات مدفوعة - طلب معلق
-                enrollment, created = Enrollment.objects.get_or_create(
-                    user=request.user,
-                    course=course,
-                    defaults={'status': 'pending'}
-                )
-                if created:
-                    pending_count += 1
+            OrderItem.objects.create(
+                order=order,
+                course=course,
+                price=course.price
+            )
         
-        # تفريغ السلة بعد إرسال الطلب
+        # إنشاء رسالة واتساب
+        course_list = "\n".join([f"• {course.title} - {course.price} ج.م" for course in cart_courses])
+        
+        message = f"""🔔 *طلب شراء جديد* 🔔
+
+👤 *اسم العميل:* {user_name}
+📧 *البريد الإلكتروني:* {request.user.email}
+📱 *رقم الهاتف:* {request.user.phone_number or 'غير متوفر'}
+🆔 *رقم الطلب:* #{order.id}
+
+📚 *الدورات المطلوبة:*
+{course_list}
+
+💰 *الإجمالي:* {total} ج.م
+📅 *تاريخ الطلب:* {timezone.now().strftime('%Y-%m-%d %H:%M')}
+
+⏳ الحالة: قيد الانتظار - بانتظار تأكيد الدفع"""
+        
+        encoded_message = quote(message)
+        whatsapp_number = getattr(settings, 'WHATSAPP_NUMBER', '201234567890')
+        whatsapp_url = f"https://wa.me/{whatsapp_number}?text={encoded_message}"
+        
+        # تفريغ السلة بعد حفظ الطلب
         request.session['cart'] = []
         
-        # رسالة تأكيد
-        if enrolled_count > 0 and pending_count > 0:
-            messages.success(request, f'✅ تم تسجيلك في {enrolled_count} دورة مجانية، وتم إرسال {pending_count} طلب شراء للمراجعة')
-        elif enrolled_count > 0:
-            messages.success(request, f'✅ تم تسجيلك في {enrolled_count} دورة مجانية بنجاح')
-        elif pending_count > 0:
-            messages.success(request, f'✅ تم إرسال طلب الشراء بنجاح، بانتظار المراجعة')
+        messages.success(request, f'✅ تم إرسال طلب شراء الدورات المدفوعة رقم #{order.id} بنجاح!')
         
-        return redirect('courses:user_dashboard')
+        # التوجيه إلى واتساب
+        return redirect(whatsapp_url)
     
     return redirect('courses:cart_view')
+
+
+
+@login_required
+def order_success(request):
+    """صفحة نجاح الطلب (إذا لم يتم التوجيه من submit_order)"""
+    # الحصول على آخر طلب للمستخدم
+    last_order = Order.objects.filter(user=request.user).order_by('-created_at').first()
+    
+    if not last_order:
+        return redirect('courses:cart_view')
+    
+    whatsapp_number = getattr(settings, 'WHATSAPP_NUMBER', '201234567890')
+    
+    context = {
+        'order': last_order,
+        'whatsapp_url': f"https://wa.me/{whatsapp_number}",
+        'cart_courses': last_order.items.all(),
+        'total': last_order.total,
+    }
+    
+    return render(request, 'cart/order_success.html', context)
+
+
+
 
 @login_required
 def order_history(request):

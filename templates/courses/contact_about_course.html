@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تواصل معنا - {{ course.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
+    <div class="container mx-auto px-4 max-w-3xl">
+        <!-- Header -->
+        <div class="text-center mb-8 animate__animated animate__fadeInDown">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-6 shadow-xl">
+                <i class="fab fa-whatsapp text-5xl text-white"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-l from-green-600 to-green-800 bg-clip-text text-transparent">
+                تواصل معنا عبر واتساب
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg">للاستفسار عن شراء الدورة كهدية أو للغير</p>
+            
+            <!-- شارة للمستخدمين المكتملة فقط -->
+            <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                <i class="fas fa-check-circle"></i>
+                <span class="font-semibold">لديك وصول مدى الحياة لهذه الدورة</span>
+            </div>
+        </div>
+
+        <!-- Course Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 mb-8 transform hover:scale-105 transition duration-500 animate__animated animate__fadeInUp">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <!-- صورة الدورة -->
+                <div class="relative w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-xl group">
+                    {% if course.image %}
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                        <i class="fas fa-book-open text-4xl text-white"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- شارة إكمال -->
+                    <div class="absolute -top-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-lg">
+                        <i class="fas fa-check text-white text-sm"></i>
+                    </div>
+                </div>
+                
+                <!-- معلومات الدورة -->
+                <div class="flex-1 text-center md:text-right">
+                    <h2 class="text-2xl font-bold mb-2">{{ course.title }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-3">{{ course.category.name }}</p>
+                    
+                    <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                        <span class="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-semibold flex items-center gap-2">
+                            <i class="fas fa-infinity"></i>
+                            وصول مدى الحياة
+                        </span>
+                        <span class="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-semibold flex items-center gap-2">
+                            <i class="fas fa-gift"></i>
+                            شراء كهدية
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقات الخيارات -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- خيار الشراء كهدية -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition group animate__animated animate__fadeInLeft">
+                <div class="text-center mb-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition">
+                        <i class="fas fa-gift text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">شراء كهدية 🎁</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">أرسل هذه الدورة كهدية لأصدقائك أو أحبائك</p>
+                </div>
+            </div>
+            
+            <!-- خيار الشراء للغير -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition group animate__animated animate__fadeInRight">
+                <div class="text-center mb-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition">
+                        <i class="fas fa-users text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">شراء لشخص آخر 👥</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">قم بشراء الدورة لشخص آخر غيرك</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 mb-8 animate__animated animate__fadeInUp">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-comment-dots text-2xl text-green-600 dark:text-green-400"></i>
+                </div>
+                <h3 class="text-2xl font-bold">رسالتك المخصصة</h3>
+            </div>
+            
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 rounded-2xl p-8 mb-6 border-2 border-green-200 dark:border-green-800">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">
+                            <span class="font-bold text-green-600">{{ user.get_full_name|default:user.username }}</span>،
+                        </p>
+                        <p class="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mt-4 mr-6">
+                            أود شراء دورة "<span class="font-bold text-green-600">{{ course.title }}</span>" كهدية أو لشخص آخر. 
+                            لقد أكملت هذه الدورة بالفعل ولدي وصول مدى الحياة، وأرغب في شراء نسخة إضافية.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                <a href="{{ whatsapp_url }}" 
+                   target="_blank"
+                   class="group relative w-full px-8 py-5 bg-gradient-to-l from-green-600 to-green-700 text-white rounded-2xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 font-bold text-xl flex items-center justify-center gap-4 shadow-2xl hover:shadow-green-500/50 overflow-hidden">
+                    <!-- تأثير الخلفية -->
+                    <span class="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700"></span>
+                    
+                    <i class="fab fa-whatsapp text-3xl relative z-10"></i>
+                    <span class="relative z-10">فتح محادثة واتساب</span>
+                    <i class="fas fa-arrow-left text-2xl relative z-10 group-hover:translate-x-2 transition"></i>
+                </a>
+                
+                <p class="text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
+                    <i class="fas fa-shield-alt text-green-600"></i>
+                    محادثتك آمنة ومشفرة مع فريق الدعم
+                </p>
+            </div>
+        </div>
+
+        <!-- معلومات إضافية -->
+        <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-2xl p-6 mb-8 animate__animated animate__fadeInUp">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-infinity text-white text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-green-800 dark:text-green-200 mb-2">تذكر: لديك وصول مدى الحياة! 🌟</h4>
+                    <p class="text-green-700 dark:text-green-300 text-sm">
+                        بما أنك أكملت هذه الدورة، لا يزال بإمكانك الوصول إليها في أي وقت. 
+                        هذا الطلب مخصص لشراء نسخة إضافية كهدية أو لشخص آخر.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate__animated animate__fadeInUp">
+            <a href="{% url 'courses:course_detail' course.slug %}" 
+               class="group px-6 py-4 bg-gradient-to-l from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all duration-300 text-center font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl">
+                <i class="fas fa-arrow-right group-hover:-translate-x-1 transition"></i>
+                <span>العودة لصفحة الدورة</span>
+            </a>
+            <a href="{% url 'courses:course_learn' course.slug %}" 
+               class="group px-6 py-4 bg-gradient-to-l from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all duration-300 text-center font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl">
+                <i class="fas fa-play group-hover:scale-110 transition"></i>
+                <span>العودة للتعلم</span>
+            </a>
+        </div>
+        
+        <!-- رسالة تذكير -->
+        <div class="text-center mt-8 text-sm text-gray-500 dark:text-gray-500 animate__animated animate__fadeInUp">
+            <i class="fas fa-heart text-red-500 ml-1 animate-pulse"></i>
+            شكراً لكونك جزءاً من مجتمعنا التعليمي
+        </div>
+    </div>
+</div>
+
+<style>
+    /* تحسينات إضافية */
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    /* تخصيص شريط التمرير */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #22c55e;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #16a34a;
+    }
+</style>
+{% endblock %}

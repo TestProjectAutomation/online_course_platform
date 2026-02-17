@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تم إرسال الطلب - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-900 dark:to-gray-800 py-12">
+    <div class="container mx-auto px-4 max-w-3xl">
+        <!-- Header -->
+        <div class="text-center mb-8 animate__animated animate__fadeInDown">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-6 shadow-xl animate-pulse">
+                <i class="fab fa-whatsapp text-5xl text-white"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-l from-green-600 to-green-800 bg-clip-text text-transparent">
+                جاري تحويلك إلى واتساب! 🚀
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg">رقم الطلب: <span class="font-bold text-green-600">#{{ order.id }}</span></p>
+        </div>
+
+        <!-- رسالة التوجيه -->
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 mb-8 animate__animated animate__fadeInUp">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-spinner fa-spin text-3xl text-green-600 dark:text-green-400"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">سيتم تحويلك إلى واتساب خلال ثوانٍ...</h3>
+                <p class="text-gray-600 dark:text-gray-400">
+                    إذا لم يتم التحويل تلقائياً، اضغط على الزر أدناه
+                </p>
+            </div>
+            
+            <a href="{{ whatsapp_url }}" 
+               target="_blank"
+               id="whatsappButton"
+               class="w-full px-6 py-4 bg-gradient-to-l from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 font-semibold text-lg flex items-center justify-center gap-3 shadow-lg hover:shadow-green-500/50">
+                <i class="fab fa-whatsapp text-2xl"></i>
+                <span>فتح محادثة واتساب الآن</span>
+            </a>
+            
+            <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
+                <i class="fas fa-shield-alt text-green-600 ml-1"></i>
+                محادثتك آمنة ومشفرة مع فريق الدعم
+            </p>
+        </div>
+
+        <!-- تفاصيل الطلب مختصرة -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <h3 class="font-bold mb-4">تفاصيل الطلب #{{ order.id }}</h3>
+            <div class="space-y-2">
+                {% for item in order.items.all|slice:":3" %}
+                <div class="flex justify-between text-sm">
+                    <span>{{ item.course.title|truncatechars:30 }}</span>
+                    <span class="font-semibold">{{ item.price }} ج.م</span>
+                </div>
+                {% endfor %}
+                {% if order.items.count > 3 %}
+                <p class="text-xs text-gray-500">+{{ order.items.count|add:"-3" }} دورات أخرى</p>
+                {% endif %}
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                    <div class="flex justify-between font-bold">
+                        <span>الإجمالي</span>
+                        <span class="text-green-600">{{ total }} ج.م</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="grid grid-cols-2 gap-4">
+            <a href="{% url 'courses:user_dashboard' %}" 
+               class="px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition text-center text-sm">
+                <i class="fas fa-tachometer-alt ml-2"></i>
+                لوحة التحكم
+            </a>
+            <a href="{% url 'courses:course_list' %}" 
+               class="px-4 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition text-center text-sm">
+                <i class="fas fa-book-open ml-2"></i>
+                المزيد من الدورات
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // التوجيه التلقائي إلى واتساب بعد 3 ثواني
+    setTimeout(function() {
+        window.location.href = "{{ whatsapp_url }}";
+    }, 3000);
+    
+    // إذا نقر المستخدم على الزر، نوقف التوجيه التلقائي
+    document.getElementById('whatsappButton').addEventListener('click', function() {
+        clearTimeout(timeout);
+    });
+</script>
+{% endblock %}

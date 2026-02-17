@@ -6,10 +6,27 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Welcome Header -->
-    <div class="bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 rounded-2xl p-8 mb-8 text-white">
-        <div class="flex items-center justify-between">
+    <div class="bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-800 dark:to-primary-950 rounded-2xl p-8 mb-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
             <div>
-                <h1 class="text-3xl font-bold mb-2">مرحباً {{ user.first_name|default:user.username }}! 👋</h1>
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-3xl font-bold">مرحباً {{ user.first_name|default:user.username }}! 👋</h1>
+                    {% if user.is_superuser %}
+                    <span class="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold flex items-center gap-1">
+                        <i class="fas fa-crown"></i>
+                        سوبر أدمن
+                    </span>
+                    {% endif %}
+                    {% if user.role == 'instructor' %}
+                    <span class="px-3 py-1 bg-green-400 text-green-900 rounded-full text-sm font-bold flex items-center gap-1">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        مدرب
+                    </span>
+                    {% endif %}
+                </div>
                 <p class="text-white/90">تابع تقدمك التعليمي واستعرض دوراتك المسجل فيها</p>
             </div>
             <div class="hidden md:block">
@@ -20,7 +37,7 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي الدورات</p>
@@ -30,9 +47,13 @@
                     <i class="fas fa-book-open text-primary-600 dark:text-primary-400 text-xl"></i>
                 </div>
             </div>
+            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <i class="fas fa-infinity ml-1 text-green-500"></i>
+                وصول مدى الحياة لجميع الدورات
+            </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">قيد التقدم</p>
@@ -42,9 +63,12 @@
                     <i class="fas fa-spinner text-yellow-600 dark:text-yellow-400 text-xl"></i>
                 </div>
             </div>
+            <div class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div class="bg-yellow-500 rounded-full h-1.5" style="width: {{ overall_progress|default:'0' }}%"></div>
+            </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">الدورات المكتملة</p>
@@ -54,9 +78,13 @@
                     <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
                 </div>
             </div>
+            <div class="mt-2 flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                <i class="fas fa-infinity"></i>
+                <span>وصول مدى الحياة</span>
+            </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">الشهادات</p>
@@ -66,19 +94,32 @@
                     <i class="fas fa-certificate text-purple-600 dark:text-purple-400 text-xl"></i>
                 </div>
             </div>
+            <div class="mt-2 flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+                <i class="fas fa-download"></i>
+                <span>جاهزة للتحميل</span>
+            </div>
         </div>
     </div>
 
     <!-- Progress Overview -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold">نظرة عامة على التقدم</h2>
-            <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ overall_progress|default:'0' }}%</span>
+            <div class="flex items-center gap-2">
+                <i class="fas fa-chart-line text-primary-600 text-xl"></i>
+                <h2 class="text-xl font-bold">نظرة عامة على التقدم</h2>
+            </div>
+            <span class="text-primary-600 dark:text-primary-400 font-semibold text-2xl">{{ overall_progress|default:'0' }}%</span>
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-2">
-            <div class="bg-primary-600 rounded-full h-4 transition-all duration-500" style="width: {{ overall_progress|default:'0' }}%"></div>
+            <div class="bg-primary-600 rounded-full h-4 transition-all duration-500 relative" style="width: {{ overall_progress|default:'0' }}%">
+                <span class="absolute -top-6 -right-2 text-xs font-bold text-primary-600">{{ overall_progress|default:'0' }}%</span>
+            </div>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">تقدم عام في جميع الدورات</p>
+        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
+            <span><i class="fas fa-play-circle ml-1 text-green-500"></i> {{ completed_lessons|default:'0' }} درس مكتمل</span>
+            <span><i class="fas fa-clock ml-1 text-yellow-500"></i> {{ total_lessons|default:'0' }} إجمالي الدروس</span>
+            <span><i class="fas fa-infinity ml-1 text-primary-500"></i> وصول مدى الحياة</span>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -86,19 +127,22 @@
         <div class="lg:col-span-2">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold">الدورات قيد التقدم</h2>
-                    <a href="{% url 'courses:course_list' %}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-play-circle text-primary-600 text-xl"></i>
+                        <h2 class="text-xl font-bold">الدورات قيد التقدم</h2>
+                    </div>
+                    <a href="{% url 'courses:course_list' %}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1">
                         عرض الكل
-                        <i class="fas fa-arrow-left mr-1"></i>
+                        <i class="fas fa-arrow-left"></i>
                     </a>
                 </div>
 
                 {% if active_enrollments %}
                 <div class="space-y-6">
                     {% for enrollment in active_enrollments %}
-                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-6 last:pb-0">
+                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-6 last:pb-0 hover:bg-gray-50 dark:hover:bg-gray-700/20 p-3 rounded-lg transition">
                         <div class="flex items-start gap-4">
-                            <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                            <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                                 {% if enrollment.course.image %}
                                 <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}" class="w-full h-full object-cover">
                                 {% else %}
@@ -108,20 +152,37 @@
                                 {% endif %}
                             </div>
                             <div class="flex-1">
-                                <div class="flex justify-between mb-1">
-                                    <h3 class="font-semibold">{{ enrollment.course.title }}</h3>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ enrollment.progress }}%</span>
+                                <div class="flex items-start justify-between mb-1">
+                                    <div>
+                                        <h3 class="font-semibold text-lg">{{ enrollment.course.title }}</h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <!-- شارة الوصول مدى الحياة -->
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">
+                                                <i class="fas fa-infinity"></i>
+                                                وصول مدى الحياة
+                                            </span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-500">
+                                                <i class="fas fa-user ml-1"></i>
+                                                {{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="text-lg font-bold text-primary-600">{{ enrollment.progress }}%</span>
                                 </div>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}</p>
+                                
                                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
-                                    <div class="bg-primary-600 rounded-full h-2" style="width: {{ enrollment.progress }}%"></div>
+                                    <div class="bg-primary-600 rounded-full h-2 transition-all duration-500" style="width: {{ enrollment.progress }}%"></div>
                                 </div>
+                                
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs text-gray-500 dark:text-gray-500">
-                                        <i class="fas fa-clock ml-1"></i> آخر وصول: {{ enrollment.last_accessed|timesince }}
+                                    <span class="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1">
+                                        <i class="fas fa-clock"></i> 
+                                        آخر وصول: {{ enrollment.last_accessed|timesince }}
                                     </span>
-                                    <a href="{% url 'courses:course_learn' enrollment.course.slug %}" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
-                                        <i class="fas fa-play ml-1"></i> متابعة
+                                    <a href="{% url 'courses:course_learn' enrollment.course.slug %}" 
+                                       class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg">
+                                        <i class="fas fa-play"></i>
+                                        متابعة
                                     </a>
                                 </div>
                             </div>
@@ -131,12 +192,12 @@
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                    <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4 animate-pulse-slow">
                         <i class="fas fa-book-open"></i>
                     </div>
                     <h3 class="text-xl font-bold mb-2">لا توجد دورات قيد التقدم</h3>
                     <p class="text-gray-600 dark:text-gray-400 mb-6">ابدأ رحلة التعلم الآن</p>
-                    <a href="{% url 'courses:course_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                    <a href="{% url 'courses:course_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                         <i class="fas fa-search ml-2"></i>
                         استعرض الدورات
                     </a>
@@ -146,16 +207,27 @@
 
             <!-- Completed Courses -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mt-8">
-                <h2 class="text-xl font-bold mb-6">الدورات المكتملة</h2>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        <h2 class="text-xl font-bold">الدورات المكتملة</h2>
+                    </div>
+                    {% if completed_enrollments %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm rounded-full">
+                        <i class="fas fa-infinity"></i>
+                        وصول مدى الحياة
+                    </span>
+                    {% endif %}
+                </div>
                 
                 {% if completed_enrollments %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {% for enrollment in completed_enrollments %}
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition">
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-xl transition-all duration-300 group">
                         <div class="flex gap-3">
-                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                                 {% if enrollment.course.image %}
-                                <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}" class="w-full h-full object-cover">
+                                <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                                 {% else %}
                                 <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
                                      alt="{{ enrollment.course.title }}" 
@@ -163,51 +235,147 @@
                                 {% endif %}
                             </div>
                             <div class="flex-1">
-                                <h3 class="font-semibold text-sm mb-1 line-clamp-2">{{ enrollment.course.title }}</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-500 mb-2">أكملت في: {{ enrollment.completed_at|date:'d M Y' }}</p>
-                                <a href="#" class="text-primary-600 hover:text-primary-700 text-xs font-semibold">
-                                    <i class="fas fa-download ml-1"></i> تحميل الشهادة
-                                </a>
+                                <div class="flex items-start justify-between">
+                                    <h3 class="font-semibold text-sm mb-1 line-clamp-2">{{ enrollment.course.title }}</h3>
+                                    <i class="fas fa-check-circle text-green-500 group-hover:scale-110 transition"></i>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mb-2">
+                                    <i class="fas fa-calendar ml-1"></i>
+                                    أكملت في: {{ enrollment.completed_at|date:'d M Y' }}
+                                </p>
+                                
+                                <!-- شارة الوصول مدى الحياة -->
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">
+                                        <i class="fas fa-infinity"></i>
+                                        وصول مدى الحياة
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3 mt-2">
+                                    <a href="{% url 'courses:course_learn' enrollment.course.slug %}" 
+                                       class="text-primary-600 hover:text-primary-700 text-xs font-semibold flex items-center gap-1">
+                                        <i class="fas fa-redo-alt"></i>
+                                        مراجعة
+                                    </a>
+                                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                                    <button onclick="downloadCertificate({{ enrollment.id }})" 
+                                            class="text-green-600 hover:text-green-700 text-xs font-semibold flex items-center gap-1">
+                                        <i class="fas fa-download"></i>
+                                        الشهادة
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
+                
+                <!-- رسالة تذكير بالوصول مدى الحياة -->
+                <div class="mt-6 p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center">
+                            <i class="fas fa-infinity text-green-600 dark:text-green-400 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-green-800 dark:text-green-200">
+                                وصول مدى الحياة!
+                            </p>
+                            <p class="text-xs text-green-600 dark:text-green-400">
+                                يمكنك العودة لمراجعة هذه الدورات في أي وقت
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
                 {% else %}
-                <p class="text-center text-gray-500 dark:text-gray-400 py-8">لم تكمل أي دورة بعد</p>
+                <div class="text-center py-8">
+                    <div class="text-5xl text-gray-300 dark:text-gray-600 mb-3 animate-bounce-slow">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400">لم تكمل أي دورة بعد</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">عند إكمال الدورة، ستحصل على وصول مدى الحياة!</p>
+                </div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Sidebar -->
         <div class="lg:col-span-1">
-            <!-- Pending Enrollments -->
+            <!-- Pending Enrollments / Purchase Requests -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold mb-4">طلبات التسجيل المعلقة</h2>
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    <h2 class="text-xl font-bold">الطلبات المعلقة</h2>
+                </div>
                 
                 {% if pending_enrollments %}
                 <div class="space-y-4">
                     {% for enrollment in pending_enrollments %}
-                    <div class="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <div class="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition">
                         <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
                             <i class="fas fa-clock text-yellow-600 dark:text-yellow-400"></i>
                         </div>
                         <div class="flex-1">
                             <h4 class="font-semibold text-sm">{{ enrollment.course.title|truncatechars:20 }}</h4>
                             <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.enrolled_at|date:'d M Y' }}</p>
+                            <span class="text-xs text-yellow-600">في انتظار المراجعة</span>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-gray-500 dark:text-gray-400 text-center py-4">لا توجد طلبات معلقة</p>
+                <div class="text-center py-4">
+                    <div class="text-4xl text-gray-300 dark:text-gray-600 mb-2">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <p class="text-gray-500 dark:text-gray-400">لا توجد طلبات معلقة</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Purchase Orders -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
+                        <h2 class="text-xl font-bold">طلبات الشراء</h2>
+                    </div>
+                    <a href="{% url 'courses:order_history' %}" class="text-primary-600 hover:text-primary-700 text-sm">
+                        عرض الكل
+                    </a>
+                </div>
+                
+                {% if pending_orders %}
+                <div class="space-y-3">
+                    {% for order in pending_orders|slice:":3" %}
+                    <div class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                            <i class="fas fa-file-invoice text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h4 class="font-semibold text-sm">طلب #{{ order.id }}</h4>
+                                <span class="text-xs font-bold text-blue-600">{{ order.total }} ج.م</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">{{ order.created_at|date:'d M Y' }}</p>
+                            <span class="text-xs text-yellow-600">{{ order.get_status_display }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">لا توجد طلبات شراء</p>
                 {% endif %}
             </div>
 
             <!-- Favorites -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold">المفضلة</h2>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-heart text-red-500 text-xl"></i>
+                        <h2 class="text-xl font-bold">المفضلة</h2>
+                    </div>
                     <a href="{% url 'courses:profile' %}#favorites" class="text-primary-600 hover:text-primary-700 text-sm">
                         عرض الكل
                     </a>
@@ -216,10 +384,10 @@
                 {% if favorites %}
                 <div class="space-y-3">
                     {% for favorite in favorites|slice:":3" %}
-                    <a href="{% url 'courses:course_detail' favorite.course.slug %}" class="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
-                        <div class="w-10 h-10 rounded-lg overflow-hidden">
+                    <a href="{% url 'courses:course_detail' favorite.course.slug %}" class="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition group">
+                        <div class="w-10 h-10 rounded-lg overflow-hidden shadow-md">
                             {% if favorite.course.image %}
-                            <img src="{{ favorite.course.image.url }}" alt="{{ favorite.course.title }}" class="w-full h-full object-cover">
+                            <img src="{{ favorite.course.image.url }}" alt="{{ favorite.course.title }}" class="w-full h-full object-cover group-hover:scale-110 transition">
                             {% else %}
                             <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
                                  alt="{{ favorite.course.title }}" 
@@ -227,7 +395,7 @@
                             {% endif %}
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-sm">{{ favorite.course.title|truncatechars:20 }}</h4>
+                            <h4 class="font-semibold text-sm group-hover:text-primary-600 transition">{{ favorite.course.title|truncatechars:20 }}</h4>
                             <p class="text-xs text-gray-500 dark:text-gray-500">{{ favorite.course.category.name }}</p>
                         </div>
                     </a>
@@ -240,12 +408,15 @@
 
             <!-- Recent Activity -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                <h2 class="text-xl font-bold mb-4">آخر الأنشطة</h2>
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-history text-primary-600 text-xl"></i>
+                    <h2 class="text-xl font-bold">آخر الأنشطة</h2>
+                </div>
                 
                 {% if recent_activity %}
                 <div class="space-y-4">
                     {% for activity in recent_activity %}
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
                         <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas {% if activity.status == 'completed' %}fa-check-circle text-green-600{% else %}fa-play-circle text-primary-600{% endif %} text-sm"></i>
                         </div>
@@ -263,4 +434,67 @@
         </div>
     </div>
 </div>
+
+<script>
+    function downloadCertificate(enrollmentId) {
+        fetch(`/certificate/${enrollmentId}/download/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showNotification('📄 جاري تحميل الشهادة...', 'info');
+                window.location.href = `/certificate/${enrollmentId}/download/`;
+            } else {
+                showNotification('❌ حدث خطأ أثناء تحميل الشهادة', 'error');
+            }
+        });
+    }
+
+    // تحديث التقدم تلقائياً
+    function updateProgress() {
+        fetch('/ajax/overall-progress/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const progressBar = document.querySelector('.bg-primary-600.rounded-full.h-4');
+                const progressText = document.querySelector('.text-primary-600.font-semibold.text-2xl');
+                if (progressBar && progressText) {
+                    progressBar.style.width = data.progress + '%';
+                    progressText.textContent = data.progress + '%';
+                }
+            }
+        });
+    }
+
+    // تحديث كل 30 ثانية
+    setInterval(updateProgress, 30000);
+</script>
+
+<style>
+    .animate-pulse-slow {
+        animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .animate-bounce-slow {
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+</style>
 {% endblock %}

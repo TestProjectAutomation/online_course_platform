@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الطلب #{{ order.id }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">تفاصيل الطلب #{{ order.id }}</h1>
+            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة معلومات الطلب</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'courses:admin_orders' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center">
+                <i class="fas fa-arrow-right ml-2"></i>
+                العودة للقائمة
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <!-- Order Items -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-6">الدورات في الطلب</h2>
+                
+                <div class="space-y-4">
+                    {% for item in items %}
+                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            {% if item.course.image %}
+                            <img src="{{ item.course.image.url }}" alt="{{ item.course.title }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                <i class="fas fa-image text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold">{{ item.course.title }}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.course.category.name }}</p>
+                        </div>
+                        <div class="text-left">
+                            <span class="font-bold text-primary-600">{{ item.price }} ج.م</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center text-lg">
+                        <span class="font-semibold">الإجمالي</span>
+                        <span class="font-bold text-2xl text-primary-600">{{ order.total }} ج.م</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Status Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-6">تحديث حالة الطلب</h2>
+                
+                <form method="post" action="{% url 'courses:admin_order_update_status' order.id %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">الحالة</label>
+                        <div class="flex gap-4 flex-wrap">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="status" value="pending" {% if order.status == 'pending' %}checked{% endif %} class="w-4 h-4 text-yellow-600">
+                                <span class="text-sm">قيد الانتظار</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="status" value="processing" {% if order.status == 'processing' %}checked{% endif %} class="w-4 h-4 text-blue-600">
+                                <span class="text-sm">قيد المعالجة</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="status" value="completed" {% if order.status == 'completed' %}checked{% endif %} class="w-4 h-4 text-green-600">
+                                <span class="text-sm">مكتمل</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="status" value="cancelled" {% if order.status == 'cancelled' %}checked{% endif %} class="w-4 h-4 text-red-600">
+                                <span class="text-sm">ملغي</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200 flex items-start gap-2">
+                            <i class="fas fa-info-circle mt-1"></i>
+                            <span>عند تغيير الحالة إلى "مكتمل"، سيتم تفعيل التسجيل في الدورات تلقائياً للمستخدم مع وصول مدى الحياة.</span>
+                        </p>
+                    </div>
+                    
+                    <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
+                        <i class="fas fa-save ml-2"></i>
+                        تحديث الحالة
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Customer Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4">معلومات العميل</h2>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-user text-primary-600"></i>
+                        <span>{{ order.customer_name|default:order.user.get_full_name|default:order.user.username }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-envelope text-primary-600"></i>
+                        <a href="mailto:{{ order.user.email }}" class="hover:text-primary-600">{{ order.user.email }}</a>
+                    </div>
+                    
+                    {% if order.customer_phone %}
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-phone text-primary-600"></i>
+                        <a href="tel:{{ order.customer_phone }}" dir="ltr">{{ order.customer_phone }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <i class="fas fa-calendar text-primary-600"></i>
+                        <span>عضو منذ: {{ order.user.date_joined|date:'Y-m-d' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-4">معلومات الطلب</h2>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">رقم الطلب</span>
+                        <span class="font-semibold">#{{ order.id }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">تاريخ الطلب</span>
+                        <span class="font-semibold">{{ order.created_at|date:'Y-m-d H:i' }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">آخر تحديث</span>
+                        <span class="font-semibold">{{ order.updated_at|date:'Y-m-d H:i' }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">الحالة</span>
+                        <span class="px-3 py-1 text-xs rounded-full 
+                            {% if order.status == 'pending' %}bg-yellow-100 text-yellow-600
+                            {% elif order.status == 'processing' %}bg-blue-100 text-blue-600
+                            {% elif order.status == 'completed' %}bg-green-100 text-green-600
+                            {% else %}bg-red-100 text-red-600{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    {% if order.notes %}
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">ملاحظات</p>
+                        <p class="text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">{{ order.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

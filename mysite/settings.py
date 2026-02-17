@@ -76,6 +76,7 @@ INSTALLED_APPS = [
 
 
 
+WHATSAPP_NUMBER = '0123456789'  # رقم الواتساب مع رمز الدولة بدون +
 
 SITE_ID = 1
 

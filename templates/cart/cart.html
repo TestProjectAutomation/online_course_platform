@@ -8,7 +8,7 @@
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold mb-2">سلة المشتريات</h1>
-        <p class="text-gray-600 dark:text-gray-400">راجع الدورة التي اخترتها قبل الشراء</p>
+        <p class="text-gray-600 dark:text-gray-400">راجع الدورات المدفوعة التي اخترتها قبل الشراء</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -16,9 +16,28 @@
         <div class="lg:col-span-2">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 {% if cart_courses %}
+                
+                <!-- تحذير إذا وجدت دورات مجانية في السلة -->
+                {% if free_courses_in_cart %}
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">تنبيه: دورات مجانية في السلة</h4>
+                            <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                                الدورات المجانية لا تحتاج إلى شراء. يمكنك التسجيل فيها مباشرة من صفحة الدورة.
+                                سيتم إزالتها تلقائياً عند إتمام الطلب.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="space-y-4">
                     {% for course in cart_courses %}
-                    <div class="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-md transition group" id="course-{{ course.id }}">
+                    <div class="flex items-center gap-4 p-4 border {% if course.price == 0 %}border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10{% else %}border-gray-200 dark:border-gray-700{% endif %} rounded-xl hover:shadow-md transition group" id="course-{{ course.id }}">
                         <!-- Course Image -->
                         <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
                             {% if course.image %}
@@ -27,6 +46,13 @@
                             <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" 
                                  alt="{{ course.title }}" 
                                  class="w-full h-full object-cover">
+                            {% endif %}
+                            
+                            <!-- شارة مجانية -->
+                            {% if course.price == 0 %}
+                            <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                <i class="fas fa-gift ml-1"></i> مجانية
+                            </div>
                             {% endif %}
                         </div>
                         
@@ -48,11 +74,20 @@
                                     {{ course.duration_hours }} ساعة
                                 </span>
                             </div>
+                            
+                            {% if course.price == 0 %}
+                            <div class="mt-2">
+                                <span class="text-xs text-green-600 dark:text-green-400">
+                                    <i class="fas fa-info-circle ml-1"></i>
+                                    الدورات المجانية لا تضاف إلى طلبات الشراء، يمكنك التسجيل مباشرة
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Price & Actions -->
                         <div class="text-left">
-                            <div class="text-2xl font-bold text-primary-600 mb-2">
+                            <div class="text-2xl font-bold {% if course.price == 0 %}text-green-600{% else %}text-primary-600{% endif %} mb-2">
                                 {% if course.price == 0 %}
                                 <span class="text-green-600">مجاناً</span>
                                 {% else %}
@@ -87,7 +122,7 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-2">السلة فارغة</h3>
-                    <p class="text-gray-600 dark:text-gray-400 mb-6">لم تقم بإضافة أي دورات إلى السلة بعد</p>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">لم تقم بإضافة أي دورات مدفوعة إلى السلة بعد</p>
                     <a href="{% url 'courses:course_list' %}" 
                        class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition transform hover:scale-105 shadow-lg">
                         <i class="fas fa-search ml-2"></i>
@@ -104,36 +139,72 @@
                 <h2 class="text-xl font-bold mb-4">ملخص الطلب</h2>
                 
                 {% if cart_courses %}
+                <!-- حساب المدفوع فقط -->
+                {% with paid_courses=cart_courses|dictsortreversed:"price" %}
+                {% with total_paid=cart_courses|length %}
                 <div class="space-y-3 mb-4">
                     {% for course in cart_courses %}
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600 dark:text-gray-400">{{ course.title|truncatechars:20 }}</span>
-                        <span class="font-semibold">${{ course.price }}</span>
-                    </div>
+                        {% if course.price > 0 %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">{{ course.title|truncatechars:20 }}</span>
+                            <span class="font-semibold">${{ course.price }}</span>
+                        </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
                     <div class="flex justify-between font-bold text-lg">
-                        <span>الإجمالي</span>
-                        <span class="text-primary-600">${{ total }}</span>
+                        <span>الإجمالي (مدفوع)</span>
+                        <span class="text-primary-600">${{ total_paid|default:'0' }}</span>
                     </div>
+                    
+                    {% if free_courses_in_cart %}
+                    <div class="mt-2 text-xs text-green-600 dark:text-green-400">
+                        <i class="fas fa-gift ml-1"></i>
+                        الدورات المجانية: {{ free_courses_count }}
+                    </div>
+                    {% endif %}
                 </div>
                 
-                <!-- زر إرسال الطلب (بدلاً من إتمام الشراء) -->
-                <form method="post" action="{% url 'courses:submit_order' %}" onsubmit="return confirmOrder()">
+                <!-- رسالة توضيحية -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
+                    <p class="text-xs text-blue-800 dark:text-blue-200 flex items-start gap-2">
+                        <i class="fas fa-info-circle mt-0.5"></i>
+                        <span>
+                            <strong>ملاحظة:</strong> هذا الطلب مخصص للدورات المدفوعة فقط. 
+                            الدورات المجانية يمكنك التسجيل فيها مباشرة من صفحة الدورة.
+                        </span>
+                    </p>
+                </div>
+                
+                <!-- زر إتمام الطلب (يظهر فقط إذا كان هناك دورات مدفوعة) -->
+                {% if total_paid > 0 %}
+                <form method="post" action="{% url 'courses:submit_order' %}" class="mt-6">
                     {% csrf_token %}
                     <button type="submit" 
-                            class="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                        <i class="fas fa-paper-plane"></i>
-                        إرسال الطلب
+                            class="w-full px-6 py-4 bg-gradient-to-l from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition transform hover:scale-105 font-bold text-lg flex items-center justify-center gap-3 shadow-lg"
+                            onclick="return confirmOrder()">
+                        <i class="fab fa-whatsapp text-2xl"></i>
+                        <span>إتمام الطلب عبر واتساب</span>
                     </button>
                 </form>
+                {% else %}
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 text-center">
+                    <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                        <i class="fas fa-exclamation-triangle ml-2"></i>
+                        لا توجد دورات مدفوعة في السلة
+                    </p>
+                </div>
+                {% endif %}
                 
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
                     <i class="fas fa-info-circle ml-1"></i>
-                    سيتم مراجعة طلبك والرد عليك قريباً
+                    سيتم التواصل معك عبر واتساب لتأكيد الطلب
                 </p>
+                {% endwith %}
+                {% endwith %}
+                
                 {% else %}
                 <div class="text-center py-8 text-gray-500 dark:text-gray-400">
                     <i class="fas fa-info-circle text-4xl mb-2 opacity-50"></i>
@@ -149,18 +220,26 @@
 <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold">تأكيد الشراء</h3>
+            <h3 class="text-xl font-bold">تأكيد الطلب</h3>
             <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="space-y-4">
-            <p class="text-gray-600 dark:text-gray-400">هل أنت متأكد من إتمام عملية الشراء؟</p>
+            <p class="text-gray-600 dark:text-gray-400">
+                سيتم توجيهك إلى واتساب للتواصل مع فريق الدعم وتأكيد الطلب.
+            </p>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+                <p class="text-xs text-yellow-800 dark:text-yellow-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    تأكد من صحة بيانات التواصل الخاصة بك
+                </p>
+            </div>
             <div class="flex gap-3">
                 <button onclick="processCheckout()" 
                         class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                    <i class="fas fa-check ml-2"></i>
-                    تأكيد
+                    <i class="fab fa-whatsapp ml-2"></i>
+                    متابعة
                 </button>
                 <button onclick="closeModal()" 
                         class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
@@ -175,123 +254,6 @@
 
 {% block extra_js %}
 <script>
-    function removeFromCart(courseId) {
-        fetch('/cart/update/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                action: 'decrease'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const courseElement = document.getElementById(`course-${courseId}`);
-                courseElement.style.transition = 'all 0.3s ease';
-                courseElement.style.opacity = '0';
-                courseElement.style.transform = 'translateX(100px)';
-                
-                setTimeout(() => {
-                    courseElement.remove();
-                    updateCartCount(data.cart_count);
-                    updateTotal(data.total);
-                    
-                    if (data.cart_count === 0) {
-                        location.reload();
-                    }
-                }, 300);
-                
-                showNotification('✅ تم إزالة الدورة من السلة', 'success');
-            }
-        });
-    }
-
-    function clearCart() {
-        if (!confirm('هل أنت متأكد من تفريغ السلة؟')) return;
-        
-        window.location.href = "{% url 'courses:clear_cart' %}";
-    }
-
-    function updateCartCount(count) {
-        const cartBadge = document.querySelector('.notification-badge');
-        const cartCount = document.querySelector('#cart-count');
-        
-        if (cartBadge) {
-            if (count > 0) {
-                cartBadge.textContent = count;
-            } else {
-                cartBadge.remove();
-            }
-        }
-        
-        if (cartCount) {
-            cartCount.textContent = count;
-        }
-    }
-
-    function updateTotal(total) {
-        const totalElement = document.querySelector('.text-primary-600.font-bold.text-lg');
-        if (totalElement) {
-            totalElement.textContent = `$${total}`;
-        }
-    }
-
-    function checkout() {
-        document.getElementById('checkoutModal').classList.remove('hidden');
-        document.getElementById('checkoutModal').classList.add('flex');
-    }
-
-    function closeModal() {
-        document.getElementById('checkoutModal').classList.add('hidden');
-        document.getElementById('checkoutModal').classList.remove('flex');
-    }
-
-    function processCheckout() {
-        showNotification('✅ تم إتمام الشراء بنجاح', 'success');
-        closeModal();
-        setTimeout(() => {
-            window.location.href = "{% url 'courses:clear_cart' %}";
-        }, 2000);
-    }
-
-    // تحديث دالة showNotification لتكون موحدة
-    function showNotification(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate__animated animate__fadeInDown ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'error' ? 'bg-red-500' : 
-            'bg-blue-500'
-        } text-white flex items-center gap-3`;
-        
-        toast.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('animate__fadeOutUp');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    }
-</script>
-
-<script>
-    function confirmOrder() {
-        const total = parseFloat('{{ total }}');
-        if (total > 0) {
-            return confirm(`💰 إجمالي المبلغ: ${{ total }}\n\nهل أنت متأكد من إرسال طلب الشراء؟`);
-        } else {
-            return confirm('✅ جميع الدورات مجانية\n\nهل تريد التأكيد؟');
-        }
-    }
-
     function removeFromCart(courseId) {
         if (!confirm('هل أنت متأكد من إزالة هذه الدورة من السلة؟')) {
             return;
@@ -332,6 +294,11 @@
         });
     }
 
+    function clearCart() {
+        if (!confirm('هل أنت متأكد من تفريغ السلة؟')) return;
+        window.location.href = "{% url 'courses:clear_cart' %}";
+    }
+
     function updateCartCount(count) {
         const cartBadge = document.querySelector('.notification-badge');
         if (cartBadge) {
@@ -350,10 +317,47 @@
         }
     }
 
-    function clearCart() {
-        if (!confirm('هل أنت متأكد من تفريغ السلة؟')) return;
-        window.location.href = "{% url 'courses:clear_cart' %}";
+    function confirmOrder() {
+        return confirm('💰 سيتم توجيهك إلى واتساب للتواصل مع فريق الدعم\n\nهل أنت متأكد من إرسال الطلب؟');
+    }
+
+    function checkout() {
+        document.getElementById('checkoutModal').classList.remove('hidden');
+        document.getElementById('checkoutModal').classList.add('flex');
+    }
+
+    function closeModal() {
+        document.getElementById('checkoutModal').classList.add('hidden');
+        document.getElementById('checkoutModal').classList.remove('flex');
+    }
+
+    function processCheckout() {
+        closeModal();
+        showNotification('✅ جاري تحويلك إلى واتساب...', 'success');
+        
+        // إرسال الطلب
+        document.querySelector('form[action*="submit-order"]').submit();
+    }
+
+    function showNotification(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-50 animate__animated animate__fadeInDown ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 
+            'bg-blue-500'
+        } text-white flex items-center gap-3`;
+        
+        toast.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('animate__fadeOutUp');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
 </script>
-
 {% endblock %}

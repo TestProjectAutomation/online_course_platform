@@ -35,6 +35,23 @@ class User(AbstractUser):
     def get_completed_courses(self):
         return self.enrollments.filter(status='completed').select_related('course')
     
+    def get_purchased_courses(self):
+        """الحصول على جميع الدورات المشتراة (مدى الحياة)"""
+        return Course.objects.filter(
+            enrollments__user=self,
+            enrollments__status='enrolled',
+            enrollments__has_lifetime_access=True
+        )
+    
+    def has_course_access(self, course):
+        """التحقق من وصول المستخدم لدورة معينة"""
+        try:
+            enrollment = Enrollment.objects.get(user=self, course=course)
+            return enrollment.has_access
+        except Enrollment.DoesNotExist:
+            return False
+
+    
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
@@ -325,11 +342,17 @@ class Enrollment(models.Model):
     notes = models.TextField(blank=True)
     last_accessed = models.DateTimeField(auto_now=True)
     
+    
+    has_lifetime_access = models.BooleanField(_("وصول مدى الحياة"), default=True)
+    access_expires_at = models.DateTimeField(_("تاريخ انتهاء الوصول"), null=True, blank=True)
+
+
     class Meta:
         unique_together = ['user', 'course']
         indexes = [
             models.Index(fields=['status', 'user']),
             models.Index(fields=['course', 'status']),
+            models.Index(fields=['user', 'has_lifetime_access']),
         ]
     
     def update_progress(self):
@@ -341,11 +364,37 @@ class Enrollment(models.Model):
             if self.progress == 100 and self.status != 'completed':
                 self.status = 'completed'
                 self.completed_at = timezone.now()
+                
+                # ✅ إنشاء إشعار بإكمال الدورة
+                from .utils import notify_course_completed
+                notify_course_completed(self)
             
             self.save(update_fields=['progress', 'status', 'completed_at'])
+    def notify_course_completed(enrollment):
+        """إرسال إشعار عند إكمال الدورة"""
+        from .models import Notification
+        
+        Notification.objects.create(
+            user=enrollment.user,
+            title="🎉 تهانينا! لقد أكملت الدورة",
+            message=f"لقد أكملت بنجاح دورة {enrollment.course.title}. لا يزال لديك وصول مدى الحياة لمحتوى الدورة",
+            notification_type='success',
+            link=f"/course/{enrollment.course.slug}/",
+            icon="fa-graduation-cap"
+        )
+
+    @property
+    def has_access(self):
+        """التحقق مما إذا كان المستخدم لا يزال لديه حق الوصول"""
+        if self.has_lifetime_access:
+            return True
+        if self.access_expires_at:
+            return timezone.now() <= self.access_expires_at
+        return self.status == 'enrolled'
     
     def __str__(self):
         return f"{self.user.username} - {self.course.title} ({self.get_status_display()})"
+
 
 class LessonProgress(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='lesson_progress')
@@ -392,6 +441,49 @@ class Review(models.Model):
     
     
     
+class Order(models.Model):
+    """نموذج الطلبات"""
+    STATUS_CHOICES = (
+        ('pending', 'قيد الانتظار'),
+        ('processing', 'قيد المعالجة'),
+        ('completed', 'مكتمل'),
+        ('cancelled', 'ملغي'),
+    )
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True, null=True)
     
+    # معلومات التواصل
+    customer_name = models.CharField(max_length=255, blank=True, null=True)
+    customer_email = models.EmailField(blank=True, null=True)
+    customer_phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'طلب'
+        verbose_name_plural = 'الطلبات'
+    
+    def __str__(self):
+        return f"طلب #{self.id} - {self.user.username} - {self.total} ج.م"
+    
+    def get_items_count(self):
+        return self.items.count()
+
+class OrderItem(models.Model):
+    """عناصر الطلب"""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'عنصر الطلب'
+        verbose_name_plural = 'عناصر الطلبات'
+    
+    def __str__(self):
+        return f"{self.order.id} - {self.course.title}"
     

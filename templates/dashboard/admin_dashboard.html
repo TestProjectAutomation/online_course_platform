@@ -175,7 +175,7 @@
     </div>
 
     <!-- Quick Actions Cards - موسعة لتشمل جميع النماذج -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <a href="{% url 'courses:admin_user_create' %}" 
            class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500 group">
             <div class="flex items-center justify-between mb-4">
@@ -222,6 +222,23 @@
             </div>
             <p class="text-gray-600 dark:text-gray-400 text-sm">تسجيل طالب في دورة يدوياً</p>
             <span class="text-yellow-600 dark:text-yellow-400 text-sm mt-2 inline-block group-hover:translate-x-1 transition">تسجيل جديد →</span>
+        </a>
+
+        <a href="{% url 'courses:admin_orders' %}" 
+           class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-red-500 group">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg group-hover:text-red-600 transition">إدارة الطلبات</h3>
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center group-hover:scale-110 transition">
+                    <i class="fas fa-shopping-cart text-red-600 dark:text-red-400 text-xl"></i>
+                </div>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">عرض وإدارة طلبات الشراء</p>
+            <span class="text-red-600 dark:text-red-400 text-sm mt-2 inline-block group-hover:translate-x-1 transition">
+                عرض الطلبات
+                {% if pending_orders_count > 0 %}
+                <span class="mr-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ pending_orders_count }}</span>
+                {% endif %}
+            </span>
         </a>
     </div>
 
@@ -523,101 +540,130 @@
             </div>
         </div>
 
-        <!-- Column 2: Sidebar -->
+        <!-- Column 2: Sidebar - مع طلبات التسجيل والطلبات -->
         <div class="lg:col-span-1">
-            {% comment %} <!-- Pending Enrollments -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-clock text-yellow-500"></i>
-                        طلبات التسجيل
-                    </h2>
-                    <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="text-primary-600 hover:text-primary-700 text-sm">
-                        عرض الكل
-                    </a>
-                </div>
-                
-                {% if pending_enrollments %}
-                <div class="space-y-4">
-                    {% for enrollment in pending_enrollments %}
-                    <div class="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition">
-                        <div class="flex items-center gap-3">
-                            {% if enrollment.user.avatar %}
-                            <img src="{{ enrollment.user.avatar.url }}" alt="{{ enrollment.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+        <!-- Pending Enrollments - طلبات التسجيل في الدورات -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-clock text-yellow-500"></i>
+                    طلبات التسجيل في الدورات
+                    {% if pending_enrollments_count > 0 %}
+                    <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-600 rounded-full">{{ pending_enrollments_count }}</span>
+                    {% endif %}
+                </h2>
+                <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="text-primary-600 hover:text-primary-700 text-sm">
+                    عرض الكل
+                    <i class="fas fa-arrow-left mr-1"></i>
+                </a>
+            </div>
+            
+            {% if pending_enrollments %}
+            <div class="space-y-4">
+                {% for enrollment in pending_enrollments %}
+                <div class="flex items-center justify-between p-3 rounded-lg transition
+                            {% if enrollment.course.price == 0 %}
+                            bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30
                             {% else %}
-                            <div class="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                                <span class="text-yellow-600 dark:text-yellow-400 font-semibold">{{ enrollment.user.first_name|first|upper }}</span>
-                            </div>
-                            {% endif %}
-                            <div>
-                                <h4 class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.course.title|truncatechars:20 }}</p>
+                            bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30
+                            {% endif %}">
+                    <div class="flex items-center gap-3">
+                        {% if enrollment.user.avatar %}
+                        <img src="{{ enrollment.user.avatar.url }}" alt="{{ enrollment.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                        <div class="w-10 h-10 rounded-full {% if enrollment.course.price == 0 %}bg-green-100 dark:bg-green-900{% else %}bg-yellow-100 dark:bg-yellow-900{% endif %} flex items-center justify-center">
+                            <span class="{% if enrollment.course.price == 0 %}text-green-600 dark:text-green-400{% else %}text-yellow-600 dark:text-yellow-400{% endif %} font-semibold">
+                                {{ enrollment.user.first_name|first|upper }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.course.title|truncatechars:20 }}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-gray-400">{{ enrollment.enrolled_at|date:'Y-m-d' }}</span>
+                                {% if enrollment.course.price == 0 %}
+                                <span class="px-2 py-0.5 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300 text-xs rounded-full">
+                                    <i class="fas fa-gift ml-1"></i> مجانية
+                                </span>
+                                {% else %}
+                                <span class="px-2 py-0.5 bg-yellow-200 dark:bg-yellow-800 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
+                                    {{ enrollment.course.price }} ج.م
+                                </span>
+                                {% endif %}
                             </div>
                         </div>
-                        <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="text-primary-600 hover:text-primary-700">
-                            <i class="fas fa-chevron-left"></i>
+                    </div>
+                    <div class="flex gap-1">
+                        <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=enrolled" 
+                        class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-800 transition" 
+                        title="قبول"
+                        onclick="return confirm('هل أنت متأكد من قبول هذا التسجيل؟')">
+                            <i class="fas fa-check text-green-600"></i>
+                        </a>
+                        <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=cancelled" 
+                        class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 transition" 
+                        title="رفض"
+                        onclick="return confirm('هل أنت متأكد من رفض هذا التسجيل؟')">
+                            <i class="fas fa-times text-red-600"></i>
+                        </a>
+                        <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition" title="عرض التفاصيل">
+                            <i class="fas fa-eye text-blue-600"></i>
                         </a>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <i class="fas fa-check-circle text-4xl mb-2 opacity-50"></i>
-                    <p>لا توجد طلبات معلقة</p>
-                </div>
-                {% endif %}
-            </div> {% endcomment %}
-
-            
-            <!-- Pending Enrollments -->
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <i class="fas fa-check-circle text-4xl mb-2 opacity-50"></i>
+                <p>لا توجد طلبات تسجيل معلقة</p>
+            </div>
+            {% endif %}
+        </div>
+            <!-- Pending Orders - طلبات الشراء الجديدة -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-clock text-yellow-500"></i>
-                        طلبات التسجيل
-                        {% if pending_enrollments_count > 0 %}
-                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-600 rounded-full">{{ pending_enrollments_count }}</span>
+                        <i class="fas fa-shopping-cart text-green-600"></i>
+                        طلبات الشراء الجديدة
+                        {% if pending_orders_count > 0 %}
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-600 rounded-full">{{ pending_orders_count }}</span>
                         {% endif %}
                     </h2>
-                    <a href="{% url 'courses:admin_enrollments' %}?status=pending" class="text-primary-600 hover:text-primary-700 text-sm">
+                    <a href="{% url 'courses:admin_orders' %}?status=pending" class="text-primary-600 hover:text-primary-700 text-sm">
                         عرض الكل
                         <i class="fas fa-arrow-left mr-1"></i>
                     </a>
                 </div>
                 
-                {% if pending_enrollments %}
+                {% if pending_orders %}
                 <div class="space-y-4">
-                    {% for enrollment in pending_enrollments %}
-                    <div class="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition">
+                    {% for order in pending_orders %}
+                    <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition">
                         <div class="flex items-center gap-3">
-                            {% if enrollment.user.avatar %}
-                            <img src="{{ enrollment.user.avatar.url }}" alt="{{ enrollment.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
+                            {% if order.user.avatar %}
+                            <img src="{{ order.user.avatar.url }}" alt="{{ order.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
                             {% else %}
-                            <div class="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                                <span class="text-yellow-600 dark:text-yellow-400 font-semibold">{{ enrollment.user.first_name|first|upper }}</span>
+                            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                                <span class="text-green-600 dark:text-green-400 font-semibold">{{ order.user.first_name|first|upper }}</span>
                             </div>
                             {% endif %}
                             <div>
-                                <h4 class="font-semibold text-sm">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-500">{{ enrollment.course.title|truncatechars:20 }}</p>
-                                <p class="text-xs text-gray-400 mt-1">{{ enrollment.enrolled_at|date:'Y-m-d' }}</p>
+                                <h4 class="font-semibold text-sm">{{ order.customer_name|default:order.user.get_full_name|default:order.user.username }}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-500">{{ order.items.count }} دورات | {{ order.total }} ج.م</p>
+                                <p class="text-xs text-gray-400 mt-1">#{{ order.id }} - {{ order.created_at|date:'Y-m-d' }}</p>
                             </div>
                         </div>
                         <div class="flex gap-1">
-                            <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=enrolled" 
-                            class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-800 transition" 
-                            title="قبول"
-                            onclick="return confirm('هل أنت متأكد من قبول هذا التسجيل؟')">
-                                <i class="fas fa-check text-green-600"></i>
-                            </a>
-                            <a href="{% url 'courses:admin_enrollment_update_status' enrollment.id %}?status=cancelled" 
-                            class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 transition" 
-                            title="رفض"
-                            onclick="return confirm('هل أنت متأكد من رفض هذا التسجيل؟')">
-                                <i class="fas fa-times text-red-600"></i>
-                            </a>
-                            <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition" title="عرض التفاصيل">
+                            <a href="{% url 'courses:admin_order_detail' order.id %}" class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition" title="عرض التفاصيل">
                                 <i class="fas fa-eye text-blue-600"></i>
+                            </a>
+                            <a href="{% url 'courses:admin_order_update_status' order.id %}?status=completed" 
+                               class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-800 transition" 
+                               title="تأكيد الدفع"
+                               onclick="return confirm('هل أنت متأكد من تأكيد دفع هذا الطلب؟ سيتم تفعيل الدورات للمستخدم.')">
+                                <i class="fas fa-check text-green-600"></i>
                             </a>
                         </div>
                     </div>
@@ -625,12 +671,11 @@
                 </div>
                 {% else %}
                 <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <i class="fas fa-check-circle text-4xl mb-2 opacity-50"></i>
-                    <p>لا توجد طلبات معلقة</p>
+                    <i class="fas fa-shopping-cart text-4xl mb-2 opacity-50"></i>
+                    <p>لا توجد طلبات شراء جديدة</p>
                 </div>
                 {% endif %}
             </div>
-
 
             <!-- Recent Reviews -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
