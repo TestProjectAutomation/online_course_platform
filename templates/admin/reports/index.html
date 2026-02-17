@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}التقارير - {{ block.super }}{% endblock %}
+{% block title %}التقارير والإحصائيات - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold mb-2">التقارير والإحصائيات</h1>
-        <p class="text-gray-600 dark:text-gray-400">نظرة شاملة على أداء المنصة</p>
+        <p class="text-gray-600 dark:text-gray-400">نظرة شاملة على أداء المنصة وإحصائيات الزوار</p>
     </div>
 
     <!-- Date Range Filter -->
@@ -16,11 +16,13 @@
         <form method="get" class="flex flex-wrap gap-4 items-end">
             <div>
                 <label class="block text-sm font-medium mb-2">من تاريخ</label>
-                <input type="date" name="start_date" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                <input type="date" name="start_date" value="{{ request.GET.start_date }}" 
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-2">إلى تاريخ</label>
-                <input type="date" name="end_date" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
+                <input type="date" name="end_date" value="{{ request.GET.end_date }}" 
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700">
             </div>
             <div>
                 <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
@@ -37,9 +39,54 @@
         </form>
     </div>
 
+    <!-- إحصائيات الزوار -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-line text-primary-600"></i>
+            إحصائيات الزوار
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">زوار اليوم</h3>
+                    <i class="fas fa-calendar-day text-2xl opacity-80"></i>
+                </div>
+                <div class="text-4xl font-bold mb-2">{{ today_visitors }}</div>
+                <p class="text-blue-100 text-sm">عدد الزوار النشطين اليوم</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">زوار الشهر</h3>
+                    <i class="fas fa-calendar-alt text-2xl opacity-80"></i>
+                </div>
+                <div class="text-4xl font-bold mb-2">{{ month_visitors }}</div>
+                <p class="text-green-100 text-sm">عدد الزوار آخر 30 يوم</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">إجمالي الزوار</h3>
+                    <i class="fas fa-users text-2xl opacity-80"></i>
+                </div>
+                <div class="text-4xl font-bold mb-2">{{ total_visitors }}</div>
+                <p class="text-purple-100 text-sm">جميع المستخدمين المسجلين</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl p-6 text-white shadow-lg transform hover:scale-105 transition">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">جدد هذا الشهر</h3>
+                    <i class="fas fa-user-plus text-2xl opacity-80"></i>
+                </div>
+                <div class="text-4xl font-bold mb-2">{{ new_visitors_month }}</div>
+                <p class="text-yellow-100 text-sm">مستخدمين جدد آخر 30 يوم</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold">إجمالي المستخدمين</h3>
                 <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -52,22 +99,22 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold">إجمالي الدورات</h3>
+                <h3 class="font-semibold">الدورات النشطة</h3>
                 <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                     <i class="fas fa-book-open text-green-600 dark:text-green-400"></i>
                 </div>
             </div>
-            <div class="text-3xl font-bold mb-2">{{ total_courses|default:'0' }}</div>
+            <div class="text-3xl font-bold mb-2">{{ active_courses|default:'0' }}/{{ total_courses|default:'0' }}</div>
             <div class="text-sm text-green-600">
                 <i class="fas fa-arrow-up ml-1"></i> +{{ new_courses|default:'0' }} هذا الشهر
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold">إجمالي التسجيلات</h3>
+                <h3 class="font-semibold">التسجيلات</h3>
                 <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
                     <i class="fas fa-user-graduate text-yellow-600 dark:text-yellow-400"></i>
                 </div>
@@ -76,9 +123,10 @@
             <div class="text-sm text-green-600">
                 <i class="fas fa-arrow-up ml-1"></i> +{{ new_enrollments|default:'0' }} هذا الشهر
             </div>
+            <div class="text-xs text-gray-500 mt-1">مكتمل: {{ completed_enrollments }}</div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold">الإيرادات</h3>
                 <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
@@ -92,11 +140,25 @@
         </div>
     </div>
 
-    <!-- Charts Section -->
+    <!-- الرسوم البيانية -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Visitors Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-chart-line text-primary-600"></i>
+                الزوار اليومية (آخر 7 أيام)
+            </h2>
+            <div class="h-64">
+                <canvas id="visitorsChart"></canvas>
+            </div>
+        </div>
+
         <!-- Users Chart -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 class="text-xl font-bold mb-6">نمو المستخدمين</h2>
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-user-plus text-green-600"></i>
+                نمو المستخدمين
+            </h2>
             <div class="h-64">
                 <canvas id="usersChart"></canvas>
             </div>
@@ -104,31 +166,55 @@
 
         <!-- Revenue Chart -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 class="text-xl font-bold mb-6">الإيرادات الشهرية</h2>
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-dollar-sign text-yellow-600"></i>
+                الإيرادات الشهرية
+            </h2>
             <div class="h-64">
                 <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Enrollments Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-user-graduate text-purple-600"></i>
+                التسجيلات الشهرية
+            </h2>
+            <div class="h-64">
+                <canvas id="enrollmentsChart"></canvas>
             </div>
         </div>
     </div>
 
     <!-- Detailed Reports -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- Top Courses -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 class="text-xl font-bold mb-6">أفضل الدورات</h2>
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-trophy text-yellow-500"></i>
+                أفضل الدورات (حسب عدد الطلاب)
+            </h2>
             <div class="space-y-4">
                 {% for course in top_courses %}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
                     <div class="flex items-center gap-3">
-                        <span class="text-gray-500 dark:text-gray-400 w-6">{{ forloop.counter }}.</span>
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full 
+                            {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600
+                            {% elif forloop.counter == 2 %}bg-gray-100 text-gray-600
+                            {% elif forloop.counter == 3 %}bg-orange-100 text-orange-600
+                            {% else %}bg-gray-100 text-gray-500{% endif %} 
+                            font-bold text-sm">
+                            {{ forloop.counter }}
+                        </span>
                         <div>
                             <h3 class="font-semibold">{{ course.title|truncatechars:30 }}</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-500">{{ course.instructor.get_full_name|default:course.instructor.username }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ course.instructor.get_full_name|default:course.instructor.username }}</p>
                         </div>
                     </div>
                     <div class="text-left">
-                        <span class="block font-bold">{{ course.enrollments.count }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-500">طالب</span>
+                        <span class="block font-bold text-primary-600">{{ course.enrollments.count }}</span>
+                        <span class="text-xs text-gray-500">طالب</span>
                     </div>
                 </div>
                 {% empty %}
@@ -139,12 +225,22 @@
 
         <!-- Top Instructors -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 class="text-xl font-bold mb-6">أفضل المدربين</h2>
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-chalkboard-teacher text-green-600"></i>
+                أفضل المدربين
+            </h2>
             <div class="space-y-4">
                 {% for instructor in top_instructors %}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
                     <div class="flex items-center gap-3">
-                        <span class="text-gray-500 dark:text-gray-400 w-6">{{ forloop.counter }}.</span>
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full 
+                            {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600
+                            {% elif forloop.counter == 2 %}bg-gray-100 text-gray-600
+                            {% elif forloop.counter == 3 %}bg-orange-100 text-orange-600
+                            {% else %}bg-gray-100 text-gray-500{% endif %} 
+                            font-bold text-sm">
+                            {{ forloop.counter }}
+                        </span>
                         <div class="flex items-center gap-3">
                             {% if instructor.avatar %}
                             <img src="{{ instructor.avatar.url }}" alt="{{ instructor.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
@@ -155,13 +251,13 @@
                             {% endif %}
                             <div>
                                 <h3 class="font-semibold">{{ instructor.get_full_name|default:instructor.username }}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-500">{{ instructor.courses_taught.count }} دورة</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ instructor.courses_count }} دورة</p>
                             </div>
                         </div>
                     </div>
                     <div class="text-left">
-                        <span class="block font-bold">{{ instructor.total_students|default:'0' }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-500">طالب</span>
+                        <span class="block font-bold text-green-600">{{ instructor.total_students }}</span>
+                        <span class="text-xs text-gray-500">طالب</span>
                     </div>
                 </div>
                 {% empty %}
@@ -173,24 +269,53 @@
 
     <!-- Export Buttons -->
     <div class="mt-8 flex flex-wrap gap-4 justify-center">
-        <a href="{% url 'courses:admin_export_users' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
-            <i class="fas fa-download ml-2"></i>
+        <a href="{% url 'courses:admin_export_users' %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl">
+            <i class="fas fa-download"></i>
             تصدير المستخدمين (CSV)
         </a>
-        <a href="{% url 'courses:admin_export_courses' %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center">
-            <i class="fas fa-download ml-2"></i>
+        <a href="{% url 'courses:admin_export_courses' %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl">
+            <i class="fas fa-download"></i>
             تصدير الدورات (CSV)
         </a>
-        <a href="{% url 'courses:admin_export_enrollments' %}" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition flex items-center">
-            <i class="fas fa-download ml-2"></i>
+        <a href="{% url 'courses:admin_export_enrollments' %}" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl">
+            <i class="fas fa-download"></i>
             تصدير التسجيلات (CSV)
         </a>
     </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Visitors Chart (آخر 7 أيام)
+    const visitorsCtx = document.getElementById('visitorsChart')?.getContext('2d');
+    if (visitorsCtx) {
+        new Chart(visitorsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ daily_visitors_labels|safe|default:'["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"]' }},
+                datasets: [{
+                    label: 'عدد الزوار',
+                    data: {{ daily_visitors_data|safe|default:'[10, 15, 12, 18, 20, 25, 22]' }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
     // Users Chart
     const usersCtx = document.getElementById('usersChart')?.getContext('2d');
     if (usersCtx) {
@@ -201,9 +326,10 @@
                 datasets: [{
                     label: 'المستخدمين الجدد',
                     data: {{ user_chart_data|safe|default:'[65, 59, 80, 81, 56, 55]' }},
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
@@ -228,7 +354,33 @@
                 datasets: [{
                     label: 'الإيرادات ($)',
                     data: {{ revenue_chart_data|safe|default:'[1200, 1900, 3000, 5000, 2000, 3000]' }},
-                    backgroundColor: '#10b981',
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    // Enrollments Chart
+    const enrollmentsCtx = document.getElementById('enrollmentsChart')?.getContext('2d');
+    if (enrollmentsCtx) {
+        new Chart(enrollmentsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ revenue_chart_labels|safe|default:'["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو"]' }},
+                datasets: [{
+                    label: 'التسجيلات',
+                    data: {{ revenue_chart_data|safe|default:'[1200, 1900, 3000, 5000, 2000, 3000]' }},  // ✅ تم إزالة map
+                    backgroundColor: '#8b5cf6',
                     borderRadius: 8
                 }]
             },

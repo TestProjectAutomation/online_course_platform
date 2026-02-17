@@ -87,17 +87,16 @@ urlpatterns = [
     path('admin/export/courses/', views.admin_export_courses, name='admin_export_courses'),
     path('admin/export/enrollments/', views.admin_export_enrollments, name='admin_export_enrollments'),
     
+    # ==================== Admin: Statistics ====================
+    path('admin/stats/', views.admin_stats_view, name='admin_stats'),
+
     # ==================== AJAX Endpoints ====================
     path('ajax/toggle-favorite/', views.ajax_toggle_favorite, name='ajax_toggle_favorite'),
     path('ajax/update-lesson-progress/', views.ajax_update_lesson_progress, name='ajax_update_lesson_progress'),
     path('ajax/course-stats/<int:course_id>/', views.ajax_get_course_stats, name='ajax_get_course_stats'),
     path('ajax/dashboard-stats/', views.ajax_get_dashboard_stats, name='ajax_dashboard_stats'),
     path('ajax/chart-data/', views.ajax_get_chart_data, name='ajax_chart_data'),
-    
-    path('ajax/recent-activities/', views.ajax_get_recent_activities, name='ajax_recent_activities'),
-    
-    path('admin/stats/', views.admin_stats_view, name='admin_stats'),
-    
+    path('ajax/recent-activities/', views.ajax_get_recent_activities, name='ajax_recent_activities'),    
     
     # ==================== Cart URLs ====================
     path('cart/', views.cart_view, name='cart_view'),
@@ -107,6 +106,7 @@ urlpatterns = [
     path('cart/clear/', views.clear_cart, name='clear_cart'),
     path('cart/submit-order/', views.submit_order, name='submit_order'),
     path('orders/', views.order_history, name='order_history'),
+    path('cart/count/', views.cart_count, name='cart_count'),
 
     # ==================== Instructor Public Profile ====================
     path('instructor/<int:instructor_id>/', views.instructor_profile, name='instructor_profile'),

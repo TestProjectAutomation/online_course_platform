@@ -32,7 +32,12 @@
                     {{ form.title.label }}
                     {% if form.title.field.required %}<span class="text-red-500">*</span>{% endif %}
                 </label>
-                {{ form.title }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-heading text-gray-400"></i>
+                    </div>
+                    {{ form.title }}
+                </div>
                 {% if form.title.errors %}
                 <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
                 {% endif %}
@@ -44,7 +49,12 @@
                     <label for="{{ form.video_url.id_for_label }}" class="block text-sm font-medium mb-2">
                         {{ form.video_url.label }}
                     </label>
-                    {{ form.video_url }}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fab fa-youtube text-gray-400"></i>
+                        </div>
+                        {{ form.video_url }}
+                    </div>
                     {% if form.video_url.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.video_url.errors.0 }}</p>
                     {% endif %}
@@ -54,7 +64,12 @@
                     <label for="{{ form.video_file.id_for_label }}" class="block text-sm font-medium mb-2">
                         {{ form.video_file.label }}
                     </label>
-                    {{ form.video_file }}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-upload text-gray-400"></i>
+                        </div>
+                        {{ form.video_file }}
+                    </div>
                     {% if form.video_file.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.video_file.errors.0 }}</p>
                     {% endif %}
@@ -67,7 +82,12 @@
                     <label for="{{ form.duration_minutes.id_for_label }}" class="block text-sm font-medium mb-2">
                         {{ form.duration_minutes.label }}
                     </label>
-                    {{ form.duration_minutes }}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                        {{ form.duration_minutes }}
+                    </div>
                     {% if form.duration_minutes.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.duration_minutes.errors.0 }}</p>
                     {% endif %}
@@ -77,7 +97,12 @@
                     <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium mb-2">
                         {{ form.order.label }}
                     </label>
-                    {{ form.order }}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fas fa-sort-numeric-down text-gray-400"></i>
+                        </div>
+                        {{ form.order }}
+                    </div>
                     {% if form.order.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
                     {% endif %}
@@ -89,28 +114,35 @@
                 <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium mb-2">
                     {{ form.content.label }}
                 </label>
-                {{ form.content }}
+                <div class="relative">
+                    <div class="absolute top-3 right-0 pr-3 flex pointer-events-none">
+                        <i class="fas fa-file-alt text-gray-400"></i>
+                    </div>
+                    {{ form.content }}
+                </div>
                 {% if form.content.errors %}
                 <p class="mt-1 text-sm text-red-600">{{ form.content.errors.0 }}</p>
                 {% endif %}
             </div>
 
             <!-- Free Lesson Checkbox -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 {{ form.is_free }}
-                <label for="{{ form.is_free.id_for_label }}" class="text-sm font-medium">
+                <label for="{{ form.is_free.id_for_label }}" class="text-sm font-medium cursor-pointer">
                     {{ form.is_free.label }}
+                    <span class="block text-xs text-gray-500 dark:text-gray-400">يمكن للطلاب مشاهدة هذا الدرس بدون تسجيل</span>
                 </label>
             </div>
 
             <!-- Form Actions -->
             <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
-                    <i class="fas fa-save ml-2"></i>
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold flex items-center gap-2">
+                    <i class="fas fa-save"></i>
                     حفظ
                 </button>
-                <a href="{% url 'courses:admin_course_detail' course.id %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
-                    <i class="fas fa-times ml-2"></i>
+                <a href="{% url 'courses:admin_course_detail' course.id %}" 
+                   class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold flex items-center gap-2">
+                    <i class="fas fa-times"></i>
                     إلغاء
                 </a>
             </div>

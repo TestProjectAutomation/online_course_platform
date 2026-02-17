@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q, Count, Avg, Sum
+
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
@@ -17,6 +18,9 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.utils.timesince import timesince
 from core.models import ContactMessage, NewsletterSubscriber, Testimonial
+
+from datetime import timedelta, datetime
+from django.contrib.auth import get_user_model
 
 from .models import (
     Course, Category, User, Enrollment, Review, 
@@ -973,19 +977,36 @@ def admin_courses(request):
     }
     return render(request, 'admin/courses/list.html', context)
 
+
 @staff_member_required
 def admin_course_detail(request, course_id):
     """تفاصيل الدورة"""
     course = get_object_or_404(Course, id=course_id)
     
+    # إحصائيات
+    total_lessons = Lesson.objects.filter(module__course=course).count()
+    
+    total_students = course.enrollments.filter(status='enrolled').count()
+    completed_enrollments = course.enrollments.filter(status='completed').count()
+    
+    completion_rate = (completed_enrollments / total_students * 100) if total_students > 0 else 0
+    
+    total_revenue = total_students * course.price
+
     context = {
         'course': course,
         'modules': course.modules.prefetch_related('lessons').all(),
-        'enrollments': Enrollment.objects.filter(course=course).select_related('user'),
-        'reviews': Review.objects.filter(course=course).select_related('user'),
-        'total_students': course.enrollments.filter(status='enrolled').count(),
-        'total_revenue': course.enrollments.filter(status='enrolled').count() * course.price,
+        'enrollments': course.enrollments.select_related('user'),
+        'reviews': course.reviews.select_related('user'),
+        'total_students': total_students,
+        'total_revenue': total_revenue,
+        'total_lessons': total_lessons,
+        'total_modules': course.modules.count(),
+        'total_reviews': course.reviews.count(),
+        'completed_enrollments': completed_enrollments,
+        'completion_rate': round(completion_rate, 2),
     }
+
     return render(request, 'admin/courses/detail.html', context)
 
 
@@ -1238,8 +1259,9 @@ def admin_module_create(request, course_id):
             module = form.save(commit=False)
             module.course = course
             module.save()
-            messages.success(request, f'تم إنشاء الوحدة {module.title} بنجاح')
-            return redirect('admin_course_detail', course_id=course.id)
+            messages.success(request, f'✅ تم إنشاء الوحدة "{module.title}" بنجاح')
+            # ✅ استخدام المسار الصحيح مع بادئة التطبيق
+            return redirect('courses:admin_course_detail', course_id=course.id)
     else:
         form = CourseModuleForm()
     
@@ -1248,6 +1270,7 @@ def admin_module_create(request, course_id):
         'course': course,
         'title': 'إنشاء وحدة جديدة'
     })
+    
 
 @staff_member_required
 def admin_module_edit(request, module_id):
@@ -1258,8 +1281,9 @@ def admin_module_edit(request, module_id):
         form = CourseModuleForm(request.POST, instance=module)
         if form.is_valid():
             form.save()
-            messages.success(request, f'تم تحديث الوحدة {module.title} بنجاح')
-            return redirect('admin_course_detail', course_id=module.course.id)
+            messages.success(request, f'✅ تم تحديث الوحدة "{module.title}" بنجاح')
+            # ✅ استخدام المسار الصحيح
+            return redirect('courses:admin_course_detail', course_id=module.course.id)
     else:
         form = CourseModuleForm(instance=module)
     
@@ -1270,6 +1294,7 @@ def admin_module_edit(request, module_id):
         'title': f'تعديل الوحدة: {module.title}'
     })
 
+
 @staff_member_required
 def admin_module_delete(request, module_id):
     """حذف وحدة"""
@@ -1279,10 +1304,12 @@ def admin_module_delete(request, module_id):
     if request.method == 'POST':
         title = module.title
         module.delete()
-        messages.success(request, f'تم حذف الوحدة {title} بنجاح')
-        return redirect('admin_course_detail', course_id=course.id)
+        messages.success(request, f'✅ تم حذف الوحدة "{title}" بنجاح')
+        # ✅ استخدام المسار الصحيح
+        return redirect('courses:admin_course_detail', course_id=course.id)
     
     return render(request, 'admin/courses/module_delete.html', {'module': module})
+
 
 # ---- Lesson Management ----
 
@@ -1297,8 +1324,9 @@ def admin_lesson_create(request, module_id):
             lesson = form.save(commit=False)
             lesson.module = module
             lesson.save()
-            messages.success(request, f'تم إنشاء الدرس {lesson.title} بنجاح')
-            return redirect('admin_course_detail', course_id=module.course.id)
+            messages.success(request, f'✅ تم إنشاء الدرس "{lesson.title}" بنجاح')
+            # ✅ استخدام المسار الصحيح مع بادئة التطبيق
+            return redirect('courses:admin_course_detail', course_id=module.course.id)
     else:
         form = LessonForm()
     
@@ -1308,7 +1336,8 @@ def admin_lesson_create(request, module_id):
         'course': module.course,
         'title': 'إنشاء درس جديد'
     })
-
+    
+    
 @staff_member_required
 def admin_lesson_edit(request, lesson_id):
     """تعديل درس"""
@@ -1318,8 +1347,9 @@ def admin_lesson_edit(request, lesson_id):
         form = LessonForm(request.POST, request.FILES, instance=lesson)
         if form.is_valid():
             form.save()
-            messages.success(request, f'تم تحديث الدرس {lesson.title} بنجاح')
-            return redirect('admin_course_detail', course_id=lesson.module.course.id)
+            messages.success(request, f'✅ تم تحديث الدرس "{lesson.title}" بنجاح')
+            # ✅ استخدام المسار الصحيح
+            return redirect('courses:admin_course_detail', course_id=lesson.module.course.id)
     else:
         form = LessonForm(instance=lesson)
     
@@ -1330,7 +1360,7 @@ def admin_lesson_edit(request, lesson_id):
         'course': lesson.module.course,
         'title': f'تعديل الدرس: {lesson.title}'
     })
-
+    
 @staff_member_required
 def admin_lesson_delete(request, lesson_id):
     """حذف درس"""
@@ -1340,12 +1370,14 @@ def admin_lesson_delete(request, lesson_id):
     if request.method == 'POST':
         title = lesson.title
         lesson.delete()
-        messages.success(request, f'تم حذف الدرس {title} بنجاح')
-        return redirect('admin_course_detail', course_id=course.id)
+        messages.success(request, f'✅ تم حذف الدرس "{title}" بنجاح')
+        # ✅ استخدام المسار الصحيح
+        return redirect('courses:admin_course_detail', course_id=course.id)
     
     return render(request, 'admin/courses/lesson_delete.html', {'lesson': lesson})
 
-# ---- Category Management ----
+
+# ---- Category Management ----f
 
 @staff_member_required
 def admin_categories(request):
@@ -1848,10 +1880,328 @@ def ajax_get_recent_activities(request):
 
 # ==================== Reports & Exports ====================
 
+
+
+# @staff_member_required
+# def admin_reports(request):
+#     """صفحة التقارير والإحصائيات المتقدمة"""
+    
+#     # ========== إحصائيات الزيارات ==========
+#     # عدد الزيارات اليوم
+#     today = timezone.now().date()
+#     today_start = timezone.make_aware(datetime.combine(today, datetime.min.time()))
+#     today_end = timezone.make_aware(datetime.combine(today, datetime.max.time()))
+    
+#     # زوار اليوم (المستخدمين الذين دخلوا اليوم)
+#     today_visitors = User.objects.filter(
+#         last_login__range=[today_start, today_end]
+#     ).count()
+    
+#     # زوار الشهر
+#     month_start = today - timedelta(days=30)
+#     month_visitors = User.objects.filter(
+#         last_login__date__gte=month_start
+#     ).count()
+    
+#     # إجمالي الزوار (كل المستخدمين)
+#     total_visitors = User.objects.count()
+    
+#     # الزوار الجدد هذا الشهر
+#     new_visitors_month = User.objects.filter(
+#         date_joined__date__gte=month_start
+#     ).count()
+    
+#     # ========== إحصائيات المحتوى ==========
+#     total_courses = Course.objects.count()
+#     active_courses = Course.objects.filter(is_active=True).count()
+#     new_courses_month = Course.objects.filter(
+#         created_at__date__gte=month_start
+#     ).count()
+    
+#     # ========== إحصائيات التسجيلات ==========
+#     total_enrollments = Enrollment.objects.count()
+#     new_enrollments_month = Enrollment.objects.filter(
+#         enrolled_at__date__gte=month_start
+#     ).count()
+#     completed_enrollments = Enrollment.objects.filter(status='completed').count()
+    
+#     # ========== إحصائيات الإيرادات ==========
+#     total_revenue = Enrollment.objects.filter(
+#         status='enrolled'
+#     ).aggregate(total=Sum('course__price'))['total'] or 0
+    
+#     monthly_revenue = Enrollment.objects.filter(
+#         status='enrolled',
+#         enrolled_at__date__gte=month_start
+#     ).aggregate(total=Sum('course__price'))['total'] or 0
+    
+#     # ========== أفضل الدورات ==========
+#     top_courses = Course.objects.annotate(
+#         enroll_count=Count('enrollments', filter=Q(enrollments__status='enrolled'))
+#     ).order_by('-enroll_count')[:10]
+    
+#     # ========== أفضل المدربين ==========
+#     from django.db.models import Count, Sum
+    
+#     top_instructors = User.objects.filter(role='instructor').annotate(
+#         total_students=Count('courses_taught__enrollments', filter=Q(courses_taught__enrollments__status='enrolled'), distinct=True),
+#         courses_count=Count('courses_taught', distinct=True)
+#     ).order_by('-total_students')[:10]
+    
+#     # ========== بيانات الرسوم البيانية ==========
+#     # بيانات المستخدمين لآخر 6 أشهر
+#     user_chart_labels = []
+#     user_chart_data = []
+    
+#     for i in range(5, -1, -1):
+#         month = today - timedelta(days=30 * i)
+#         month_name = month.strftime('%B')  # اسم الشهر
+#         month_start_date = month.replace(day=1)
+#         if i > 0:
+#             month_end_date = (month_start_date + timedelta(days=32)).replace(day=1)
+#         else:
+#             month_end_date = today_end
+        
+#         user_chart_labels.append(month_name)
+#         count = User.objects.filter(
+#             date_joined__date__gte=month_start_date,
+#             date_joined__date__lt=month_end_date
+#         ).count()
+#         user_chart_data.append(count)
+    
+#     # بيانات الإيرادات لآخر 6 أشهر
+#     revenue_chart_labels = []
+#     revenue_chart_data = []
+    
+#     for i in range(5, -1, -1):
+#         month = today - timedelta(days=30 * i)
+#         month_name = month.strftime('%B')
+#         month_start_date = month.replace(day=1)
+#         if i > 0:
+#             month_end_date = (month_start_date + timedelta(days=32)).replace(day=1)
+#         else:
+#             month_end_date = today_end
+        
+#         revenue_chart_labels.append(month_name)
+#         total = Enrollment.objects.filter(
+#             status='enrolled',
+#             enrolled_at__date__gte=month_start_date,
+#             enrolled_at__date__lt=month_end_date
+#         ).aggregate(total=Sum('course__price'))['total'] or 0
+#         revenue_chart_data.append(float(total))
+    
+#     # بيانات الزيارات اليومية لآخر 7 أيام
+#     daily_visitors_labels = []
+#     daily_visitors_data = []
+    
+#     for i in range(6, -1, -1):
+#         day = today - timedelta(days=i)
+#         day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()))
+#         day_end = timezone.make_aware(datetime.combine(day, datetime.max.time()))
+        
+#         daily_visitors_labels.append(day.strftime('%A'))  # اسم اليوم
+#         visitors = User.objects.filter(
+#             last_login__range=[day_start, day_end]
+#         ).count()
+#         daily_visitors_data.append(visitors)
+    
+#     context = {
+#         # إحصائيات الزوار
+#         'today_visitors': today_visitors,
+#         'month_visitors': month_visitors,
+#         'total_visitors': total_visitors,
+#         'new_visitors_month': new_visitors_month,
+        
+#         # إحصائيات عامة
+#         'total_users': User.objects.count(),
+#         'new_users': new_visitors_month,
+#         'total_courses': total_courses,
+#         'new_courses': new_courses_month,
+#         'active_courses': active_courses,
+#         'total_enrollments': total_enrollments,
+#         'new_enrollments': new_enrollments_month,
+#         'completed_enrollments': completed_enrollments,
+#         'total_revenue': total_revenue,
+#         'monthly_revenue': monthly_revenue,
+        
+#         # بيانات الجداول
+#         'top_courses': top_courses,
+#         'top_instructors': top_instructors,
+        
+#         # بيانات الرسوم البيانية
+#         'user_chart_labels': user_chart_labels,
+#         'user_chart_data': user_chart_data,
+#         'revenue_chart_labels': revenue_chart_labels,
+#         'revenue_chart_data': revenue_chart_data,
+#         'daily_visitors_labels': daily_visitors_labels,
+#         'daily_visitors_data': daily_visitors_data,
+#     }
+    
+#     return render(request, 'admin/reports/index.html', context)
+
+
 @staff_member_required
 def admin_reports(request):
-    """صفحة التقارير"""
-    return render(request, 'admin/reports/index.html')
+    """صفحة التقارير والإحصائيات المتقدمة"""
+    from django.db.models import Count, Sum, Avg, Q  # ✅ تأكد من استيراد Sum هنا
+    from django.utils import timezone
+    from datetime import timedelta, datetime
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    
+    # ========== إحصائيات الزيارات ==========
+    # عدد الزيارات اليوم
+    today = timezone.now().date()
+    today_start = timezone.make_aware(datetime.combine(today, datetime.min.time()))
+    today_end = timezone.make_aware(datetime.combine(today, datetime.max.time()))
+    
+    # زوار اليوم (المستخدمين الذين دخلوا اليوم)
+    today_visitors = User.objects.filter(
+        last_login__range=[today_start, today_end]
+    ).count()
+    
+    # زوار الشهر
+    month_start = today - timedelta(days=30)
+    month_visitors = User.objects.filter(
+        last_login__date__gte=month_start
+    ).count()
+    
+    # إجمالي الزوار (كل المستخدمين)
+    total_visitors = User.objects.count()
+    
+    # الزوار الجدد هذا الشهر
+    new_visitors_month = User.objects.filter(
+        date_joined__date__gte=month_start
+    ).count()
+    
+    # ========== إحصائيات المحتوى ==========
+    total_courses = Course.objects.count()
+    active_courses = Course.objects.filter(is_active=True).count()
+    new_courses_month = Course.objects.filter(
+        created_at__date__gte=month_start
+    ).count()
+    
+    # ========== إحصائيات التسجيلات ==========
+    total_enrollments = Enrollment.objects.count()
+    new_enrollments_month = Enrollment.objects.filter(
+        enrolled_at__date__gte=month_start
+    ).count()
+    completed_enrollments = Enrollment.objects.filter(status='completed').count()
+    
+    # ========== إحصائيات الإيرادات ==========
+    total_revenue = Enrollment.objects.filter(
+        status='enrolled'
+    ).aggregate(total=Sum('course__price'))['total'] or 0
+    
+    monthly_revenue = Enrollment.objects.filter(
+        status='enrolled',
+        enrolled_at__date__gte=month_start
+    ).aggregate(total=Sum('course__price'))['total'] or 0
+    
+    # ========== أفضل الدورات ==========
+    top_courses = Course.objects.annotate(
+        enroll_count=Count('enrollments', filter=Q(enrollments__status='enrolled'))
+    ).order_by('-enroll_count')[:10]
+    
+    # ========== أفضل المدربين ==========    
+    top_instructors = User.objects.filter(role='instructor').annotate(
+        total_students=Count('courses_taught__enrollments', filter=Q(courses_taught__enrollments__status='enrolled'), distinct=True),
+        courses_count=Count('courses_taught', distinct=True)
+    ).order_by('-total_students')[:10]
+    
+    # ========== بيانات الرسوم البيانية ==========
+    # بيانات المستخدمين لآخر 6 أشهر
+    user_chart_labels = []
+    user_chart_data = []
+    
+    for i in range(5, -1, -1):
+        month = today - timedelta(days=30 * i)
+        month_name = month.strftime('%B')  # اسم الشهر
+        month_start_date = month.replace(day=1)
+        if i > 0:
+            month_end_date = (month_start_date + timedelta(days=32)).replace(day=1)
+        else:
+            month_end_date = today_end
+        
+        user_chart_labels.append(month_name)
+        count = User.objects.filter(
+            date_joined__date__gte=month_start_date,
+            date_joined__date__lt=month_end_date
+        ).count()
+        user_chart_data.append(count)
+    
+    # بيانات الإيرادات لآخر 6 أشهر
+    revenue_chart_labels = []
+    revenue_chart_data = []
+    
+    for i in range(5, -1, -1):
+        month = today - timedelta(days=30 * i)
+        month_name = month.strftime('%B')
+        month_start_date = month.replace(day=1)
+        if i > 0:
+            month_end_date = (month_start_date + timedelta(days=32)).replace(day=1)
+        else:
+            month_end_date = today_end
+        
+        revenue_chart_labels.append(month_name)
+        total = Enrollment.objects.filter(
+            status='enrolled',
+            enrolled_at__date__gte=month_start_date,
+            enrolled_at__date__lt=month_end_date
+        ).aggregate(total=Sum('course__price'))['total'] or 0
+        revenue_chart_data.append(float(total))
+    
+    # بيانات الزيارات اليومية لآخر 7 أيام
+    daily_visitors_labels = []
+    daily_visitors_data = []
+    
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()))
+        day_end = timezone.make_aware(datetime.combine(day, datetime.max.time()))
+        
+        daily_visitors_labels.append(day.strftime('%A'))  # اسم اليوم
+        visitors = User.objects.filter(
+            last_login__range=[day_start, day_end]
+        ).count()
+        daily_visitors_data.append(visitors)
+    
+    context = {
+        # إحصائيات الزوار
+        'today_visitors': today_visitors,
+        'month_visitors': month_visitors,
+        'total_visitors': total_visitors,
+        'new_visitors_month': new_visitors_month,
+        
+        # إحصائيات عامة
+        'total_users': User.objects.count(),
+        'new_users': new_visitors_month,
+        'total_courses': total_courses,
+        'new_courses': new_courses_month,
+        'active_courses': active_courses,
+        'total_enrollments': total_enrollments,
+        'new_enrollments': new_enrollments_month,
+        'completed_enrollments': completed_enrollments,
+        'total_revenue': total_revenue,
+        'monthly_revenue': monthly_revenue,
+        
+        # بيانات الجداول
+        'top_courses': top_courses,
+        'top_instructors': top_instructors,
+        
+        # بيانات الرسوم البيانية
+        'user_chart_labels': user_chart_labels,
+        'user_chart_data': user_chart_data,
+        'revenue_chart_labels': revenue_chart_labels,
+        'revenue_chart_data': revenue_chart_data,
+        'daily_visitors_labels': daily_visitors_labels,
+        'daily_visitors_data': daily_visitors_data,
+    }
+    
+    return render(request, 'admin/reports/index.html', context)
+
+
 
 @staff_member_required
 def admin_export_users(request):
@@ -2186,17 +2536,28 @@ def add_to_cart(request, course_id):
     """إضافة دورة إلى السلة"""
     course = get_object_or_404(Course, id=course_id, is_active=True)
     
-    # الحصول على السلة من الجلسة
     cart = request.session.get('cart', [])
     
     if course_id not in cart:
         cart.append(course_id)
         request.session['cart'] = cart
-        messages.success(request, f'✅ تم إضافة "{course.title}" إلى السلة')
+        message = f'✅ تم إضافة "{course.title}" إلى السلة'
+        status = 'success'
     else:
-        messages.info(request, f'ℹ️ الدورة "{course.title}" موجودة بالفعل في السلة')
+        message = f'ℹ️ الدورة "{course.title}" موجودة بالفعل في السلة'
+        status = 'info'
     
+    # إذا كان طلب AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'status': status,
+            'message': message,
+            'cart_count': len(cart)
+        })
+    
+    messages.success(request, message)
     return redirect(request.META.get('HTTP_REFERER', 'courses:course_list'))
+
 
 def remove_from_cart(request, course_id):
     """إزالة دورة من السلة"""
@@ -2259,6 +2620,16 @@ def clear_cart(request):
     request.session['cart'] = []
     messages.success(request, '✅ تم تفريغ السلة')
     return redirect('courses:cart_view')
+
+
+def cart_count(request):
+    """API للحصول على عدد العناصر في السلة"""
+    cart = request.session.get('cart', [])
+    return JsonResponse({
+        'count': len(cart),
+        'status': 'success'
+    })
+    
 
 # ==================== طلبات الشراء ====================
 
@@ -2340,367 +2711,3 @@ def order_history(request):
     
     return render(request, 'cart/orders.html', context)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ==================== صفحة صفحة (Page) عامة ====================
-
-def page_detail(request, slug):
-    """عرض صفحة ثابتة"""
-    from .models import Page
-    page = get_object_or_404(Page, slug=slug, is_active=True, is_published=True)
-    
-    # زيادة عدد المشاهدات
-    page.increment_views()
-    
-    # تعيين الصفحة الحالية للـ context processor
-    request.current_page = page
-    
-    return render(request, 'page_detail.html', {'page': page})
-
-# ==================== دوال الملف الشخصي ====================
-
-@login_required
-def profile_settings(request):
-    """إعدادات الملف الشخصي"""
-    if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, '✅ تم تحديث الإعدادات بنجاح')
-            return redirect('courses:profile_settings')
-    else:
-        form = UserProfileForm(instance=request.user)
-    
-    return render(request, 'auth/profile_settings.html', {'form': form})
-
-@login_required
-def change_password(request):
-    """تغيير كلمة المرور"""
-    if request.method == 'POST':
-        form = auth_views.PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            auth_views.update_session_auth_hash(request, user)
-            messages.success(request, '✅ تم تغيير كلمة المرور بنجاح')
-            return redirect('courses:profile')
-    else:
-        form = auth_views.PasswordChangeForm(request.user)
-    
-    return render(request, 'auth/change_password.html', {'form': form})
-
-# ==================== دوال التقارير المتقدمة ====================
-
-@staff_member_required
-def admin_reports_detail(request, report_type):
-    """تقارير مفصلة"""
-    from django.db.models import Count, Sum, Avg
-    from datetime import datetime, timedelta
-    
-    # تحديد نطاق التاريخ
-    period = request.GET.get('period', 'month')
-    if period == 'week':
-        start_date = timezone.now() - timedelta(days=7)
-    elif period == 'month':
-        start_date = timezone.now() - timedelta(days=30)
-    elif period == 'year':
-        start_date = timezone.now() - timedelta(days=365)
-    else:
-        start_date = timezone.now() - timedelta(days=30)
-    
-    context = {
-        'report_type': report_type,
-        'period': period,
-        'start_date': start_date,
-    }
-    
-    if report_type == 'users':
-        # تقرير المستخدمين
-        context['data'] = {
-            'total': User.objects.count(),
-            'new': User.objects.filter(date_joined__gte=start_date).count(),
-            'by_role': User.objects.values('role').annotate(count=Count('id')),
-            'by_month': User.objects.filter(date_joined__gte=start_date).extra(
-                select={'month': "strftime('%%Y-%%m', date_joined)"}
-            ).values('month').annotate(count=Count('id')).order_by('month'),
-        }
-    
-    elif report_type == 'courses':
-        # تقرير الدورات
-        context['data'] = {
-            'total': Course.objects.count(),
-            'active': Course.objects.filter(is_active=True).count(),
-            'by_level': Course.objects.values('level').annotate(count=Count('id')),
-            'by_category': Course.objects.values('category__name').annotate(count=Count('id')),
-            'top_rated': Course.objects.order_by('-rating')[:10],
-            'most_viewed': Course.objects.order_by('-views_count')[:10],
-        }
-    
-    elif report_type == 'enrollments':
-        # تقرير التسجيلات
-        context['data'] = {
-            'total': Enrollment.objects.count(),
-            'by_status': Enrollment.objects.values('status').annotate(count=Count('id')),
-            'by_month': Enrollment.objects.filter(enrolled_at__gte=start_date).extra(
-                select={'month': "strftime('%%Y-%%m', enrolled_at)"}
-            ).values('month').annotate(count=Count('id')).order_by('month'),
-            'revenue': Enrollment.objects.filter(status='enrolled').aggregate(
-                total=Sum('course__price')
-            )['total'] or 0,
-        }
-    
-    elif report_type == 'revenue':
-        # تقرير الإيرادات
-        enrollments = Enrollment.objects.filter(
-            status='enrolled',
-            enrolled_at__gte=start_date
-        ).select_related('course')
-        
-        total_revenue = sum(e.course.price for e in enrollments)
-        
-        context['data'] = {
-            'total_revenue': total_revenue,
-            'by_course': enrollments.values('course__title').annotate(
-                revenue=Sum('course__price'),
-                count=Count('id')
-            ).order_by('-revenue')[:10],
-            'by_month': enrollments.extra(
-                select={'month': "strftime('%%Y-%%m', enrolled_at)"}
-            ).values('month').annotate(
-                revenue=Sum('course__price'),
-                count=Count('id')
-            ).order_by('month'),
-        }
-    
-    return render(request, f'admin/reports/{report_type}.html', context)
-
-# ==================== دوال الإشعارات ====================
-
-@login_required
-def notifications_view(request):
-    """عرض الإشعارات"""
-    # يمكنك إنشاء نموذج Notification إذا أردت
-    # أو استخدام إشعارات Django
-    notifications = []  # استبدل هذا ب query حقيقي
-    
-    context = {
-        'notifications': notifications,
-        'unread_count': 0,  # استبدل بعدد الإشعارات غير المقروءة
-    }
-    return render(request, 'notifications.html', context)
-
-@login_required
-@require_POST
-def mark_notification_read(request, notification_id):
-    """تحديد إشعار كمقروء"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # منطق تحديث الإشعار
-        return JsonResponse({'status': 'success'})
-    return redirect('courses:notifications')
-
-@login_required
-@require_POST
-def mark_all_notifications_read(request):
-    """تحديد كل الإشعارات كمقروءة"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # منطق تحديث كل الإشعارات
-        return JsonResponse({'status': 'success'})
-    return redirect('courses:notifications')
-
-# ==================== دوال البحث المتقدم ====================
-
-def advanced_search(request):
-    """بحث متقدم في الدورات"""
-    form = SearchForm(request.GET)
-    results = []
-    
-    if form.is_valid():
-        query = form.cleaned_data.get('query', '')
-        category = form.cleaned_data.get('category')
-        level = form.cleaned_data.get('level')
-        min_price = form.cleaned_data.get('min_price')
-        max_price = form.cleaned_data.get('max_price')
-        min_rating = form.cleaned_data.get('min_rating')
-        sort_by = form.cleaned_data.get('sort_by', '-created_at')
-        
-        results = Course.objects.filter(is_active=True)
-        
-        if query:
-            results = results.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query) |
-                Q(instructor__username__icontains=query) |
-                Q(instructor__first_name__icontains=query) |
-                Q(instructor__last_name__icontains=query)
-            )
-        
-        if category:
-            results = results.filter(category_id=category)
-        
-        if level:
-            results = results.filter(level=level)
-        
-        if min_price is not None:
-            results = results.filter(price__gte=min_price)
-        
-        if max_price is not None:
-            results = results.filter(price__lte=max_price)
-        
-        if min_rating is not None:
-            results = results.filter(rating__gte=min_rating)
-        
-        # ترتيب النتائج
-        if sort_by in ['title', '-title', 'price', '-price', 'rating', '-rating', 'created_at', '-created_at']:
-            results = results.order_by(sort_by)
-        else:
-            results = results.order_by('-created_at')
-    
-    paginator = Paginator(results, 12)
-    page = request.GET.get('page')
-    results = paginator.get_page(page)
-    
-    context = {
-        'form': form,
-        'results': results,
-        'total_results': paginator.count,
-        'query': request.GET.urlencode(),
-    }
-    return render(request, 'search/advanced.html', context)
-
-# ==================== دوال شهادات الإكمال ====================
-
-@login_required
-def certificate_view(request, enrollment_id):
-    """عرض شهادة إتمام دورة"""
-    enrollment = get_object_or_404(
-        Enrollment, 
-        id=enrollment_id, 
-        user=request.user,
-        status='completed'
-    )
-    
-    return render(request, 'certificate.html', {
-        'enrollment': enrollment,
-        'user': request.user,
-        'course': enrollment.course,
-        'completion_date': enrollment.completed_at,
-    })
-
-@login_required
-def download_certificate(request, enrollment_id):
-    """تحميل شهادة إتمام دورة (PDF)"""
-    enrollment = get_object_or_404(
-        Enrollment, 
-        id=enrollment_id, 
-        user=request.user,
-        status='completed'
-    )
-    
-    # هنا يمكنك استخدام مكتبة مثل reportlab أو weasyprint
-    # لإنشاء ملف PDF للشهادة
-    
-    messages.info(request, 'سيتم إضافة خاصية تحميل الشهادة قريباً')
-    return redirect('courses:certificate_view', enrollment_id=enrollment.id)
-
-# ==================== دوال API إضافية ====================
-
-@login_required
-def api_get_user_progress(request):
-    """API للحصول على تقدم المستخدم في دورة معينة"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        course_id = request.GET.get('course_id')
-        
-        if course_id:
-            enrollment = Enrollment.objects.filter(
-                user=request.user,
-                course_id=course_id,
-                status='enrolled'
-            ).first()
-            
-            if enrollment:
-                total_lessons = Lesson.objects.filter(module__course_id=course_id).count()
-                completed_lessons = LessonProgress.objects.filter(
-                    enrollment=enrollment,
-                    is_completed=True
-                ).count()
-                
-                return JsonResponse({
-                    'status': 'success',
-                    'progress': enrollment.progress,
-                    'completed_lessons': completed_lessons,
-                    'total_lessons': total_lessons,
-                    'percentage': int((completed_lessons / total_lessons) * 100) if total_lessons > 0 else 0
-                })
-        
-        return JsonResponse({'status': 'error', 'message': 'لم يتم العثور على الدورة'}, status=404)
-    
-    return JsonResponse({'status': 'error'}, status=400)
-
-@login_required
-def api_get_recommendations(request):
-    """API للحصول على توصيات دورات للمستخدم"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # الحصول على تصنيفات الدورات التي سجل فيها المستخدم
-        user_categories = Enrollment.objects.filter(
-            user=request.user,
-            status='enrolled'
-        ).values_list('course__category', flat=True).distinct()
-        
-        # اقتراح دورات من نفس التصنيفات
-        recommendations = Course.objects.filter(
-            category__in=user_categories,
-            is_active=True
-        ).exclude(
-            enrollments__user=request.user
-        ).distinct()[:6]
-        
-        data = []
-        for course in recommendations:
-            data.append({
-                'id': course.id,
-                'title': course.title,
-                'slug': course.slug,
-                'price': float(course.price),
-                'rating': float(course.rating),
-                'instructor': course.instructor.get_full_name() or course.instructor.username,
-                'image': course.image.url if course.image else None,
-            })
-        
-        return JsonResponse({
-            'status': 'success',
-            'recommendations': data
-        })
-    
-    return JsonResponse({'status': 'error'}, status=400)
-
-# ==================== معالج الأخطاء ====================
-
-def handler404(request, exception):
-    """صفحة خطأ 404"""
-    return render(request, 'errors/404.html', status=404)
-
-def handler500(request):
-    """صفحة خطأ 500"""
-    return render(request, 'errors/500.html', status=500)
-
-def handler403(request, exception):
-    """صفحة خطأ 403"""
-    return render(request, 'errors/403.html', status=403)
-
-def handler400(request, exception):
-    """صفحة خطأ 400"""
-    return render(request, 'errors/400.html', status=400)

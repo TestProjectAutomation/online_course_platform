@@ -71,6 +71,7 @@ INSTALLED_APPS = [
 
     'courses',
     'core',
+    'notifications',
 ]
 
 
@@ -126,6 +127,8 @@ TEMPLATES = [
                 'core.context_processors.cart_info',
                 'core.context_processors.current_year',
                 'core.context_processors.is_mobile',
+                
+                'notifications.context_processors.notifications_processor',
 
             ],
         },

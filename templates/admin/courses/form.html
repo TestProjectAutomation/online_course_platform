@@ -4,11 +4,11 @@
 {% block title %}{{ title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-4xl">
+<div class="container mx-auto px-4 py-8 max-w-6xl">
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold mb-2">{{ title }}</h1>
-        <p class="text-gray-600 dark:text-gray-400">أدخل معلومات الدورة الجديدة</p>
+        <p class="text-gray-600 dark:text-gray-400">أدخل معلومات الدورة الجديدة وأضف الوحدات والدروس</p>
     </div>
 
     <!-- Form -->
@@ -111,7 +111,7 @@
                     </div>
 
                     <!-- السعر -->
-                    <div>
+                     <div>
                         <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium mb-2">
                             {{ form.price.label }}
                         </label>
@@ -128,8 +128,93 @@
                         {% if form.price.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
                         {% endif %}
+                    </div> 
+                    <!-- قسم الخصم - بعد حقل السعر -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mt-6">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-red-600">
+                            <i class="fas fa-tags"></i>
+                            إعدادات الخصم
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- نسبة الخصم -->
+                            <div>
+                                <label for="{{ form.discount_percent.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ form.discount_percent.label }} (%)
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-percent text-gray-400"></i>
+                                    </div>
+                                    {{ form.discount_percent }}
+                                </div>
+                                {% if form.discount_percent.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.discount_percent.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- تاريخ البداية -->
+                            <div>
+                                <label for="{{ form.discount_start_date.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ form.discount_start_date.label }}
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    </div>
+                                    {{ form.discount_start_date }}
+                                </div>
+                                {% if form.discount_start_date.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.discount_start_date.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- تاريخ النهاية -->
+                            <div>
+                                <label for="{{ form.discount_end_date.id_for_label }}" class="block text-sm font-medium mb-2">
+                                    {{ form.discount_end_date.label }}
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-check text-gray-400"></i>
+                                    </div>
+                                    {{ form.discount_end_date }}
+                                </div>
+                                {% if form.discount_end_date.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.discount_end_date.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- معاينة الخصم -->
+                        <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700" id="discount-preview">
+                            <p class="text-sm font-medium mb-2">معاينة الخصم:</p>
+                            <div class="flex items-center gap-4">
+                                <span class="text-lg text-gray-500 line-through" id="original-price-preview">EGP {{ course.price|default:'0' }}</span>
+                                <span class="text-2xl font-bold text-green-600" id="discounted-price-preview">EGP {{ course.price|default:'0' }}</span>
+                                <span class="px-2 py-1 bg-red-500 text-white text-xs rounded-full" id="discount-percent-preview">0%</span>
+                            </div>
+                        </div>
                     </div>
 
+                    <script>
+                        // معاينة الخصم في الوقت الحقيقي
+                        const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+                        const discountInput = document.getElementById('{{ form.discount_percent.id_for_label }}');
+                        
+                        function updateDiscountPreview() {
+                            const price = parseFloat(priceInput.value) || 0;
+                            const discount = parseFloat(discountInput.value) || 0;
+                            const discountedPrice = price * (100 - discount) / 100;
+                            
+                            document.getElementById('original-price-preview').textContent = `$${price.toFixed(2)}`;
+                            document.getElementById('discounted-price-preview').textContent = `$${discountedPrice.toFixed(2)}`;
+                            document.getElementById('discount-percent-preview').textContent = `${discount}%`;
+                        }
+                        
+                        priceInput?.addEventListener('input', updateDiscountPreview);
+                        discountInput?.addEventListener('input', updateDiscountPreview);
+                    </script>
                     <!-- المدة -->
                     <div>
                         <label for="{{ form.duration_hours.id_for_label }}" class="block text-sm font-medium mb-2">
@@ -186,6 +271,80 @@
                     </div>
                     {% endif %}
                 </div>
+            </div>
+
+            <!-- Video Section - جديد -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-primary-600">
+                    <i class="fas fa-video"></i>
+                    فيديو تعريفي للدورة
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- رابط يوتيوب -->
+                    <div>
+                        <label for="{{ form.video_url.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.video_url.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fab fa-youtube text-gray-400"></i>
+                            </div>
+                            <input type="url" name="{{ form.video_url.name }}" id="{{ form.video_url.id_for_label }}" 
+                                   value="{{ form.video_url.value|default:'' }}"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
+                                   placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        {% if form.video_url.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.video_url.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-info-circle ml-1"></i>
+                            أدخل رابط يوتيوب صحيح
+                        </p>
+                    </div>
+
+                    <!-- رفع فيديو -->
+                    <div>
+                        <label for="{{ form.video_file.id_for_label }}" class="block text-sm font-medium mb-2">
+                            {{ form.video_file.label }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-upload text-gray-400"></i>
+                            </div>
+                            <input type="file" name="{{ form.video_file.name }}" id="{{ form.video_file.id_for_label }}" 
+                                   accept="video/mp4,video/webm,video/ogg"
+                                   class="w-full pr-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300">
+                        </div>
+                        {% if form.video_file.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.video_file.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-info-circle ml-1"></i>
+                            الصيغ المسموحة: MP4, WebM, OGG. الحد الأقصى: 100MB
+                        </p>
+                    </div>
+                </div>
+
+                <!-- معاينة الفيديو الحالي إذا وجد -->
+                {% if course and course.video_file %}
+                <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium mb-2">الفيديو الحالي:</p>
+                    <video class="w-full max-w-md rounded-lg" controls>
+                        <source src="{{ course.video_file.url }}" type="video/mp4">
+                    </video>
+                </div>
+                {% endif %}
+
+                {% if course and course.video_url %}
+                <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium mb-2">رابط الفيديو الحالي:</p>
+                    <a href="{{ course.video_url }}" target="_blank" class="text-primary-600 hover:text-primary-700 flex items-center gap-2">
+                        <i class="fab fa-youtube text-xl"></i>
+                        {{ course.video_url|truncatechars:50 }}
+                    </a>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Descriptions -->
@@ -318,7 +477,7 @@
             <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" class="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
                     <i class="fas fa-save"></i>
-                    حفظ
+                    حفظ الدورة
                 </button>
                 
                 <!-- زر الإلغاء - يعود للقائمة إذا كانت إضافة، أو لتفاصيل الدورة إذا كانت تعديل -->
@@ -336,5 +495,172 @@
             </div>
         </form>
     </div>
+
+    <!-- إذا كان تعديل، نعرض الوحدات والدروس -->
+    {% if is_edit and course %}
+    <div class="mt-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fas fa-cubes text-primary-600"></i>
+                    وحدات الدورة والدروس
+                </h2>
+                <a href="{% url 'courses:admin_module_create' course.id %}" 
+                   class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2">
+                    <i class="fas fa-plus-circle"></i>
+                    إضافة وحدة جديدة
+                </a>
+            </div>
+
+            {% if modules %}
+            <div class="space-y-4">
+                {% for module in modules %}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                    <!-- رأس الوحدة -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <i class="fas fa-cube text-primary-600"></i>
+                                {{ module.title }}
+                            </h3>
+                            {% if module.description %}
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ module.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-500 dark:text-gray-500">
+                                {{ module.lessons.count }} درس | {{ module.get_total_duration }} دقيقة
+                            </span>
+                            <a href="{% url 'courses:admin_module_edit' module.id %}" 
+                               class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition"
+                               title="تعديل الوحدة">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'courses:admin_module_delete' module.id %}" 
+                               class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                               title="حذف الوحدة"
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الوحدة؟')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                            <a href="{% url 'courses:admin_lesson_create' module.id %}" 
+                               class="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition"
+                               title="إضافة درس">
+                                <i class="fas fa-plus-circle"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- الدروس -->
+                    {% if module.lessons.all %}
+                    <div class="p-4 bg-white dark:bg-gray-800">
+                        <div class="space-y-2">
+                            {% for lesson in module.lessons.all %}
+                            <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
+                                <div class="flex items-center gap-3">
+                                    {% if lesson.is_free %}
+                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">
+                                        مجاني
+                                    </span>
+                                    {% endif %}
+                                    <i class="fas fa-play-circle text-gray-400"></i>
+                                    <span class="font-medium">{{ lesson.title }}</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-500">
+                                        {{ lesson.duration_minutes }} دقيقة
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'courses:admin_lesson_edit' lesson.id %}" 
+                                       class="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition"
+                                       title="تعديل الدرس">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </a>
+                                    <a href="{% url 'courses:admin_lesson_delete' lesson.id %}" 
+                                       class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition"
+                                       title="حذف الدرس"
+                                       onclick="return confirm('هل أنت متأكد من حذف هذا الدرس؟')">
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-video text-3xl mb-2 opacity-50"></i>
+                        <p>لا توجد دروس في هذه الوحدة</p>
+                        <a href="{% url 'courses:admin_lesson_create' module.id %}" 
+                           class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 mt-2 text-sm">
+                            <i class="fas fa-plus-circle"></i>
+                            أضف أول درس
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">لا توجد وحدات دراسية</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">قم بإضافة وحدات لتنظيم محتوى الدورة</p>
+                <a href="{% url 'courses:admin_module_create' course.id %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition">
+                    <i class="fas fa-plus-circle"></i>
+                    إضافة وحدة جديدة
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
+<!-- JavaScript للمعاينة -->
+{% block extra_js %}
+<script>
+    // معاينة الصورة
+    document.getElementById('{{ form.image.id_for_label }}')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                showNotification('❌ الرجاء اختيار ملف صورة فقط', 'error');
+                this.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('❌ حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)', 'error');
+                this.value = '';
+                return;
+            }
+        }
+    });
+
+    // معاينة الفيديو
+    document.getElementById('{{ form.video_file.id_for_label }}')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.type.startsWith('video/')) {
+                showNotification('❌ الرجاء اختيار ملف فيديو فقط', 'error');
+                this.value = '';
+                return;
+            }
+            if (file.size > 100 * 1024 * 1024) {
+                showNotification('❌ حجم الفيديو كبير جداً (الحد الأقصى 100 ميجابايت)', 'error');
+                this.value = '';
+                return;
+            }
+        }
+    });
+
+    // التحقق من إدخال رابط يوتيوب صحيح
+    document.getElementById('{{ form.video_url.id_for_label }}')?.addEventListener('blur', function(e) {
+        const url = e.target.value;
+        if (url && !url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/)) {
+            showNotification('⚠️ الرجاء إدخال رابط يوتيوب صحيح', 'warning');
+        }
+    });
+</script>
 {% endblock %}

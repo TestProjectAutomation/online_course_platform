@@ -105,7 +105,9 @@ class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
         fields = ['title', 'category', 'description', 'short_description', 'image', 
-                 'price', 'level', 'duration_hours', 'is_featured', 'is_active']
+                 'video_url', 'video_file', 'price', 'discount_percent', 
+                 'discount_start_date', 'discount_end_date', 'level', 
+                 'duration_hours', 'is_featured', 'is_active']
         widgets = {
             'title': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'عنوان الدورة'}),
             'category': forms.Select(attrs={'class': TAILWIND_SELECT}),
@@ -117,14 +119,55 @@ class CourseForm(forms.ModelForm):
             'duration_hours': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'عدد الساعات'}),
             'is_featured': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
             'is_active': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'video_url': forms.URLInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg',
+                'placeholder': 'https://www.youtube.com/watch?v=...'
+            }),
+            'video_file': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg'
+            }),
+            'discount_percent': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition',
+                'min': '0',
+                'max': '100',
+                'placeholder': '0'
+            }),
+            'discount_start_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition',
+                'type': 'datetime-local'
+            }),
+            'discount_end_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition',
+                'type': 'datetime-local'
+            }),
+
         }
-    
+    def clean(self):
+        cleaned_data = super().clean()
+        video_url = cleaned_data.get('video_url')
+        video_file = cleaned_data.get('video_file')
+        cleaned_data = super().clean()
+        discount_percent = cleaned_data.get('discount_percent')
+        start_date = cleaned_data.get('discount_start_date')
+        end_date = cleaned_data.get('discount_end_date')
+        
+        if discount_percent and discount_percent > 0:
+            if not start_date or not end_date:
+                raise forms.ValidationError("يجب تحديد تاريخ بداية ونهاية الخصم")
+            if start_date >= end_date:
+                raise forms.ValidationError("تاريخ النهاية يجب أن يكون بعد تاريخ البداية")
+
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if self.user and not self.user.is_admin_user():
             self.fields['is_featured'].disabled = True
             self.fields['is_active'].disabled = True
+
+
+
 
 class CategoryForm(forms.ModelForm):
     class Meta:

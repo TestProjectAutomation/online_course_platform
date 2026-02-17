@@ -16,57 +16,68 @@
         <form method="post" class="space-y-6">
             {% csrf_token %}
             
-            {% if form.non_field_errors %}
-            <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
-                {% for error in form.non_field_errors %}
-                <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <!-- Title -->
+            <!-- عنوان الوحدة -->
             <div>
                 <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium mb-2">
                     {{ form.title.label }}
-                    {% if form.title.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    <span class="text-red-500">*</span>
                 </label>
-                {{ form.title }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-heading text-gray-400"></i>
+                    </div>
+                    {{ form.title }}
+                </div>
                 {% if form.title.errors %}
                 <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
                 {% endif %}
             </div>
 
-            <!-- Description -->
+            <!-- وصف الوحدة -->
             <div>
                 <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium mb-2">
                     {{ form.description.label }}
                 </label>
-                {{ form.description }}
+                <div class="relative">
+                    <div class="absolute top-3 right-0 pr-3 flex pointer-events-none">
+                        <i class="fas fa-align-left text-gray-400"></i>
+                    </div>
+                    {{ form.description }}
+                </div>
                 {% if form.description.errors %}
                 <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
                 {% endif %}
             </div>
 
-            <!-- Order -->
+            <!-- ترتيب الوحدة -->
             <div>
                 <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium mb-2">
                     {{ form.order.label }}
                 </label>
-                {{ form.order }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-sort-numeric-down text-gray-400"></i>
+                    </div>
+                    {{ form.order }}
+                </div>
                 {% if form.order.errors %}
                 <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
                 {% endif %}
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ترتيب الوحدة في الدورة (رقم)</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    رقم ترتيب الوحدة في الدورة (كلما قل الرقم ظهرت أولاً)
+                </p>
             </div>
 
-            <!-- Form Actions -->
+            <!-- أزرار الإجراءات -->
             <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold">
-                    <i class="fas fa-save ml-2"></i>
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold flex items-center gap-2">
+                    <i class="fas fa-save"></i>
                     حفظ
                 </button>
-                <a href="{% url 'courses:admin_course_detail' course.id %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold">
-                    <i class="fas fa-times ml-2"></i>
+                <a href="{% url 'courses:admin_course_detail' course.id %}" 
+                   class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold flex items-center gap-2">
+                    <i class="fas fa-times"></i>
                     إلغاء
                 </a>
             </div>

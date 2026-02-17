@@ -240,13 +240,23 @@ def cart_info(request):
         'cart_items': [],
     }
     
-    # إذا كان لديك سلة تسوق، يمكنك إضافتها هنا
-    # cart = request.session.get('cart', {})
-    # cart_data['cart_count'] = len(cart)
-    # cart_data['cart_total'] = sum(item.get('price', 0) * item.get('quantity', 0) for item in cart.values())
+    # ✅ الطريقة الصحيحة: السلة هي قائمة من IDs
+    cart = request.session.get('cart', [])
+    
+    if cart:
+        cart_data['cart_count'] = len(cart)
+        
+        # إذا أردت جلب تفاصيل الدورات
+        try:
+            from courses.models import Course
+            cart_items = Course.objects.filter(id__in=cart, is_active=True)
+            cart_data['cart_items'] = cart_items
+            cart_data['cart_total'] = sum(course.price for course in cart_items)
+        except (ImportError, Exception):
+            # إذا لم يكن تطبيق courses متاحاً
+            pass
     
     return cart_data
-
 
 def current_year(request):
     """

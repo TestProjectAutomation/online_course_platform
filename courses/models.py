@@ -4,6 +4,9 @@ from django.utils.text import slugify
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
 class User(AbstractUser):
     USER_ROLES = (
         ('admin', 'Admin'),
@@ -90,6 +93,24 @@ class Course(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='courses')
     instructor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses_taught')
     price = models.DecimalField(max_digits=10, decimal_places=2)
+     # حقول الخصم
+    discount_percent = models.IntegerField(
+        _("نسبة الخصم"), 
+        default=0,
+        help_text="نسبة الخصم (0-100%)",
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    discount_start_date = models.DateTimeField(
+        _("تاريخ بداية الخصم"), 
+        null=True, 
+        blank=True
+    )
+    discount_end_date = models.DateTimeField(
+        _("تاريخ نهاية الخصم"), 
+        null=True, 
+        blank=True
+    )
+    is_discounted = models.BooleanField(_("مخفض"), default=False)
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='beginner')
     duration_hours = models.IntegerField(default=0)
     is_featured = models.BooleanField(default=False)
@@ -99,7 +120,79 @@ class Course(models.Model):
     views_count = models.IntegerField(default=0)  # أضف هذا السطر
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    video_url = models.URLField(
+        _("رابط يوتيوب"), 
+        blank=True, 
+        null=True,
+        help_text="رابط فيديو يوتيوب (مثال: https://www.youtube.com/watch?v=...)"
+    )
+    video_file = models.FileField(
+        _("ملف فيديو"), 
+        upload_to='courses/videos/',
+        blank=True, 
+        null=True,
+        help_text="رفع ملف فيديو (mp4, webm, etc)"
+    )
     
+    
+    
+    @property
+    def has_discount(self):
+        """التحقق من وجود خصم ساري"""
+        now = timezone.now()
+        return (self.discount_percent > 0 and 
+                self.discount_start_date and 
+                self.discount_end_date and 
+                self.discount_start_date <= now <= self.discount_end_date)
+    
+    @property
+    def discounted_price(self):
+        """حساب السعر بعد الخصم"""
+        if self.has_discount:
+            return self.price * (100 - self.discount_percent) / 100
+        return self.price
+    
+    @property
+    def discount_status(self):
+        """حالة الخصم"""
+        if not self.has_discount:
+            return None
+        now = timezone.now()
+        if self.discount_end_date:
+            days_left = (self.discount_end_date - now).days
+            if days_left <= 1:
+                return 'ending_soon'
+            elif days_left <= 3:
+                return 'last_chance'
+            else:
+                return 'active'
+        return 'active'
+    
+    @property
+    def discount_ends_in(self):
+        """الوقت المتبقي للخصم"""
+        if self.has_discount and self.discount_end_date:
+            delta = self.discount_end_date - timezone.now()
+            days = delta.days
+            hours = delta.seconds // 3600
+            minutes = (delta.seconds % 3600) // 60
+            
+            if days > 0:
+                return f"{days} يوم"
+            elif hours > 0:
+                return f"{hours} ساعة"
+            elif minutes > 0:
+                return f"{minutes} دقيقة"
+            else:
+                return "ينتهي قريباً"
+        return None
+
+
+    @property
+    def has_video_preview(self):
+        """التحقق من وجود فيديو تعريفي"""
+        return bool(self.video_url or self.video_file)
+
     class Meta:
         ordering = ['-created_at']
         indexes = [
@@ -296,3 +389,9 @@ class Review(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.course.title} ({self.rating}/5)"
+    
+    
+    
+    
+    
+    

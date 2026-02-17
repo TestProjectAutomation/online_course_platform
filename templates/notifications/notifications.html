@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الإشعارات - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">الإشعارات</h1>
+            <p class="text-gray-600 dark:text-gray-400">جميع الإشعارات والتحديثات الخاصة بحسابك</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="markAllAsRead()" 
+                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
+                    {% if total_unread == 0 %}disabled{% endif %}>
+                <i class="fas fa-check-double"></i>
+                تحديد الكل كمقروء
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">إجمالي الإشعارات</p>
+                    <h3 class="text-3xl font-bold">{{ total_notifications }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-bell text-primary-600 dark:text-primary-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">غير مقروءة</p>
+                    <h3 class="text-3xl font-bold text-yellow-600">{{ total_unread }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-circle text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">مقروءة</p>
+                    <h3 class="text-3xl font-bold text-green-600">{{ total_notifications|add:total_unread }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-6">
+        <div class="flex flex-wrap gap-2">
+            <a href="?filter=all" 
+               class="px-4 py-2 rounded-lg transition {% if filter_type == 'all' %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+                الكل
+            </a>
+            <a href="?filter=unread" 
+               class="px-4 py-2 rounded-lg transition {% if filter_type == 'unread' %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+                غير مقروءة
+            </a>
+            <a href="?filter=important" 
+               class="px-4 py-2 rounded-lg transition {% if filter_type == 'important' %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+                مهمة
+            </a>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        {% if notifications %}
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for notification in notifications %}
+            <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition notification-item {% if not notification.is_read %}bg-primary-50/50 dark:bg-primary-900/10{% endif %}"
+                 data-id="{{ notification.id }}">
+                <div class="flex items-start gap-4">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center
+                            {% if notification.notification_type == 'success' %}bg-green-100 dark:bg-green-900
+                            {% elif notification.notification_type == 'error' %}bg-red-100 dark:bg-red-900
+                            {% elif notification.notification_type == 'warning' %}bg-yellow-100 dark:bg-yellow-900
+                            {% else %}bg-blue-100 dark:bg-blue-900{% endif %}">
+                            <i class="fas fa-{{ notification.icon|default:'bell' }} 
+                                {% if notification.notification_type == 'success' %}text-green-600 dark:text-green-400
+                                {% elif notification.notification_type == 'error' %}text-red-600 dark:text-red-400
+                                {% elif notification.notification_type == 'warning' %}text-yellow-600 dark:text-yellow-400
+                                {% else %}text-blue-600 dark:text-blue-400{% endif %} text-xl">
+                            </i>
+                        </div>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-1">
+                            <div>
+                                <h3 class="font-semibold text-lg">{{ notification.title }}</h3>
+                                <p class="text-gray-600 dark:text-gray-400">{{ notification.message }}</p>
+                            </div>
+                            <span class="text-xs text-gray-500 whitespace-nowrap mr-4">
+                                {{ notification.created_at|timesince }}
+                            </span>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex items-center gap-4 mt-3">
+                            {% if notification.link %}
+                            <a href="{{ notification.link }}" class="text-primary-600 hover:text-primary-700 text-sm">
+                                <i class="fas fa-external-link-alt ml-1"></i>
+                                عرض التفاصيل
+                            </a>
+                            {% endif %}
+                            
+                            {% if not notification.is_read %}
+                            <button onclick="markAsRead('{{ notification.id }}')" 
+                                    class="text-green-600 hover:text-green-700 text-sm">
+                                <i class="fas fa-check ml-1"></i>
+                                تحديد كمقروء
+                            </button>
+                            {% endif %}
+                            
+                            <button onclick="deleteNotification('{{ notification.id }}')" 
+                                    class="text-red-600 hover:text-red-700 text-sm">
+                                <i class="fas fa-trash-alt ml-1"></i>
+                                حذف
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Unread Indicator -->
+                    {% if not notification.is_read %}
+                    <div class="w-2 h-2 bg-primary-600 rounded-full mt-2"></div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if notifications.has_other_pages %}
+        <div class="flex justify-center items-center gap-2 p-6 border-t border-gray-200 dark:border-gray-700">
+            {% if notifications.has_previous %}
+            <a href="?page={{ notifications.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+
+            {% for i in notifications.paginator.page_range %}
+                {% if notifications.number == i %}
+                <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ i }}</span>
+                {% elif i > notifications.number|add:'-3' and i < notifications.number|add:'3' %}
+                <a href="?page={{ i }}{% if filter_type %}&filter={{ filter_type }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                    {{ i }}
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if notifications.has_next %}
+            <a href="?page={{ notifications.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="text-7xl text-gray-300 dark:text-gray-600 mb-4">
+                <i class="far fa-bell"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2">لا توجد إشعارات</h3>
+            <p class="text-gray-600 dark:text-gray-400">سوف تظهر هنا الإشعارات والتحديثات الهامة</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markAsRead(notificationId) {
+        fetch(`/notifications/${notificationId}/read/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                item.classList.remove('bg-primary-50/50', 'dark:bg-primary-900/10');
+                updateUnreadCount(data.unread_count);
+                showNotification(data.message, 'success');
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        fetch('/notifications/read-all/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.classList.remove('bg-primary-50/50', 'dark:bg-primary-900/10');
+                });
+                updateUnreadCount(0);
+                showNotification(data.message, 'success');
+            }
+        });
+    }
+
+    function deleteNotification(notificationId) {
+        if (!confirm('هل أنت متأكد من حذف هذا الإشعار؟')) return;
+        
+        fetch(`/notifications/${notificationId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                item.style.transition = 'all 0.3s ease';
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(100px)';
+                
+                setTimeout(() => {
+                    item.remove();
+                    updateUnreadCount(data.unread_count);
+                    
+                    // التحقق مما إذا كانت القائمة فارغة
+                    if (document.querySelectorAll('.notification-item').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+                
+                showNotification(data.message, 'success');
+            }
+        });
+    }
+
+    function updateUnreadCount(count) {
+        const badge = document.querySelector('.notification-badge');
+        const statsCard = document.querySelector('.text-yellow-600');
+        
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+            } else {
+                badge.remove();
+            }
+        }
+        
+        if (statsCard) {
+            statsCard.textContent = count;
+        }
+    }
+
+    // تحديث الإشعارات كل 30 ثانية
+    setInterval(function() {
+        fetch('/notifications/count/', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateUnreadCount(data.unread_count);
+            }
+        });
+    }, 30000);
+</script>
+{% endblock %}

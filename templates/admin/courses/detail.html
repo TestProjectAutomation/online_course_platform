@@ -1,47 +1,62 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load course_extras %}  <!-- هذا مهم -->
 
 {% block title %}{{ course.title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-bold mb-2">{{ course.title }}</h1>
-            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة تفاصيل الدورة</p>
+            <p class="text-gray-600 dark:text-gray-400">عرض وإدارة تفاصيل الدورة والمحتوى</p>
         </div>
-        <div class="flex gap-3">
-            <a href="{% url 'courses:admin_course_edit' course.id %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center">
-                <i class="fas fa-edit ml-2"></i>
-                تعديل
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'courses:admin_course_edit' course.id %}" class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl">
+                <i class="fas fa-edit"></i>
+                تعديل الدورة
             </a>
-            <a href="{% url 'courses:admin_module_create' course.id %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center">
-                <i class="fas fa-plus-circle ml-2"></i>
+            <a href="{% url 'courses:admin_module_create' course.id %}" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition flex items-center gap-2 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus-circle"></i>
                 إضافة وحدة
             </a>
-            <a href="{% url 'courses:admin_courses' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center">
-                <i class="fas fa-arrow-right ml-2"></i>
-                عودة
+            <a href="{% url 'courses:admin_courses' %}" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition flex items-center gap-2">
+                <i class="fas fa-arrow-right"></i>
+                العودة للقائمة
             </a>
         </div>
     </div>
 
-    <!-- Course Info Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                    <i class="fas fa-dollar-sign text-primary-600 dark:text-primary-400 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">السعر</p>
-                    <h3 class="text-2xl font-bold">${{ course.price }}</h3>
+    <!-- Course Info Cards - محدثة -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition">
+            <!-- Rating & Price -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    {% if course.has_discount %}
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-500 line-through">EGP-( {{ course.price }}  )</span>
+                        <span class="font-bold text-green-600">EGP-( {{ course.discounted_price|floatformat:2 }} )</span>
+                    </div>
+                    <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full inline-block mt-1">
+                        -{{ course.discount_percent }}%
+                    </span>
+                    {% else %}
+                    <span class="font-bold text-primary-600">
+                        {% if course.price == 0 %}
+                        <span class="text-green-600">مجاناً</span>
+                        {% else %}
+                        EGP-( {{ course.price }} )
+                        {% endif %}
+                    </span>
+                    {% endif %}
                 </div>
             </div>
+
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                     <i class="fas fa-users text-green-600 dark:text-green-400 text-xl"></i>
@@ -53,19 +68,19 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
                     <i class="fas fa-star text-yellow-600 dark:text-yellow-400 text-xl"></i>
                 </div>
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">التقييم</p>
-                    <h3 class="text-2xl font-bold">{{ course.rating }}/5</h3>
+                    <h3 class="text-2xl font-bold">{{ course.rating|floatformat:1 }}/5</h3>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                     <i class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"></i>
@@ -76,6 +91,18 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-eye text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">المشاهدات</p>
+                    <h3 class="text-2xl font-bold">{{ course.views_count|default:'0' }}</h3>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -83,24 +110,27 @@
         <div class="lg:col-span-2">
             <!-- Course Details -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold mb-4">تفاصيل الدورة</h2>
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-primary-600"></i>
+                    تفاصيل الدورة
+                </h2>
                 
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                         <p class="text-sm text-gray-600 dark:text-gray-400">التصنيف</p>
                         <p class="font-semibold">{{ course.category.name }}</p>
                     </div>
-                    <div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                         <p class="text-sm text-gray-600 dark:text-gray-400">المستوى</p>
                         <p class="font-semibold">{{ course.get_level_display }}</p>
                     </div>
-                    <div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                         <p class="text-sm text-gray-600 dark:text-gray-400">الحالة</p>
                         <span class="px-3 py-1 text-xs rounded-full {% if course.is_active %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
                             {{ course.is_active|yesno:'نشط,غير نشط' }}
                         </span>
                     </div>
-                    <div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                         <p class="text-sm text-gray-600 dark:text-gray-400">مميزة</p>
                         {% if course.is_featured %}
                         <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600">
@@ -110,27 +140,63 @@
                         <span class="text-gray-500">لا</span>
                         {% endif %}
                     </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">عدد الوحدات</p>
+                        <p class="font-semibold">{{ total_modules }}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">إجمالي الدروس</p>
+                        <p class="font-semibold">{{ total_lessons }}</p>
+                    </div>
                 </div>
 
                 <div class="mb-6">
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">وصف قصير</p>
-                    <p class="text-gray-800 dark:text-gray-200">{{ course.short_description|default:'لا يوجد' }}</p>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                        <p class="text-gray-800 dark:text-gray-200">{{ course.short_description|default:'لا يوجد وصف قصير' }}</p>
+                    </div>
                 </div>
 
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">الوصف الكامل</p>
-                    <div class="prose dark:prose-invert max-w-none">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg prose dark:prose-invert max-w-none">
                         {{ course.description|linebreaks }}
                     </div>
                 </div>
             </div>
 
+            <!-- Video Preview Section - جديد -->
+            {% if course.has_video_preview %}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-video text-primary-600"></i>
+                    الفيديو التعريفي
+                </h2>
+                <div class="aspect-video bg-black rounded-xl overflow-hidden">
+                    {% if course.video_file %}
+                    <video class="w-full h-full" controls>
+                        <source src="{{ course.video_file.url }}" type="video/mp4">
+                    </video>
+                    {% elif course.video_url %}
+                    <iframe class="w-full h-full" 
+                            src="https://www.youtube.com/embed/{{ course.video_url|youtube_embed_id }}" 
+                            frameborder="0" 
+                            allowfullscreen>
+                    </iframe>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Modules and Lessons -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold">الوحدات والدروس</h2>
-                    <a href="{% url 'courses:admin_module_create' course.id %}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
-                        <i class="fas fa-plus-circle ml-1"></i>
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fas fa-cubes text-primary-600"></i>
+                        الوحدات والدروس
+                    </h2>
+                    <a href="{% url 'courses:admin_module_create' course.id %}" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2 text-sm">
+                        <i class="fas fa-plus-circle"></i>
                         إضافة وحدة جديدة
                     </a>
                 </div>
@@ -139,69 +205,120 @@
                 <div class="space-y-4">
                     {% for module in modules %}
                     <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                        <!-- Module Header -->
                         <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="font-semibold text-lg">{{ module.title }}</h3>
+                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center text-xs font-bold text-primary-600">
+                                            {{ forloop.counter }}
+                                        </span>
+                                        <h3 class="font-semibold text-lg">{{ module.title }}</h3>
+                                    </div>
                                     {% if module.description %}
-                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ module.description }}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mr-8">{{ module.description }}</p>
                                     {% endif %}
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm text-gray-500 dark:text-gray-500">
-                                        {{ module.lessons.count }} درس | {{ module.get_total_duration }} دقيقة
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm">
+                                        <i class="fas fa-book-open ml-1 text-primary-600"></i>
+                                        {{ module.lessons.count }} درس
                                     </span>
-                                    <a href="{% url 'courses:admin_module_edit' module.id %}" class="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition" title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{% url 'courses:admin_module_delete' module.id %}" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                    <a href="{% url 'courses:admin_lesson_create' module.id %}" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="إضافة درس">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </a>
+                                    <span class="text-sm bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm">
+                                        <i class="fas fa-clock ml-1 text-yellow-600"></i>
+                                        {{ module.get_total_duration }} د
+                                    </span>
+                                    <div class="flex gap-1">
+                                        <a href="{% url 'courses:admin_module_edit' module.id %}" 
+                                           class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition" 
+                                           title="تعديل الوحدة">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'courses:admin_module_delete' module.id %}" 
+                                           class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" 
+                                           title="حذف الوحدة"
+                                           onclick="return confirm('هل أنت متأكد من حذف هذه الوحدة؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- Lessons List -->
                         {% if module.lessons.all %}
-                        <div class="p-4">
+                        <div class="p-4 bg-white dark:bg-gray-800">
                             <div class="space-y-2">
                                 {% for lesson in module.lessons.all %}
-                                <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
-                                    <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition group">
+                                    <div class="flex items-center gap-3 flex-1">
+                                        <span class="w-5 h-5 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xs">
+                                            {{ forloop.counter }}
+                                        </span>
                                         {% if lesson.is_free %}
-                                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">مجاني</span>
+                                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full font-semibold">
+                                            مجاني
+                                        </span>
                                         {% endif %}
-                                        <i class="fas fa-play-circle text-gray-400"></i>
-                                        <span>{{ lesson.title }}</span>
+                                        <i class="fas fa-play-circle text-gray-400 group-hover:text-primary-600 transition"></i>
+                                        <span class="font-medium">{{ lesson.title }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-500">
+                                            ({{ lesson.duration_minutes }} دقيقة)
+                                        </span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-sm text-gray-500 dark:text-gray-500">{{ lesson.duration_minutes }} دقيقة</span>
-                                        <a href="{% url 'courses:admin_lesson_edit' lesson.id %}" class="p-1 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition" title="تعديل">
+                                        <a href="{% url 'courses:admin_lesson_edit' lesson.id %}" 
+                                           class="p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition" 
+                                           title="تعديل الدرس">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
-                                        <a href="{% url 'courses:admin_lesson_delete' lesson.id %}" class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition" title="حذف">
+                                        <a href="{% url 'courses:admin_lesson_delete' lesson.id %}" 
+                                           class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition" 
+                                           title="حذف الدرس"
+                                           onclick="return confirm('هل أنت متأكد من حذف هذا الدرس؟')">
                                             <i class="fas fa-trash text-sm"></i>
                                         </a>
                                     </div>
                                 </div>
                                 {% endfor %}
+                                
+                                <!-- Add Lesson Button -->
+                                <div class="mt-2 text-center">
+                                    <a href="{% url 'courses:admin_lesson_create' module.id %}" 
+                                       class="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 transition">
+                                        <i class="fas fa-plus-circle"></i>
+                                        إضافة درس جديد إلى هذه الوحدة
+                                    </a>
+                                </div>
                             </div>
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-video text-3xl mb-2 opacity-50"></i>
+                            <p>لا توجد دروس في هذه الوحدة</p>
+                            <a href="{% url 'courses:admin_lesson_create' module.id %}" 
+                               class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 mt-2">
+                                <i class="fas fa-plus-circle"></i>
+                                أضف أول درس الآن
+                            </a>
                         </div>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-center text-gray-500 dark:text-gray-400 py-8">
-                    لا توجد وحدات دراسية بعد
-                    <br>
-                    <a href="{% url 'courses:admin_module_create' course.id %}" class="text-primary-600 hover:text-primary-700 mt-2 inline-block">
-                        <i class="fas fa-plus-circle ml-1"></i>
-                        أضف أول وحدة الآن
+                <div class="text-center py-12">
+                    <div class="text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">لا توجد وحدات دراسية</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">قم بإضافة وحدات لتنظيم محتوى الدورة</p>
+                    <a href="{% url 'courses:admin_module_create' course.id %}" 
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة أول وحدة
                     </a>
-                </p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -210,13 +327,16 @@
         <div class="lg:col-span-1">
             <!-- Course Image -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold mb-4">صورة الدورة</h2>
-                <div class="rounded-xl overflow-hidden">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-image text-primary-600"></i>
+                    صورة الدورة
+                </h2>
+                <div class="rounded-xl overflow-hidden shadow-lg">
                     {% if course.image %}
-                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-auto">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-auto hover:scale-105 transition duration-300">
                     {% else %}
-                    <div class="bg-gray-200 dark:bg-gray-700 h-48 flex items-center justify-center">
-                        <i class="fas fa-image text-4xl text-gray-400"></i>
+                    <div class="bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 h-48 flex items-center justify-center">
+                        <i class="fas fa-image text-5xl text-gray-400 dark:text-gray-500"></i>
                     </div>
                     {% endif %}
                 </div>
@@ -224,52 +344,142 @@
 
             <!-- Instructor Info -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold mb-4">المدرب</h2>
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-chalkboard-teacher text-primary-600"></i>
+                    المدرب
+                </h2>
                 <div class="flex items-center gap-4">
                     {% if course.instructor.avatar %}
-                    <img src="{{ course.instructor.avatar.url }}" alt="{{ course.instructor.get_full_name }}" class="w-16 h-16 rounded-full object-cover">
+                    <img src="{{ course.instructor.avatar.url }}" alt="{{ course.instructor.get_full_name }}" 
+                         class="w-20 h-20 rounded-full object-cover border-4 border-primary-200 dark:border-primary-800">
                     {% else %}
-                    <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <span class="text-2xl text-primary-600 dark:text-primary-400 font-semibold">{{ course.instructor.first_name|first|upper }}</span>
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center border-4 border-primary-200 dark:border-primary-800">
+                        <span class="text-3xl text-white font-bold">{{ course.instructor.first_name|first|upper }}</span>
                     </div>
                     {% endif %}
-                    <div>
-                        <h3 class="font-semibold">{{ course.instructor.get_full_name|default:course.instructor.username }}</h3>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-lg">{{ course.instructor.get_full_name|default:course.instructor.username }}</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400">{{ course.instructor.email }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">{{ course.instructor.courses_taught.count }} دورة</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="px-2 py-1 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 text-xs rounded-full">
+                                <i class="fas fa-book-open ml-1"></i> {{ course.instructor.courses_taught.count }} دورة
+                            </span>
+                            <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 text-xs rounded-full">
+                                <i class="fas fa-star ml-1"></i> {{ course.instructor.avg_rating|default:'0' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Stats -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                <h2 class="text-xl font-bold mb-4">إحصائيات سريعة</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-primary-600"></i>
+                    إحصائيات سريعة
+                </h2>
                 <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between mb-1">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
                             <span class="text-sm text-gray-600 dark:text-gray-400">إجمالي الإيرادات</span>
-                            <span class="font-semibold">${{ total_revenue }}</span>
+                            <span class="text-lg font-bold text-green-600">${{ total_revenue }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">متوسط السعر للطالب</span>
+                            <span class="font-semibold">${{ total_revenue|default:0|divide:total_students|default:1|floatformat:2 }}</span>
                         </div>
                     </div>
-                    <div>
-                        <div class="flex justify-between mb-1">
+
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
                             <span class="text-sm text-gray-600 dark:text-gray-400">نسبة الإكمال</span>
-                            <span class="font-semibold">{% widthratio completed_enrollments|default:0 total_students|default:1 100 %}%</span>
+                            <span class="font-semibold">{{ completion_rate|default:0|floatformat:1 }}%</span>
                         </div>
-                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div class="bg-green-600 rounded-full h-2" style="width: {% widthratio completed_enrollments|default:0 total_students|default:1 100 %}%"></div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
+                            <div class="bg-green-600 rounded-full h-2.5 transition-all duration-500" 
+                                 style="width: {{ completion_rate|default:0 }}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>{{ completed_enrollments|default:0 }} مكتمل</span>
+                            <span>{{ total_students }} إجمالي</span>
                         </div>
                     </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600 dark:text-gray-400">التقييمات</span>
+                            <span class="font-semibold">{{ total_reviews }} تقييم</span>
+                        </div>
+                        <div class="flex items-center gap-1 mb-2">
+                            {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= course.rating %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% elif forloop.counter <= course.rating|add:"0.5" %}
+                            <i class="fas fa-star-half-alt text-yellow-400"></i>
+                            {% else %}
+                            <i class="far fa-star text-yellow-400"></i>
+                            {% endif %}
+                            {% endfor %}
+                            <span class="text-sm font-bold mr-2">{{ course.rating|floatformat:1 }}/5</span>
+                        </div>
+                    </div>
+
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between">
+                        <div class="flex justify-between py-1">
                             <span class="text-sm text-gray-600 dark:text-gray-400">تاريخ الإضافة</span>
                             <span class="font-semibold text-sm">{{ course.created_at|date:'Y-m-d' }}</span>
                         </div>
-                        <div class="flex justify-between mt-2">
+                        <div class="flex justify-between py-1">
                             <span class="text-sm text-gray-600 dark:text-gray-400">آخر تحديث</span>
                             <span class="font-semibold text-sm">{{ course.updated_at|date:'Y-m-d' }}</span>
                         </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">عدد المشاهدات</span>
+                            <span class="font-semibold text-sm">{{ course.views_count|default:'0' }}</span>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-bolt text-primary-600"></i>
+                    إجراءات سريعة
+                </h2>
+                <div class="space-y-3">
+                    <a href="{% url 'courses:admin_module_create' course.id %}" 
+                       class="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 transition">
+                        <div class="w-10 h-10 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center">
+                            <i class="fas fa-plus-circle text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <span class="font-medium">إضافة وحدة جديدة</span>
+                    </a>
+
+                    <a href="{% url 'courses:admin_enrollments' %}?course={{ course.id }}" 
+                       class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition">
+                        <div class="w-10 h-10 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <span class="font-medium">عرض جميع الطلاب</span>
+                    </a>
+
+                    <a href="{% url 'courses:admin_course_edit' course.id %}" 
+                       class="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/30 transition">
+                        <div class="w-10 h-10 bg-purple-200 dark:bg-purple-800 rounded-full flex items-center justify-center">
+                            <i class="fas fa-edit text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <span class="font-medium">تعديل معلومات الدورة</span>
+                    </a>
+
+                    <a href="{% url 'courses:admin_course_toggle_active' course.id %}" 
+                       class="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition"
+                       onclick="return confirm('هل أنت متأكد من تغيير حالة الدورة؟')">
+                        <div class="w-10 h-10 bg-yellow-200 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+                            <i class="fas {% if course.is_active %}fa-ban{% else %}fa-check-circle{% endif %} text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                        <span class="font-medium">{% if course.is_active %}تعطيل الدورة{% else %}تفعيل الدورة{% endif %}</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -278,28 +488,32 @@
     <!-- Enrollments Section -->
     <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold">الطلاب المسجلين</h2>
-            <a href="{% url 'courses:admin_enrollments' %}?course={{ course.id }}" class="text-primary-600 hover:text-primary-700 text-sm">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-users text-primary-600"></i>
+                الطلاب المسجلين ({{ total_students }})
+            </h2>
+            <a href="{% url 'courses:admin_enrollments' %}?course={{ course.id }}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1">
                 عرض الكل
-                <i class="fas fa-arrow-left mr-1"></i>
+                <i class="fas fa-arrow-left"></i>
             </a>
         </div>
 
         {% if enrollments %}
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead>
-                    <tr class="border-b border-gray-200 dark:border-gray-700">
-                        <th class="text-right py-3 px-4">الطالب</th>
-                        <th class="text-right py-3 px-4">تاريخ التسجيل</th>
-                        <th class="text-right py-3 px-4">الحالة</th>
-                        <th class="text-right py-3 px-4">التقدم</th>
-                        <th class="text-right py-3 px-4">الإجراءات</th>
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">الطالب</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">تاريخ التسجيل</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">الحالة</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">التقدم</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">آخر نشاط</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for enrollment in enrollments|slice:":5" %}
-                    <tr class="border-b border-gray-100 dark:border-gray-700">
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-3">
                                 {% if enrollment.user.avatar %}
@@ -309,12 +523,15 @@
                                     <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ enrollment.user.first_name|first|upper }}</span>
                                 </div>
                                 {% endif %}
-                                <span>{{ enrollment.user.get_full_name|default:enrollment.user.username }}</span>
+                                <div>
+                                    <span class="font-medium">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</span>
+                                    <p class="text-xs text-gray-500">{{ enrollment.user.email }}</p>
+                                </div>
                             </div>
                         </td>
-                        <td class="py-3 px-4">{{ enrollment.enrolled_at|date:'Y-m-d' }}</td>
+                        <td class="py-3 px-4 text-sm">{{ enrollment.enrolled_at|date:'Y-m-d' }}</td>
                         <td class="py-3 px-4">
-                            <span class="px-3 py-1 text-xs rounded-full 
+                            <span class="px-3 py-1 text-xs rounded-full font-semibold
                                 {% if enrollment.status == 'enrolled' %}bg-green-100 text-green-600
                                 {% elif enrollment.status == 'completed' %}bg-blue-100 text-blue-600
                                 {% elif enrollment.status == 'pending' %}bg-yellow-100 text-yellow-600
@@ -325,13 +542,16 @@
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-2">
                                 <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div class="bg-primary-600 rounded-full h-2" style="width: {{ enrollment.progress }}%"></div>
+                                    <div class="bg-primary-600 rounded-full h-2 transition-all" style="width: {{ enrollment.progress }}%"></div>
                                 </div>
-                                <span class="text-sm">{{ enrollment.progress }}%</span>
+                                <span class="text-sm font-medium">{{ enrollment.progress }}%</span>
                             </div>
                         </td>
+                        <td class="py-3 px-4 text-sm text-gray-500">{{ enrollment.last_accessed|timesince }}</td>
                         <td class="py-3 px-4">
-                            <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" class="text-primary-600 hover:text-primary-700">
+                            <a href="{% url 'courses:admin_enrollment_detail' enrollment.id %}" 
+                               class="text-primary-600 hover:text-primary-700 p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition inline-flex items-center"
+                               title="عرض التفاصيل">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>
@@ -341,47 +561,93 @@
             </table>
         </div>
         {% else %}
-        <p class="text-center text-gray-500 dark:text-gray-400 py-8">لا يوجد طلاب مسجلين في هذه الدورة</p>
+        <div class="text-center py-12">
+            <div class="text-5xl text-gray-300 dark:text-gray-600 mb-4">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400">لا يوجد طلاب مسجلين في هذه الدورة</p>
+        </div>
         {% endif %}
     </div>
 
     <!-- Reviews Section -->
     <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-        <h2 class="text-xl font-bold mb-6">التقييمات</h2>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-star text-yellow-500"></i>
+                التقييمات ({{ total_reviews }})
+            </h2>
+            <a href="{% url 'courses:admin_reviews' %}?course={{ course.id }}" class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1">
+                عرض الكل
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        </div>
         
         {% if reviews %}
         <div class="space-y-4">
-            {% for review in reviews %}
+            {% for review in reviews|slice:":5" %}
             <div class="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
                 <div class="flex justify-between mb-2">
                     <div class="flex items-center gap-3">
                         {% if review.user.avatar %}
-                        <img src="{{ review.user.avatar.url }}" alt="{{ review.user.get_full_name }}" class="w-8 h-8 rounded-full object-cover">
+                        <img src="{{ review.user.avatar.url }}" alt="{{ review.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover">
                         {% else %}
-                        <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
                             <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ review.user.first_name|first|upper }}</span>
                         </div>
                         {% endif %}
                         <div>
-                            <h3 class="font-semibold text-sm">{{ review.user.get_full_name|default:review.user.username }}</h3>
-                            <div class="flex items-center gap-1">
+                            <h3 class="font-semibold">{{ review.user.get_full_name|default:review.user.username }}</h3>
+                            <div class="flex items-center gap-1 mt-1">
                                 {% for i in "12345"|make_list %}
                                 {% if forloop.counter <= review.rating %}
                                 <i class="fas fa-star text-yellow-400 text-xs"></i>
                                 {% endif %}
                                 {% endfor %}
+                                <span class="text-xs text-gray-500 mr-1">({{ review.rating }}/5)</span>
                             </div>
                         </div>
                     </div>
-                    <span class="text-sm text-gray-500 dark:text-gray-500">{{ review.created_at|date:'Y-m-d' }}</span>
+                    <span class="text-xs text-gray-500">{{ review.created_at|date:'Y-m-d' }}</span>
                 </div>
-                <p class="text-gray-600 dark:text-gray-400 text-sm mr-11">{{ review.comment }}</p>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mr-14">{{ review.comment|linebreaks }}</p>
+                
+                <!-- Review Actions -->
+                <div class="flex justify-end gap-2 mt-2">
+                    <a href="{% url 'courses:admin_review_delete' review.id %}" 
+                       class="text-red-600 hover:text-red-700 text-sm hover:underline"
+                       onclick="return confirm('هل أنت متأكد من حذف هذا التقييم؟')">
+                        <i class="fas fa-trash-alt ml-1"></i>
+                        حذف
+                    </a>
+                </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-gray-500 dark:text-gray-400 py-8">لا توجد تقييمات لهذه الدورة</p>
+        <div class="text-center py-8">
+            <i class="fas fa-star text-4xl text-gray-300 dark:text-gray-600 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400">لا توجد تقييمات لهذه الدورة</p>
+        </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تأكيد حذف الوحدة
+    function confirmDelete(moduleId) {
+        if (confirm('هل أنت متأكد من حذف هذه الوحدة؟')) {
+            window.location.href = `/admin/modules/${moduleId}/delete/`;
+        }
+    }
+
+    // تأكيد حذف الدرس
+    function confirmLessonDelete(lessonId) {
+        if (confirm('هل أنت متأكد من حذف هذا الدرس؟')) {
+            window.location.href = `/admin/lessons/${lessonId}/delete/`;
+        }
+    }
+</script>
 {% endblock %}

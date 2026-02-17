@@ -13,7 +13,7 @@ urlpatterns = [
     # تطبيق الدورات (جميع مسارات التطبيق)
     path('', include('courses.urls')),
     path('', include('core.urls')),
-
+    path('notifications/', include('notifications.urls')),  # إضافة مسار تطبيق الإشعارات
     # إعادة توجيه الصفحة الرئيسية
     path('home/', RedirectView.as_view(url='/', permanent=True)),
 ]

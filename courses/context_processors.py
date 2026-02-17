@@ -116,21 +116,39 @@ def breadcrumbs_processor(request):
 
 def cart_processor(request):
     """
-    معالجة سلة المشتريات (للدورات المدفوعة)
+    معالج سياق السلة الخاص بتطبيق courses
     """
+    cart = request.session.get('cart', [])
+    cart_count = len(cart)
+    
     cart_items = []
     cart_total = 0
-    cart_count = 0
     
-    if request.session.get('cart'):
-        course_ids = request.session.get('cart', [])
-        cart_items = Course.objects.filter(id__in=course_ids, is_active=True)
+    if cart:
+        from .models import Course
+        cart_items = Course.objects.filter(id__in=cart, is_active=True)
         cart_total = sum(course.price for course in cart_items)
-        cart_count = cart_items.count()
     
     return {
+        'cart_count': cart_count,
         'cart_items': cart_items,
         'cart_total': cart_total,
-        'cart_count': cart_count,
     }
+
+# def cart_processor(request):
+#     """
+#     معالج سياق السلة - يجعل cart_count متاحاً في جميع القوالب
+#     """
+#     cart = request.session.get('cart', [])
+#     cart_count = len(cart)
+    
+#     # اختياري: جلب تفاصيل الدورات في السلة
+#     cart_items = Course.objects.filter(id__in=cart, is_active=True) if cart else []
+#     cart_total = sum(course.price for course in cart_items)
+    
+#     return {
+#         'cart_count': cart_count,
+#         'cart_items': cart_items,
+#         'cart_total': cart_total,
+#     }
 

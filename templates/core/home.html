@@ -110,10 +110,21 @@
                                     <div class="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0">
                                         <i class="fas fa-check-circle text-xl md:text-2xl text-green-600 dark:text-green-400"></i>
                                     </div>
-                                    <div>
+                                    {% comment %} <div>
                                         <div class="font-bold text-gray-900 dark:text-white text-sm md:text-base">{{ stats.completed_courses|default:'0' }}+</div>
                                         <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">دورة مكتملة</div>
-                                    </div>
+                                    </div> {% endcomment %}
+                                        <div>
+                                            <div class="text-2xl md:text-3xl font-bold 
+                                                        text-gray-900 dark:text-white">
+                                                {{ stats.courses_count|default:'0' }}+
+                                            </div>
+
+                                            <div class="text-xs md:text-sm 
+                                                        text-gray-600 dark:text-green-400">
+                                                دورة تدريبية
+                                            </div>
+                                        </div>
                                 </div>
                             </div>
                         </div>
@@ -153,104 +164,140 @@
             </div> {% endcomment %}
     </section>
 
-    <!-- Categories Section - تصميم بسيط وأنيق مع صور محسنة -->
-    <section class="py-16 bg-gray-50 dark:bg-gray-900">
-        <div class="container mx-auto px-4">
-            <!-- عنوان بسيط -->
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                    تصفح التصنيفات
+    <!-- Categories Section - تصميم مودرن وجذاب -->
+    <section class="py-24 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+        
+        <!-- عناصر خلفية متحركة -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-900 rounded-full opacity-20 blur-3xl animate-pulse-slow"></div>
+            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-300 dark:bg-primary-800 rounded-full opacity-20 blur-3xl animate-pulse-slow animation-delay-2000"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <!-- عنوان القسم بتصميم مودرن -->
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full text-sm font-semibold mb-4 animate__animated animate__fadeInUp">
+                    ✨ تصفح التصنيفات
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-l from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                    اكتشف مجالات التعلم
                 </h2>
                 <p class="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
-                    اختر المجال الذي تريد تطوير مهاراتك فيه
+                    اختر من بين مجموعة واسعة من التصنيفات المصممة لتلبية احتياجاتك التعليمية
                 </p>
             </div>
 
-            <!-- شبكة التصنيفات - 4 في السطر -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- شبكة التصنيفات -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
                 {% for category in categories %}
                 <a href="{% url 'courses:course_list' %}?category={{ category.slug }}" 
-                class="group block bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                class="group relative bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
                     
-                    <!-- صورة أو أيقونة - بحجم أكبر وظل أنيق -->
-                    <div class="relative w-20 h-20 mx-auto mb-4">
-                        <!-- ظل خلفي للصورة -->
-                        <div class="absolute inset-0 bg-primary-500/20 rounded-2xl blur-xl group-hover:bg-primary-500/30 transition-all duration-300"></div>
-                        
-                        <!-- الصورة نفسها -->
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300">
-                            {% if category.img_gat %}
-                            <img src="{{ category.img_gat.url }}" alt="{{ category.name }}" 
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                            {% else %}
-                            <div class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                                <i class="fas fa-{{ category.icon|default:'folder' }} text-3xl text-white"></i>
+                    <!-- خلفية متدرجة متحركة -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 dark:from-primary-400/10 dark:to-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <!-- خلفية الصورة بتأثير ضبابي -->
+                    {% if category.img_gat %}
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500">
+                        <img src="{{ category.img_gat.url }}" alt="{{ category.name }}" class="w-full h-full object-cover scale-110 group-hover:scale-125 transition-transform duration-700">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- حاوية الصورة بتصميم دائري مودرن -->
+                    <div class="relative mb-6">
+                        <div class="relative w-24 h-24 mx-auto">
+                            <!-- دائرة متدرجة خلف الصورة -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
+                            
+                            <!-- الصورة أو الأيقونة -->
+                            <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-xl group-hover:shadow-2xl transition-all duration-500 transform group-hover:scale-110">
+                                {% if category.img_gat %}
+                                <img src="{{ category.img_gat.url }}" alt="{{ category.name }}" 
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                                    <i class="fas fa-{{ category.icon|default:'folder' }} text-3xl text-white group-hover:scale-110 transition-transform duration-300"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Overlay متحرك -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                             </div>
-                            {% endif %}
+                            
+                            <!-- شارة صغيرة للتأثير -->
+                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-lg">
+                                <i class="fas fa-star"></i>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- اسم التصنيف -->
-                    <h3 class="text-center font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 transition">
-                        {{ category.name }}
-                    </h3>
+                    <!-- معلومات التصنيف -->
+                    <div class="relative text-center">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-300">
+                            {{ category.name }}
+                        </h3>
+                        
+                        <!-- عداد الدورات بتصميم جذاب -->
+                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-all duration-300">
+                            <i class="fas fa-book-open text-primary-600 dark:text-primary-400 text-xs"></i>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">{{ category.get_courses_count }} دورة</span>
+                        </div>
+                    </div>
                     
-                    <!-- عدد الدورات مع خلفية خفيفة -->
-                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 py-1.5 px-3 rounded-full inline-block mx-auto">
-                        {{ category.get_courses_count }} دورة
-                    </p>
+                    <!-- خط سفلي متحرك -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-primary-500 to-primary-600 group-hover:w-full transition-all duration-500 rounded-full"></div>
+                    
+                    <!-- تأثير sparkle للديكور -->
+                    <div class="absolute top-4 right-4 text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <i class="fas fa-sparkle text-xs"></i>
+                    </div>
                 </a>
                 {% empty %}
-                <!-- تصنيفات افتراضية بسيطة -->
-                <div class="group block bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700">
-                    <div class="relative w-20 h-20 mx-auto mb-4">
-                        <div class="absolute inset-0 bg-primary-500/20 rounded-2xl blur-xl"></div>
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                            <i class="fas fa-code text-3xl text-white"></i>
+                <!-- تصنيفات افتراضية بتصميم مودرن -->
+                {% for category_data in default_categories %}
+                <a href="#" class="group relative bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 dark:from-primary-400/10 dark:to-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div class="relative mb-6">
+                        <div class="relative w-24 h-24 mx-auto">
+                            <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
+                            <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-xl">
+                                <img src="{{ category_data.image }}" alt="{{ category_data.name }}" 
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            </div>
                         </div>
                     </div>
-                    <h3 class="text-center font-semibold text-gray-900 dark:text-white mb-2">البرمجة</h3>
-                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 py-1.5 px-3 rounded-full inline-block mx-auto">24 دورة</p>
-                </div>
-                <div class="group block bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700">
-                    <div class="relative w-20 h-20 mx-auto mb-4">
-                        <div class="absolute inset-0 bg-primary-500/20 rounded-2xl blur-xl"></div>
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                            <i class="fas fa-chart-line text-3xl text-white"></i>
+                    
+                    <div class="relative text-center">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-300">
+                            {{ category_data.name }}
+                        </h3>
+                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-all duration-300">
+                            <i class="fas fa-book-open text-primary-600 dark:text-primary-400 text-xs"></i>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">{{ category_data.courses }} دورة</span>
                         </div>
                     </div>
-                    <h3 class="text-center font-semibold text-gray-900 dark:text-white mb-2">التسويق</h3>
-                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 py-1.5 px-3 rounded-full inline-block mx-auto">18 دورة</p>
-                </div>
-                <div class="group block bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700">
-                    <div class="relative w-20 h-20 mx-auto mb-4">
-                        <div class="absolute inset-0 bg-primary-500/20 rounded-2xl blur-xl"></div>
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                            <i class="fas fa-language text-3xl text-white"></i>
-                        </div>
-                    </div>
-                    <h3 class="text-center font-semibold text-gray-900 dark:text-white mb-2">اللغات</h3>
-                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 py-1.5 px-3 rounded-full inline-block mx-auto">15 دورة</p>
-                </div>
-                <div class="group block bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700">
-                    <div class="relative w-20 h-20 mx-auto mb-4">
-                        <div class="absolute inset-0 bg-primary-500/20 rounded-2xl blur-xl"></div>
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                            <i class="fas fa-paint-brush text-3xl text-white"></i>
-                        </div>
-                    </div>
-                    <h3 class="text-center font-semibold text-gray-900 dark:text-white mb-2">التصميم</h3>
-                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 py-1.5 px-3 rounded-full inline-block mx-auto">22 دورة</p>
-                </div>
+                    
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-primary-500 to-primary-600 group-hover:w-full transition-all duration-500 rounded-full"></div>
+                </a>
+                {% endfor %}
                 {% endfor %}
             </div>
 
-            <!-- زر عرض الكل - بسيط -->
-            <div class="text-center mt-12">
+            <!-- زر عرض الكل بتصميم جذاب -->
+            <div class="text-center mt-16">
                 <a href="{% url 'courses:course_list' %}" 
-                class="inline-flex items-center gap-3 px-8 py-3.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
-                    <span class="font-medium">عرض جميع التصنيفات</span>
-                    <i class="fas fa-arrow-left text-sm"></i>
+                class="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-l from-primary-600 to-primary-700 text-white rounded-2xl hover:from-primary-700 hover:to-primary-800 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl relative overflow-hidden">
+                    <!-- خلفية متحركة -->
+                    <span class="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700"></span>
+                    
+                    <span class="relative font-bold text-lg">عرض جميع التصنيفات</span>
+                    <i class="fas fa-arrow-left relative group-hover:translate-x-1 transition-transform duration-300"></i>
+                    
+                    <!-- أيقونات متحركة -->
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></span>
+                    <span class="absolute -bottom-1 -left-1 w-2 h-2 bg-green-400 rounded-full animate-ping animation-delay-1000"></span>
                 </a>
             </div>
         </div>
@@ -327,32 +374,30 @@
                             </div>
                         </div>
 
-                        <!-- Rating & Price -->
+                         <!-- Rating & Price -->
                         <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
                             <div class="flex items-center gap-2">
-                                <div class="flex items-center">
-                                    {% with ''|center:5 as range %}
-                                    {% for i in range %}
-                                        {% if forloop.counter <= course.rating %}
-                                        <i class="fas fa-star text-yellow-400 text-sm"></i>
-                                        {% elif forloop.counter <= course.rating|add:"0.5" %}
-                                        <i class="fas fa-star-half-alt text-yellow-400 text-sm"></i>
-                                        {% else %}
-                                        <i class="far fa-star text-yellow-400 text-sm"></i>
-                                        {% endif %}
-                                    {% endfor %}
-                                    {% endwith %}
+                                {% if course.has_discount %}
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-500 line-through">EGP-( {{ course.price }}  )</span>
+                                    <span class="font-bold text-green-600">EGP-( {{ course.discounted_price|floatformat:2 }} )</span>
                                 </div>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">({{ course.reviews.count }})</span>
-                            </div>
-                            <div class="text-xl font-bold">
-                                {% if course.price == 0 %}
-                                <span class="text-green-600 dark:text-green-400">مجاناً</span>
+                                <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full inline-block mt-1">
+                                    -{{ course.discount_percent }}%
+                                </span>
                                 {% else %}
-                                <span class="text-primary-600 dark:text-primary-400">${{ course.price }}</span>
+                                <span class="font-bold text-primary-600">
+                                    {% if course.price == 0 %}
+                                    <span class="text-green-600">مجاناً</span>
+                                    {% else %}
+                                    EGP-( {{ course.price }} )
+                                    {% endif %}
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
+
+                        
                     </div>
                 </div>
                 {% empty %}
@@ -440,21 +485,29 @@
                                 {{ course.title }}
                             </a>
                         </h3>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1">
-                                <div class="flex">
-                                    {% with ''|center:course.rating as range %}
-                                    {% for i in range %}
-                                    <i class="fas fa-star text-yellow-400 text-xs"></i>
-                                    {% endfor %}
-                                    {% endwith %}
+                      <!-- Rating & Price -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center gap-2">
+                                {% if course.has_discount %}
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-500 line-through">EGP-( {{ course.price }}  )</span>
+                                    <span class="font-bold text-green-600">EGP-( {{ course.discounted_price|floatformat:2 }} )</span>
                                 </div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">({{ course.reviews.count }})</span>
-                            </div>
-                            <div class="font-bold text-primary-600 dark:text-primary-400">
-                                {% if course.price > 0 %}${% endif %}{{ course.price|default:'مجاناً' }}
+                                <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full inline-block mt-1">
+                                    -{{ course.discount_percent }}%
+                                </span>
+                                {% else %}
+                                <span class="font-bold text-primary-600">
+                                    {% if course.price == 0 %}
+                                    <span class="text-green-600">مجاناً</span>
+                                    {% else %}
+                                    EGP-( {{ course.price }} )
+                                    {% endif %}
+                                </span>
+                                {% endif %}
                             </div>
                         </div>
+
                         <div class="mt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <i class="fas fa-users ml-1"></i> {{ course.students_count }} طالب
                             <i class="fas fa-clock mr-2 ml-1"></i> {{ course.duration_hours }} ساعة
@@ -611,26 +664,26 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    // Notification system (if needed)
-    function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-2xl transform transition-all duration-500 translate-y-0 z-50 ${
-            type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-        } text-white`;
-        notification.innerHTML = `
-            <div class="flex items-center gap-3">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} text-xl"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.transform = 'translateY(200%)';
-            setTimeout(() => notification.remove(), 500);
-        }, 3000);
-    }
-</script>
+    <script>
+        // Notification system (if needed)
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-2xl transform transition-all duration-500 translate-y-0 z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} text-xl"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateY(200%)';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+    </script>
 {% endblock %}
